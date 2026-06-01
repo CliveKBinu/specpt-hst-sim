@@ -11,5 +11,6 @@ outputs/logs/*
 outputs/err/*
 !outputs/logs/.gitkeep
 !outputs/err/.gitkeep
+daemon/webhook.log
 .DS_Store
 thumbs.db
