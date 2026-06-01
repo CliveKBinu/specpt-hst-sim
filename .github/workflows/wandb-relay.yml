@@ -11,9 +11,11 @@ jobs:
       - name: Relay to local daemon
         env:
           LOCAL_AGENT_URL: ${{ secrets.LOCAL_AGENT_URL }}
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
         run: |
           curl -X POST "$LOCAL_AGENT_URL/wandb" \
             -H "Content-Type: application/json" \
+            -H "X-Webhook-Secret: $WEBHOOK_SECRET" \
             -d '{
               "runId": "${{ github.event.client_payload.runId }}",
               "runName": "${{ github.event.client_payload.runName }}",

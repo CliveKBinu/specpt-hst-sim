@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 OPENCODE_BIN = os.environ.get("OPENCODE_BIN", "opencode")
 SPECPT_REPO = os.environ.get("SPECPT_REPO", os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+WEBHOOK_SECRET = os.environ.get("WEBHOOK_SECRET", "")
 
 
 @app.route("/health", methods=["GET"])
@@ -28,6 +29,10 @@ def health():
 
 @app.route("/wandb", methods=["POST"])
 def wandb_webhook():
+    if WEBHOOK_SECRET and request.headers.get("X-Webhook-Secret") != WEBHOOK_SECRET:
+        logger.warning("Unauthorized webhook attempt")
+        return jsonify({"error": "unauthorized"}), 403
+
     data = request.get_json()
     if not data:
         return jsonify({"error": "no json payload"}), 400
@@ -63,5 +68,5 @@ def wandb_webhook():
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
+    port = int(os.environ.get("PORT", 8001))
     app.run(host="0.0.0.0", port=port)

@@ -1,0 +1,14 @@
+2026-06-01 10:54:31,695 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8000
+ * Running on http://192.168.1.101:8000
+2026-06-01 10:54:31,696 [INFO] [33mPress CTRL+C to quit[0m
+2026-06-01 10:54:34,796 [INFO] 127.0.0.1 - - [01/Jun/2026 10:54:34] "[33mGET / HTTP/1.1[0m" 404 -
+2026-06-01 11:29:47,317 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8001
+ * Running on http://192.168.1.101:8001
+2026-06-01 11:29:47,317 [INFO] [33mPress CTRL+C to quit[0m
+2026-06-01 11:29:58,083 [INFO] 127.0.0.1 - - [01/Jun/2026 11:29:58] "GET /health HTTP/1.1" 200 -
+2026-06-01 11:30:35,906 [INFO] 127.0.0.1 - - [01/Jun/2026 11:30:35] "[33mGET / HTTP/1.1[0m" 404 -
+2026-06-01 11:30:36,067 [INFO] 127.0.0.1 - - [01/Jun/2026 11:30:36] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
