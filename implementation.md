@@ -11,15 +11,11 @@ Autonomous SpecPT training on simulated HST grism data. A continuous optimizatio
 ## System Architecture
 
 ```
-W&B (job finishes)
+watcher.py (your PC, polls every 30 min)
     │
-    ▼ repository_dispatch webhook
-GitHub: ckb2084/specpt-hst-sim
+    ▼ Checks W&B API for finished runs
     │
-    ▼ curl → localhost:8000/webhook
-Your PC (daemon running)
-    │
-    ▼ opencode --agent specpt-orchestrator
+    ▼ If found: opencode --agent specpt-orchestrator
     │
     ├──► specpt-analyst          (read W&B metrics)
     ├──► specpt-experimenter     (write next config)
@@ -27,14 +23,14 @@ Your PC (daemon running)
     └──► specpt-memory           (update state)
     │
     ▼
-New job submitted → W&B → webhook → loop (continuous)
+New job submitted → W&B → watcher detects → loop (continuous)
 ```
 
 ## Configuration
 
 | Item | Value |
 |---|---|
-| **GitHub repo** | `ckb2084/specpt-hst-sim` |
+| **GitHub repo** | `CliveKBinu/specpt-hst-sim` |
 | **W&B entity** | `ckb2084-rochester-institute-of-technology` |
 | **W&B project** | `specpt-hst-sim` |
 | **SSH host** | `sporcsubmit.rc.rit.edu` (user: ckb2084) |
@@ -78,13 +74,10 @@ F:\personal_projects\specpt-hst-sim\
 │   │   └── specpt-memory.md          # Updates state + SOUL.md
 │   └── opencode.json
 │
-├── .github/workflows/
-│   └── wandb-relay.yml              # GitHub webhook relay
-│
 ├── daemon/
-│   ├── webhook_server.py           # Flask server on port 8000
+│   ├── webhook_server.py           # Flask server (optional, for Pro plan)
 │   ├── trigger.py                  # Manual trigger entry
-│   ├── watcher.py                  # Fallback W&B poller (backup)
+│   ├── watcher.py                  # W&B poller (primary trigger)
 │   └── requirements.txt
 │
 ├── src/specpt/
@@ -227,65 +220,51 @@ EXP_NAME=$1
 ssh ckb2084@sporcsubmit.rc.rit.edu "cd ~/specpt-hst-sim && sbatch scripts/slurm_train.sh $EXP_NAME"
 ```
 
-### P3 — Webhook Daemon
+### P3 — Daemon (watcher.py)
 
-**`daemon/requirements.txt`**
-```
-flask>=2.0
-gunicorn>=20.0
-```
-
-**`daemon/webhook_server.py`** — Flask server on port 8000, listens for W&B webhooks relayed from GitHub:
-- `POST /wandb` — receives run data, triggers opencode orchestrator
-- `GET /health` — health check
-- Logging to file + stdout
-- Runs as subprocess.Popen (non-blocking)
-
-**`daemon/watcher.py`** — Fallback poller that runs via cron every 30 minutes:
+**`daemon/watcher.py`** — Primary trigger, polls W&B every 30 minutes:
 - Polls W&B for any finished runs since last check
 - Triggers orchestrator if found
+- State file tracks last check timestamp
+
+**`daemon/webhook_server.py`** — Optional, for W&B Pro/Enterprise plan:
+- Flask server on port 8001
+- `POST /wandb` — receives run data, triggers opencode orchestrator
+- `GET /health` — health check
+- Requires Cloudflare tunnel + W&B webhook automation
 
 **`daemon/trigger.py`** — Manual trigger for testing:
 - Usage: `python trigger.py run_id state`
 - Calls opencode orchestrator directly
 
-### P4 — GitHub Webhook Relay
+### P4 — GitHub Webhook Relay (Optional, Pro plan only)
 
-**`.github/workflows/wandb-relay.yml`**
+> **Note:** W&B webhook automations require Pro or Enterprise plan. Student plan uses watcher.py polling instead (P3).
 
-```yaml
-name: W&B Webhook Relay
+**`.github/workflows/wandb-relay.yml`** — Not included by default. Create if upgrading to Pro.
 
-on:
-  repository_dispatch:
-    types: [wandb-webhook]
+**Setup steps (student plan — watcher.py):**
+1. Run `python daemon/watcher.py` on your PC (keep running)
+2. Watcher polls W&B every 30 minutes for finished runs
+3. When found, triggers orchestrator automatically
 
-jobs:
-  relay:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Relay to local daemon
-        env:
-          LOCAL_AGENT_URL: ${{ secrets.LOCAL_AGENT_URL }}
-        run: |
-          curl -X POST "$LOCAL_AGENT_URL/wandb" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "runId": "${{ github.event.client_payload.runId }}",
-              "runName": "${{ github.event.client_payload.runName }}",
-              "state": "${{ github.event.client_payload.state }}"
-            }'
-```
-
-**Setup steps (user does):**
+**Setup steps (Pro plan — webhook, optional):**
 1. GitHub repo → Settings → Secrets → Actions → New secret
    - Name: `LOCAL_AGENT_URL`
-   - Value: `http://localhost:8000` (or public/ngrok URL)
-2. W&B dashboard → Settings → Webhooks → Add webhook
-   - Payload URL: `https://api.github.com/repos/ckb2084/specpt-hst-sim/dispatches`
+   - Value: `https://specpt-training.clivekbinu.me`
+   - Name: `WEBHOOK_SECRET`
+   - Value: `<generated secret>`
+2. W&B dashboard → Team Settings → Secrets → New secret
+   - Name: `GITHUB_PAT`
+   - Value: `<your GitHub PAT>`
+   - Name: `WEBHOOK_SECRET`
+   - Value: `<same secret as above>`
+3. W&B dashboard → Settings → Webhooks → Add webhook
+   - Payload URL: `https://api.github.com/repos/CliveKBinu/specpt-hst-sim/dispatches`
    - Content type: `application/json`
    - Event: repository_dispatch, type: `wandb-webhook`
    - Payload: `{"runId": "{{run.id}}", "runName": "{{run.name}}", "state": "{{run.state}}"}`
+4. Cloudflare tunnel: add Published application route for `specpt-training.clivekbinu.me` → `localhost:8001`
 
 ### P5 — The 5 Opencode Agents
 
@@ -360,7 +339,7 @@ systematic experimentation.
 7. Never stop the loop without explicit user permission
 
 ## Agent Chain
-webhook → orchestrator → analyst → experimenter → runner → memory → loop
+watcher → orchestrator → analyst → experimenter → runner → memory → loop
 
 ## Forbidden
 - Never submit without writing EXPERIMENTS.md entry first
@@ -492,6 +471,7 @@ outputs/logs/*
 outputs/err/*
 !outputs/logs/.gitkeep
 !outputs/err/.gitkeep
+daemon/webhook.log
 .DS_Store
 thumbs.db
 ```
@@ -505,13 +485,13 @@ thumbs.db
 | P0 | Repo setup — git, .gitignore, structure | All dirs + .gitignore | 1h |
 | P1 | Port training code from HST_GRISM_Sim | src/specpt/*.py | 2h |
 | P2 | SLURM + SSH scripts | scripts/slurm_train.sh, ssh_submit.sh | 1h |
-| P3 | Webhook daemon | daemon/*.py, requirements.txt | 1h |
-| P4 | GitHub webhook relay | .github/workflows/wandb-relay.yml | 1h |
+| P3 | Daemon (watcher.py) | daemon/*.py | 1h |
+| P4 | GitHub webhook relay (optional) | .github/workflows/wandb-relay.yml | User action |
 | P5 | 5 opencode agents | .opencode/agents/*.md | 3h |
 | P6 | SOUL.md + experiment templates | SOUL.md, EXPERIMENTS.md, jobs.csv | 1h |
 | P7 | Config files | configs/defaults.yaml, exp_000.yaml | 0.5h |
 | P8 | opencode.json + README | .opencode/opencode.json, README.md | 0.5h |
-| P9 | W&B webhook setup | User configures W&B dashboard | User action |
+| P9 | W&B integration | Student: watcher.py polling / Pro: webhook setup | User action |
 | P10 | End-to-end test | Submit exp_000, verify full loop | 1h |
 
 **Total: ~12 hours across 11 phases**
@@ -520,27 +500,26 @@ thumbs.db
 
 ## Agent Chain (Per Optimization Loop)
 
-1. W&B job finishes → webhook POST to GitHub
-2. GitHub Actions relay → curl to `localhost:8000/wandb`
-3. `webhook_server.py` receives → `subprocess.Popen(['opencode', '--agent', 'specpt-orchestrator', ...])`
-4. Orchestrator loads state (SOUL.md, EXPERIMENTS.md, jobs.csv)
-5. Orchestrator calls `specpt-analyst`:
+1. `watcher.py` polls W&B API every 30 minutes
+2. If finished run found → `subprocess.Popen(['opencode', '--agent', 'specpt-orchestrator', ...])`
+3. Orchestrator loads state (SOUL.md, EXPERIMENTS.md, jobs.csv)
+4. Orchestrator calls `specpt-analyst`:
    - Queries W&B for run metrics
    - Compares to best run
    - Appends analysis to EXPERIMENTS.md
-6. Orchestrator calls `specpt-experimenter`:
+5. Orchestrator calls `specpt-experimenter`:
    - Reads all experiments + defaults
    - Identifies patterns
    - Writes configs/exp_N.yaml
-7. Orchestrator calls `specpt-runner`:
+6. Orchestrator calls `specpt-runner`:
    - Git commit + push config
    - SSH `ckb2084@sporcsubmit.rc.rit.edu` → sbatch
    - Records job_id in jobs.csv
-8. Orchestrator calls `specpt-memory`:
+7. Orchestrator calls `specpt-memory`:
    - Updates SOUL.md (best NMAD, direction, exp count)
    - Writes ctx_memory
    - Finalizes EXPERIMENTS.md
-9. New job on cluster → W&B → webhook → loop repeats
+8. New job on cluster → W&B → watcher detects → loop repeats
 
 ## Error Handling
 
@@ -548,8 +527,8 @@ thumbs.db
 - **SSH failure**: runner retries after 5 min → memory logs failure
 - **Git conflict**: runner rebases → retry push
 - **Docker/conda error**: analyst logs → user notified via slack
-- **Daemon crash**: auto-restart via `--restart=always` launcher (TODO: implement in phase P3)
-- **Webhook miss**: watcher.py polls W&B every 30 min as backup
+- **Daemon crash**: watcher.py can be restarted manually
+- **Webhook miss**: watcher.py polls W&B every 30 min as primary trigger
 
 ## Success Criteria
 

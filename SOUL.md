@@ -25,7 +25,7 @@ systematic experimentation.
 7. Never stop the loop without explicit user permission
 
 ## Agent Chain
-webhook → orchestrator → analyst → experimenter → runner → memory → loop
+watcher → orchestrator → analyst → experimenter → runner → memory → loop
 
 ## Forbidden
 - Never submit without writing EXPERIMENTS.md entry first
