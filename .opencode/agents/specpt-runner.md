@@ -30,7 +30,7 @@ git push origin main
 4. Once approved, SSH completes and sbatch runs
 
 ```bash
-ssh -o ConnectTimeout=60 ckb2084@sporcsubmit.rc.rit.edu "cd ~/specpt-hst-sim && git pull origin main && sbatch scripts/slurm_train.sh exp_N"
+ssh -o ConnectTimeout=60 ckb2084@sporcsubmit.rc.rit.edu "cd /home/ckb2084/research/specpt-hst-sim && git pull origin main && sbatch scripts/slurm_train.sh exp_N"
 ```
 
 ### 3. Capture Job ID

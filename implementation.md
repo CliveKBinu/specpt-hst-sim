@@ -116,7 +116,7 @@ F:\personal_projects\specpt-hst-sim\
 
 1. Create directory structure
 2. Create `.gitignore` (Python, venv, __pycache__, .env, outputs/)
-3. Initialize git: `git init`, `git remote add origin https://github.com/ckb2084/specpt-hst-sim.git`
+3. Initialize git: `git init`, `git remote add origin https://github.com/CliveKBinu/specpt-hst-sim.git`
 4. Create initial commit with directory structure
 5. Push to GitHub
 

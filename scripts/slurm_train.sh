@@ -17,7 +17,7 @@ source ~/miniconda3/etc/profile.d/conda.sh
 conda activate pytorch
 spack load cuda@12.4.0 /obxqih4
 
-cd ~/specpt-hst-sim
+cd /home/ckb2084/research/specpt-hst-sim
 git pull origin main
 
 python -m src.specpt.training.train \
