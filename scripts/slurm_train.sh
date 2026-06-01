@@ -9,7 +9,7 @@
 #SBATCH --nodes=1
 #SBATCH --partition=sporc
 #SBATCH --mem=128g
-#SBATCH --gres=gpu:h100:1
+#SBATCH --gres=gpu:a100:1
 
 EXP_NAME=${1:-exp_000}
 

@@ -22,8 +22,15 @@ git push origin main
 ```
 
 ### 2. SSH + Submit
+
+**Duo MFA required:** The RIT cluster requires Duo multi-factor authentication. When SSHing:
+1. SSH will hang waiting for Duo approval
+2. A push notification is sent to your phone
+3. **You must approve the Duo push within 60 seconds**
+4. Once approved, SSH completes and sbatch runs
+
 ```bash
-ssh ckb2084@sporcsubmit.rc.rit.edu "cd ~/specpt-hst-sim && git pull origin main && sbatch scripts/slurm_train.sh exp_N"
+ssh -o ConnectTimeout=60 ckb2084@sporcsubmit.rc.rit.edu "cd ~/specpt-hst-sim && git pull origin main && sbatch scripts/slurm_train.sh exp_N"
 ```
 
 ### 3. Capture Job ID
@@ -45,3 +52,8 @@ Return:
 - Job ID
 - Confirmation that the job was submitted
 - Any errors encountered
+
+## Error Handling
+- If Duo approval times out (60s), retry up to 3 times with 5-minute delays
+- If SSH fails after all retries, report error to orchestrator
+- If sbatch fails, check `outputs/err/` on cluster for details
