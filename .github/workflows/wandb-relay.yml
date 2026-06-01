@@ -1,0 +1,21 @@
+name: W&B Webhook Relay
+
+on:
+  repository_dispatch:
+    types: [wandb-webhook]
+
+jobs:
+  relay:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Relay to local daemon
+        env:
+          LOCAL_AGENT_URL: ${{ secrets.LOCAL_AGENT_URL }}
+        run: |
+          curl -X POST "$LOCAL_AGENT_URL/wandb" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "runId": "${{ github.event.client_payload.runId }}",
+              "runName": "${{ github.event.client_payload.runName }}",
+              "state": "${{ github.event.client_payload.state }}"
+            }'

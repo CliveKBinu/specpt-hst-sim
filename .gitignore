@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+venv/
+*.egg-info/
+dist/
+build/
+outputs/logs/*
+outputs/err/*
+!outputs/logs/.gitkeep
+!outputs/err/.gitkeep
+.DS_Store
+thumbs.db

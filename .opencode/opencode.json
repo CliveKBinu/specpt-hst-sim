@@ -1,0 +1,31 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "specpt-orchestrator": {
+      "description": "Main SpecPT-HST-Sim training orchestrator",
+      "mode": "primary",
+      "model": "opencode-go/deepseek-v4-flash"
+    },
+    "specpt-analyst": {
+      "description": "W&B run analysis",
+      "mode": "subagent",
+      "model": "opencode-go/deepseek-v4-pro"
+    },
+    "specpt-experimenter": {
+      "description": "Hypothesis generation, config writing",
+      "mode": "subagent",
+      "model": "opencode-go/deepseek-v4-pro"
+    },
+    "specpt-runner": {
+      "description": "SSH → SLURM submission",
+      "mode": "subagent",
+      "model": "opencode-go/minimax-m2.5"
+    },
+    "specpt-memory": {
+      "description": "State maintenance, SOUL.md updates",
+      "mode": "subagent",
+      "model": "opencode-go/deepseek-v4-flash"
+    }
+  },
+  "instructions": ["SOUL.md"]
+}

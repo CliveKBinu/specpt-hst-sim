@@ -1,0 +1,7 @@
+name: exp_000_baseline
+description: >
+  Baseline SpecPT training with default hyperparameters on HST grism simulated data.
+  This establishes the starting point for all optimization experiments.
+parent: defaults
+changes: []
+stage: baseline
