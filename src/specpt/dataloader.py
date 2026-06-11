@@ -4,7 +4,7 @@ import pickle
 import torch
 from torch.utils.data import Dataset
 
-from ..model import SpectrumNormalizer
+from .model import SpectrumNormalizer
 
 
 class HSTGrismDataset(Dataset):
