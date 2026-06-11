@@ -1,0 +1,13 @@
+name: exp_smoke
+description: >
+  Smoke test — 1 epoch to validate full SSH→SLURM→training pipeline.
+  Overrides training epochs to 1 and val/test splits to 0.01 for speed.
+parent: defaults
+stage: smoke
+training:
+  epochs: 1
+  patience: 2
+  batch_size: 32
+data:
+  val_split: 0.01
+  test_split: 0.01
