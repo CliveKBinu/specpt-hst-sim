@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import pickle
+
 import torch
 from torch.utils.data import Dataset
 
@@ -30,8 +30,7 @@ class HSTGrismDataset(Dataset):
 
 
 def load_grism_data(data_path, min_snr=2.5):
-    with open(data_path, "rb") as f:
-        data = pickle.load(f)
+    data = pd.read_pickle(data_path)
     data = data[data["SNR"] >= min_snr].copy()
     data.rename(
         columns={"clean_flux_resampled": "spec", "grism_id": "TARGETID"}, inplace=True
