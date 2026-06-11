@@ -3,6 +3,7 @@
 ## Running
 | exp | job_id | run_id | status |
 |-----|--------|--------|--------|
+| exp_000_baseline | 21345633 | | submitted |
 
 ## Completed
 
