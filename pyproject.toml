@@ -6,6 +6,9 @@ requires-python = ">=3.10"
 dependencies = [
     "flask>=2.0",
     "gunicorn>=20.0",
+    "ipykernel>=7.2.0",
+    "jupyter>=1.1.1",
+    "pandas>=2.3.3",
 ]
 
 [project.optional-dependencies]
@@ -17,6 +20,15 @@ train = [
     "scipy",
     "pandas",
     "numpy",
+]
+
+analyze = [
+    "matplotlib>=3.7",
+    "tqdm>=4.65",
+    "pyarrow>=12.0",
+    "h5py>=3.8",
+    "jupyter>=1.0",
+    "ipykernel>=6.0",
 ]
 
 [project.scripts]

@@ -14,3 +14,7 @@ outputs/err/*
 daemon/webhook.log
 .DS_Store
 thumbs.db
+
+# Generated training data (large binary files)
+data/hst_grism_combined.h5
+data/training_format/
