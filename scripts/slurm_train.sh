@@ -13,7 +13,6 @@
 
 EXP_NAME=${1:-exp_000}
 
-source ~/miniconda3/etc/profile.d/conda.sh
 conda activate pytorch
 spack load cuda@12.4.0 /obxqih4
 

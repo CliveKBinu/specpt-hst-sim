@@ -33,12 +33,8 @@ def load_grism_data(data_path, min_snr=2.5):
     with open(data_path, "rb") as f:
         data = pickle.load(f)
     data = data[data["SNR"] >= min_snr].copy()
-    safe_sensitivity = data["sensitivity_resampled"].apply(
-        lambda arr: np.where(arr == 0, 1e-8, arr)
-    )
-    data["flux_sensitivity"] = data["clean_flux_resampled"] / safe_sensitivity
     data.rename(
-        columns={"flux_sensitivity": "spec", "grism_id": "TARGETID"}, inplace=True
+        columns={"clean_flux_resampled": "spec", "grism_id": "TARGETID"}, inplace=True
     )
     return data
 
