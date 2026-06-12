@@ -29,7 +29,20 @@ class HSTGrismDataset(Dataset):
         return self.X[idx].float(), self.Y[idx].float(), idx, self.t_id[idx]
 
 
+def _patch_pickle_compat():
+    import pandas as pd
+    from pandas import StringDtype
+    _orig_init = StringDtype.__init__
+    def _patched_init(self, *args, **kwargs):
+        try:
+            _orig_init(self, *args, **kwargs)
+        except TypeError:
+            _orig_init(self)
+    StringDtype.__init__ = _patched_init
+
+
 def load_grism_data(data_path, min_snr=2.5):
+    _patch_pickle_compat()
     data = pd.read_pickle(data_path)
     data = data[data["SNR"] >= min_snr].copy()
     data.rename(
