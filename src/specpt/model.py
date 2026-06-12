@@ -179,10 +179,15 @@ class SpectrumNormalizer:
 
     @staticmethod
     def zscore_normalize(spectrum):
-        std = np.std(spectrum)
+        clean = spectrum[~np.isnan(spectrum)]
+        if len(clean) == 0:
+            return np.zeros_like(spectrum, dtype=np.float32)
+        std = np.std(clean)
         if std > 0:
-            return (spectrum - np.mean(spectrum)) / std
-        return spectrum
+            mean = np.mean(clean)
+            normalized = (spectrum - mean) / std
+            return np.nan_to_num(normalized, nan=0.0)
+        return np.nan_to_num(spectrum, nan=0.0).astype(np.float32)
 
     @staticmethod
     def robust_normalize(spectrum):
