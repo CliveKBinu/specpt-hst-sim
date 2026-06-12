@@ -30,7 +30,23 @@ class HSTGrismDataset(Dataset):
 
 
 def _patch_pickle_compat():
-    import pandas as pd
+    import sys, numpy, types
+
+    if 'numpy._core' not in sys.modules:
+        ncore = types.ModuleType('numpy._core')
+        ncore.__path__ = []
+        ncore.__package__ = 'numpy._core'
+        sys.modules['numpy._core'] = ncore
+        for name in ['numeric', 'multiarray', 'umath', 'shape_base',
+                      'fromnumeric', 'function_base', 'arrayprint', 'records',
+                      'memmap', 'einsumfunc']:
+            try:
+                src = __import__(f'numpy.core.{name}', fromlist=[''])
+                setattr(ncore, name, src)
+                sys.modules[f'numpy._core.{name}'] = src
+            except ImportError:
+                pass
+
     from pandas import StringDtype
     _orig_init = StringDtype.__init__
     def _patched_init(self, *args, **kwargs):
