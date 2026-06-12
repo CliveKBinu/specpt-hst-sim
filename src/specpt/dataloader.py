@@ -59,6 +59,7 @@ def load_grism_data(data_path, min_snr=2.5):
     _patch_pickle_compat()
     data = pd.read_pickle(data_path)
     data = data[data["SNR"] >= min_snr].copy()
+    data.drop(columns=["spec"], inplace=True, errors="ignore")
     data.rename(
         columns={"clean_flux_resampled": "spec", "grism_id": "TARGETID"}, inplace=True
     )
