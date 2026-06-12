@@ -134,7 +134,7 @@ def main():
     train_loader, val_loader, _ = create_dataloaders(
         train_df, val_df, test_df,
         batch_size=train_cfg["batch_size"],
-        num_workers=4,
+        num_workers=0,
     )
 
     criterion = NMADLoss(normalization_factor="std")
