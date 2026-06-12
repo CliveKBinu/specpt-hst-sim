@@ -140,8 +140,8 @@ def main():
     criterion = NMADLoss(normalization_factor="std")
     optimizer = torch.optim.AdamW(
         redshift_model.parameters(),
-        lr=train_cfg["lr"],
-        weight_decay=train_cfg.get("weight_decay", 0),
+        lr=float(train_cfg["lr"]),
+        weight_decay=float(train_cfg.get("weight_decay", 0)),
     )
 
     from transformers import get_cosine_schedule_with_warmup
