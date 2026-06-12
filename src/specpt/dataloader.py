@@ -34,18 +34,16 @@ def _patch_pickle_compat():
     import numpy
 
     if numpy.__version__.startswith('1.'):
-        import importlib.util
-        import importlib.abc
-
-        class _NumPyCoreCompatFinder(importlib.abc.MetaPathFinder):
-            def find_spec(s, fullname, path, target=None):
-                if fullname.startswith('numpy._core'):
-                    return importlib.util.find_spec(
-                        'numpy.core' + fullname[len('numpy._core'):]
-                    )
-                return None
-
-        sys.meta_path.insert(0, _NumPyCoreCompatFinder())
+        import builtins
+        _orig_import = builtins.__import__
+        def _patched_import(name, globals=None, locals=None, fromlist=(), level=0):
+            if name.startswith('numpy._core'):
+                redirected = 'numpy.core' + name[len('numpy._core'):]
+                _orig_import(redirected, globals, locals, fromlist, level)
+                sys.modules[name] = sys.modules[redirected]
+                return sys.modules[redirected]
+            return _orig_import(name, globals, locals, fromlist, level)
+        builtins.__import__ = _patched_import
 
     from pandas import StringDtype
     _orig_init = StringDtype.__init__
