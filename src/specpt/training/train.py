@@ -125,17 +125,20 @@ def main():
     redshift_model.to(device)
 
     data = load_grism_data(data_cfg["path"])
+    print(f"[DEBUG] data: {len(data)} rows, cols={list(data.columns)}")
     train_df, val_df, test_df = split_data(
         data,
         val_split=data_cfg.get("val_split", 0.1),
         test_split=data_cfg.get("test_split", 0.1),
     )
+    print(f"[DEBUG] train={len(train_df)}, val={len(val_df)}, test={len(test_df)}")
 
     train_loader, val_loader, _ = create_dataloaders(
         train_df, val_df, test_df,
         batch_size=train_cfg["batch_size"],
         num_workers=0,
     )
+    print(f"[DEBUG] train_loader={len(train_loader)} batches, val_loader={len(val_loader)} batches")
 
     criterion = NMADLoss(normalization_factor="std")
     optimizer = torch.optim.AdamW(
@@ -167,17 +170,20 @@ def main():
         start_epoch += 1
 
     for epoch in range(start_epoch, train_cfg["epochs"]):
+        print(f"[DEBUG] Starting epoch {epoch+1}")
         redshift_model.train()
         loss_epoch = 0.0
         batch_count = 0
 
         for X, Y, idx, t_id in train_loader:
+            print(f"[DEBUG] train batch {batch_count+1}: X={X.shape}")
             X, Y = X.to(device), Y.to(device)
             optimizer.zero_grad()
             preds = redshift_model(X)
             loss = criterion(preds, Y)
 
             if torch.isnan(loss) or torch.isinf(loss):
+                print(f"[DEBUG] NaN/Inf loss at batch {batch_count+1}")
                 continue
 
             loss.backward()
@@ -198,10 +204,12 @@ def main():
 
         with torch.no_grad():
             for X, Y, idx, t_id in val_loader:
+                print(f"[DEBUG] val batch {val_count+1}: X={X.shape}")
                 X, Y = X.to(device), Y.to(device)
                 preds = redshift_model(X)
                 val_loss_batch = criterion(preds, Y)
                 if torch.isnan(val_loss_batch) or torch.isinf(val_loss_batch):
+                    print(f"[DEBUG] NaN/Inf val loss at batch {val_count+1}")
                     continue
                 val_loss_epoch += val_loss_batch.item()
                 val_count += 1
