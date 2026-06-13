@@ -1,11 +1,4 @@
-exp_name,job_id,run_id,config_hash,status,val_nmad,val_z_bias,catastrophic_outliers,start_time,end_time
-exp_000_baseline,21346376,,,submitted,,,,
-exp_000_baseline,21346377,,,submitted,,,,
-exp_000_baseline,21346379,,,submitted,,,,
-exp_000_baseline,21346382,,,submitted,,,,
-exp_000_baseline,21346390,,,submitted,,,,
-exp_000_baseline,21346400,,,submitted,,,,
-exp_000_baseline,21346403,,,submitted,,,,
-exp_000_baseline,21346405,,,submitted,,,,
-exp_000_baseline,21346407,,,submitted,,,,
-
+job_id,experiment,run_id,run_name,state,start_time,end_time,val_nmad,val_loss,catastrophic_outliers,val_z_bias,val_rmse,notes
+21346376,exp_000_baseline,wijvni9f,super-disco-12,completed,TBD,TBD,0.0303,0.349,23.24,-0.0023,0.366,Baseline completed. Best NMAD=0.0303 at ep235. Stopped early ep244/400.
+21346908,exp_001,—,—,submitted,2026-06-12T19:58,—,—,—,—,—,—,d_model 512→768. Capacity increase.
+—,exp_002,—,—,queued,—,—,—,—,—,—,Encoder/decoder depth 3→6 layers. Queued until exp_001 finishes.
