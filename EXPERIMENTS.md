@@ -13,6 +13,10 @@
 | exp_000_baseline | 21346405 | | submitted |
 | exp_000_baseline | 21346407 | | submitted |
 
+> **Note:** Job IDs 21346376–21346407 are duplicate submissions of `exp_000_baseline`
+> caused by a watcher dedup bug. They will be moved to Completed or Failed once
+> outcomes are known. See jobs.csv for the full record.
+
 ## Completed
 
 ---

@@ -1,0 +1,26 @@
+import json
+import sys
+import wandb
+
+
+def fetch_run_metrics(run_id):
+    api = wandb.Api(timeout=120)
+    run = api.run(f"ckb2084-rochester-institute-of-technology/specpt-hst-sim/{run_id}")
+    history = run.scan_history(
+        keys=[
+            "train_loss", "val_loss", "val_nmad", "val_z_bias",
+            "catastrophic_outliers", "val_rmse", "lr", "epoch",
+        ]
+    )
+    config = dict(run.config)
+    result = {
+        "name": run.name,
+        "state": run.state,
+        "config": {k: v for k, v in config.items() if k != "_wandb"},
+        "metrics": [row for row in history],
+    }
+    print(json.dumps(result, indent=2))
+
+
+if __name__ == "__main__":
+    fetch_run_metrics(sys.argv[1])

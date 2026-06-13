@@ -1,0 +1,11 @@
+name: exp_001_d_model_768
+description: >
+  Increase d_model from 512 to 768 to address catastrophic outlier plateau
+  (23% stuck from epoch 100 onward) and close the 0.010 NMAD gap to target.
+  Baseline run flatlined on validation metrics after epoch 100 while training
+  loss continued dropping, indicating a model capacity bottleneck in the
+  frozen autoencoder's latent representation.
+parent: defaults
+model:
+  d_model: 768
+stage: capacity_increase

@@ -11,9 +11,10 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Active experiment: exp_000
-- Best NMAD: (from EXPERIMENTS.md)
-- Total experiments completed: 0
+|- Active experiment: exp_001 (d_model 512→768)
+|- Best NMAD: 0.0303 (from exp_000_baseline / super-disco-12)
+|- Total experiments completed: 1
+|- Direction: capacity increase (d_model 512→768)
 
 ## Operating Rules
 1. One experiment at a time (one SLURM job on cluster)
@@ -25,7 +26,7 @@ systematic experimentation.
 7. Never stop the loop without explicit user permission
 
 ## Agent Chain
-watcher → orchestrator (hermes) → analyst → experimenter → runner → memory → loop
+watcher → orchestrator → analyst → experimenter → runner → memory → loop
 
 ## Forbidden
 - Never submit without writing EXPERIMENTS.md entry first

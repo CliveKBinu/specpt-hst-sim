@@ -12,6 +12,8 @@ outputs/err/*
 !outputs/logs/.gitkeep
 !outputs/err/.gitkeep
 daemon/webhook.log
+daemon/.watcher_state
+daemon/.orchestrator.lock
 .DS_Store
 thumbs.db
 
