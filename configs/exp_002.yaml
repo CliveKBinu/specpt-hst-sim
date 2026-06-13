@@ -1,0 +1,16 @@
+name: exp_002_depth_6x6
+description: >
+  Increase encoder/decoder depth from 3→6 layers to address capacity
+  bottleneck in a different axis than exp_001 (which increased width).
+  Baseline stopped early at epoch 244 with NMAD plateau at 0.0303 and
+  catastrophic outliers at 23.24%. The 3-layer transformer may lack
+  sufficient sequential transform stages to capture the full spectral
+  mapping. Doubling depth to 6 encoder + 6 decoder layers provides
+  more representational power for the downstream task. Complementary
+  to exp_001's d_model increase; if both width and depth improvements
+  stack, the next experiment could combine them.
+parent: defaults
+model:
+  num_encoder_layers: 6
+  num_decoder_layers: 6
+stage: depth_increase
