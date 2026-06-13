@@ -26,7 +26,7 @@
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
 | exp_001 | configs/exp_001.yaml | 21346908 | — | — | — | — | — | — | — | d_model 512→768. Capacity increase. Submitted. Job 21346908. |
-|| exp_002 | configs/exp_002.yaml | 21346914 | — | — | — | — | — | — | — | submitted. Encoder/decoder depth 3→6. Job 21346914. |
+| exp_002 | configs/exp_002.yaml | 21346914 | — | — | — | — | — | — | — | submitted. Encoder/decoder depth 3→6. Job 21346914. |
 
 ## Diagnostics (failed/crashed runs)
 *None yet*
