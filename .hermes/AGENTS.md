@@ -78,7 +78,9 @@ Workflow:
    - Plateaued → bigger change (architecture)
 4. NEVER repeat a change already tried (check EXPERIMENTS.md)
 5. Write config to configs/exp_N.yaml using defaults.yaml as base
-6. Add row to EXPERIMENTS.md "Running" table
+6. CRITICAL: ALWAYS immediately add a row to EXPERIMENTS.md Running table:
+   | exp_001 | (none) | (none) | pending |
+   This must happen BEFORE calling the Runner step.
 
 Return: experiment name and justification
 ```
@@ -111,7 +113,12 @@ Retry logic:
 - SSH failure: retry up to 3x with 5-min delays
 - sbatch failure: report error
 
-Return: job ID and confirmation
+IMPORTANT — Outcome markers:
+- If submission succeeds: print the line [[RUNNER_SUCCEEDED]] (exactly, on its own line)
+- If submission fails after exhausting retries: print the line [[RUNNER_FAILED]] (exactly, on its own line) followed a brief description of the error
+- These markers tell the watcher whether to retry automatically
+
+Return: job ID and confirmation (or failure description)
 ```
 
 Use model `opencode-go/deepseek-v4-flash` for the runner subagent.
@@ -129,11 +136,27 @@ Inputs:
 - jobs.csv — job tracking
 
 Workflow:
-1. Update .hermes/SOUL.md "Current State" section (active experiment, best NMAD, total completed, direction)
-2. Move experiment from "Running" to "Completed" in EXPERIMENTS.md
-3. Fill in final metrics (NMAD, bias, outliers, RMSE)
-4. Update jobs.csv (mark as completed/failed, fill end_time, metrics)
-5. Never delete history — always append
+1. Update .hermes/SOUL.md "Current State" section:
+   - Active experiment (set to the name of the experiment just created, or "none" if no new one)
+   - Best NMAD (update if the analyzed run improved the best NMAD)
+   - Total experiments completed (increment if new experiment was created)
+   - Direction (summarize the current direction based on recent changes)
+2. Update EXPERIMENTS.md:
+   - VERIFY the new experiment is in the Running table. If not, ADD it immediately.
+   - If Runner succeeded: update the row's status from "pending" to "submitted", fill in job_id
+   - If Runner failed: update the row's status from "pending" to "runner_failed"
+   - Never delete history — always append or modify existing rows
+3. Update jobs.csv:
+   - If Runner succeeded: add a row with the job ID and status=submitted
+   - If Runner failed: add a row with status=runner_failed and note the error
+4. Update README.md:
+   - Regenerate the Active Experiments table from EXPERIMENTS.md Running section
+   - Regenerate the Leaderboard table from EXPERIMENTS.md, sorted by NMAD (ascending)
+   - Update "Current Best" from .hermes/SOUL.md Current State
+   - Update last-updated timestamp to current UTC time
+   - Update dead-letter count from daemon/.dead_letter.jsonl (count lines)
+   - Do NOT modify the static sections (Mission, Architecture, Status)
+5. When writing files, use UTF-8 encoding.
 
 Return: confirmation of state update
 ```
@@ -143,12 +166,12 @@ Use model `opencode-go/deepseek-v4-flash` for the memory subagent.
 ### Error Handling
 - If analyst fails: log error, try to continue with experimenter using last known state
 - If experimenter fails: retry once, then stop — no config to submit without hypothesis
-- If runner fails: retry up to 3 times with 5-minute delays
+- If runner fails: retry up to 3 times with 5-minute delays; on final failure print [[RUNNER_FAILED]]
 - If job crashed (`SPECPT_RUN_STATE` is "crashed" or "failed"): analyst must diagnose before proceeding
 - Max 3 retries per config before skipping
 
 ### Rules
-- Never skip the EXPERIMENTS.md entry for the current run
+- Never add to EXPERIMENTS.md Running section without also filling the status column
 - Never submit without writing a config first
 - Never change more than one variable per experiment
 - Never stop the loop without explicit user permission

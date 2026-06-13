@@ -14,6 +14,8 @@ outputs/err/*
 daemon/webhook.log
 daemon/.watcher_state
 daemon/.orchestrator.lock
+daemon/.dead_letter.jsonl
+daemon/logs/*.log
 .DS_Store
 thumbs.db
 

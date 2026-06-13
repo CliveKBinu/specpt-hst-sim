@@ -3,6 +3,7 @@ import logging
 import os
 import subprocess
 import sys
+import time
 import threading
 from flask import Flask, request, jsonify
 
@@ -18,12 +19,43 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
+DEAD_LETTER_FILE = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "daemon", ".dead_letter.jsonl",
+)
+
 HERMES_BIN = os.environ.get(
     "HERMES_BIN",
     "C:\\Users\\clive\\AppData\\Local\\hermes\\hermes-agent\\venv\\Scripts\\hermes.exe",
 )
 WORKING_MODEL = os.environ.get("SPECPT_MODEL", "opencode-go/deepseek-v4-flash")
 DELEGATE_MODEL = os.environ.get("SPECPT_DELEGATE_MODEL", "opencode-go/deepseek-v4-pro")
+SPECPT_REPO = os.environ.get(
+    "SPECPT_REPO",
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+)
+WEBHOOK_SECRET = os.environ.get("WEBHOOK_SECRET", "")
+
+LOCK_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".orchestrator.lock")
+STATE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".watcher_state")
+RECENTLY_PROCESSED = set()
+RECENTLY_PROCESSED_LOCK = threading.Lock()
+
+
+def append_dead_letter(run_id, run_name, error, timestamp):
+    entry = {
+        "run_id": run_id,
+        "run_name": run_name,
+        "timestamp": timestamp,
+        "error": error,
+    }
+    try:
+        os.makedirs(os.path.dirname(DEAD_LETTER_FILE), exist_ok=True)
+        with open(DEAD_LETTER_FILE, "a") as f:
+            f.write(json.dumps(entry) + "\n")
+    except Exception as e:
+        logger.warning(f"Could not write dead-letter: {e}")
 
 
 def build_prompt(run_id, run_name, state):
@@ -39,13 +71,6 @@ Workflow:
 4. Execute the full chain and exit
 
 Do not ask for confirmation. Execute autonomously."""
-SPECPT_REPO = os.environ.get("SPECPT_REPO", os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-WEBHOOK_SECRET = os.environ.get("WEBHOOK_SECRET", "")
-
-LOCK_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".orchestrator.lock")
-STATE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".watcher_state")
-RECENTLY_PROCESSED = set()
-RECENTLY_PROCESSED_LOCK = threading.Lock()
 
 
 def is_processed(run_id):
@@ -68,13 +93,33 @@ def mark_processed(run_id):
         RECENTLY_PROCESSED.add(run_id)
 
 
+def is_process_alive(pid):
+    import platform
+    if platform.system() == "Windows":
+        import ctypes
+        try:
+            kernel32 = ctypes.windll.kernel32
+            handle = kernel32.OpenProcess(0x400, False, pid)
+            if handle == 0:
+                return False
+            kernel32.CloseHandle(handle)
+            return True
+        except Exception:
+            return False
+    try:
+        os.kill(pid, 0)
+        return True
+    except OSError:
+        return False
+
+
 def acquire_lock():
     if os.path.exists(LOCK_FILE):
         try:
             with open(LOCK_FILE) as f:
                 pid = int(f.read().strip())
-            os.kill(pid, 0)
-            return False
+            if is_process_alive(pid):
+                return False
         except (OSError, ValueError):
             pass
     with open(LOCK_FILE, "w") as f:
@@ -127,8 +172,17 @@ def wandb_webhook():
         env["SPECPT_RUN_ID"] = run_id or ""
         env["SPECPT_RUN_NAME"] = run_name or ""
         env["SPECPT_RUN_STATE"] = state or ""
+        env["PYTHONIOENCODING"] = "utf-8"
+        env["PYTHONUTF8"] = "1"
+        env["LANG"] = "C.UTF-8"
 
         prompt = build_prompt(run_id, run_name, state)
+
+        os.makedirs(LOG_DIR, exist_ok=True)
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        log_path = os.path.join(LOG_DIR, f"orchestrator_{run_id}_{timestamp}.log")
+        log_file = open(log_path, "w", encoding="utf-8")
+
         proc = subprocess.Popen(
             [HERMES_BIN, "chat", "-q", prompt,
              "--provider", "opencode-go",
@@ -137,12 +191,13 @@ def wandb_webhook():
              "--quiet"],
             cwd=SPECPT_REPO,
             env=env,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            stdout=log_file,
+            stderr=subprocess.STDOUT,
+            creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
         )
         mark_processed(run_id)
-        logger.info(f"Launched orchestrator PID {proc.pid}")
-        return jsonify({"status": "launched", "pid": proc.pid}), 200
+        logger.info(f"Launched orchestrator PID {proc.pid}, log={log_path}")
+        return jsonify({"status": "launched", "pid": proc.pid, "log": log_path}), 200
     except Exception as e:
         logger.error(f"Failed to launch orchestrator: {e}")
         return jsonify({"error": str(e)}), 500

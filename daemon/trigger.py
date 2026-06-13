@@ -2,7 +2,15 @@ import os
 import sys
 import subprocess
 import argparse
+import time
+import json
+import threading
 
+LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
+DEAD_LETTER_FILE = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "daemon", ".dead_letter.jsonl",
+)
 
 HERMES_BIN = os.environ.get(
     "HERMES_BIN",
@@ -10,6 +18,21 @@ HERMES_BIN = os.environ.get(
 )
 WORKING_MODEL = os.environ.get("SPECPT_MODEL", "opencode-go/deepseek-v4-flash")
 DELEGATE_MODEL = os.environ.get("SPECPT_DELEGATE_MODEL", "opencode-go/deepseek-v4-pro")
+
+
+def append_dead_letter(run_id, run_name, error, timestamp):
+    entry = {
+        "run_id": run_id,
+        "run_name": run_name,
+        "timestamp": timestamp,
+        "error": error,
+    }
+    try:
+        os.makedirs(os.path.dirname(DEAD_LETTER_FILE), exist_ok=True)
+        with open(DEAD_LETTER_FILE, "a") as f:
+            f.write(json.dumps(entry) + "\n")
+    except Exception as e:
+        print(f"[WARN] Could not write dead-letter: {e}")
 
 
 def fetch_run_name(run_id):
@@ -38,6 +61,32 @@ Workflow:
 Do not ask for confirmation. Execute autonomously."""
 
 
+def detect_runner_marker(log_path):
+    if not os.path.exists(log_path):
+        return None
+    try:
+        with open(log_path, encoding="utf-8", errors="replace") as f:
+            content = f.read()
+        if "[[RUNNER_SUCCEEDED]]" in content:
+            return "succeeded"
+        if "[[RUNNER_FAILED]]" in content:
+            return "failed"
+    except Exception:
+        pass
+    return None
+
+
+def tee_output(stream, log_file):
+    for line in iter(stream.readline, ""):
+        try:
+            sys.stdout.write(line)
+        except UnicodeEncodeError:
+            sys.stdout.buffer.write(line.encode("utf-8"))
+        sys.stdout.flush()
+        log_file.write(line)
+    stream.close()
+
+
 def trigger(run_id, state, run_name=None, timeout=1800):
     valid_states = {"finished", "crashed", "failed"}
     if state not in valid_states:
@@ -50,11 +99,20 @@ def trigger(run_id, state, run_name=None, timeout=1800):
     if not run_name:
         run_name = fetch_run_name(run_id) or run_id
     env["SPECPT_RUN_NAME"] = run_name
+    env["PYTHONIOENCODING"] = "utf-8"
+    env["PYTHONUTF8"] = "1"
+    env["LANG"] = "C.UTF-8"
 
     repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     prompt = build_prompt(run_id, run_name, state)
+
+    os.makedirs(LOG_DIR, exist_ok=True)
+    timestamp = time.strftime("%Y%m%d_%H%M%S")
+    log_path = os.path.join(LOG_DIR, f"orchestrator_{run_id}_{timestamp}.log")
+
     print(f"[RUN] {run_name}  state={state}  run_id={run_id}")
     print(f"[CMD] hermes chat -q (cwd={repo}, timeout={timeout}s)")
+    print(f"[LOG] {log_path}")
 
     proc = subprocess.Popen(
         [HERMES_BIN, "chat", "-q", prompt,
@@ -64,18 +122,33 @@ def trigger(run_id, state, run_name=None, timeout=1800):
          "--quiet"],
         cwd=repo,
         env=env,
-        stdout=None,
-        stderr=None,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        encoding="utf-8",
+        errors="replace",
         creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
     )
     print(f"Triggered orchestrator PID {proc.pid}")
+
     try:
-        proc.wait(timeout=timeout)
+        with open(log_path, "w", encoding="utf-8") as log_file:
+            tee = threading.Thread(target=tee_output, args=(proc.stdout, log_file), daemon=True)
+            tee.start()
+            proc.wait(timeout=timeout)
+            tee.join(timeout=10)
         print(f"Orchestrator finished with code {proc.returncode}")
+
+        marker = detect_runner_marker(log_path)
+        if marker == "failed":
+            print("[[RUNNER_FAILED]] — see orchestrator log for details")
+        elif marker == "succeeded":
+            print("[[RUNNER_SUCCEEDED]]")
+
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.wait()
         print(f"[ERROR] Orchestrator timed out after {timeout}s — killed")
+        append_dead_letter(run_id, run_name, "timed_out", time.time())
         sys.exit(1)
 
 
