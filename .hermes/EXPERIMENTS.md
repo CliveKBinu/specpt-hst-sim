@@ -25,7 +25,7 @@
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| exp_001 | configs/exp_001.yaml | — | — | — | — | — | — | — | — | d_model 512→768. Capacity increase. Not yet submitted. |
+| exp_001 | configs/exp_001.yaml | 21346908 | — | — | — | — | — | — | — | d_model 512→768. Capacity increase. Submitted. Job 21346908. |
 
 ## Diagnostics (failed/crashed runs)
 *None yet*
