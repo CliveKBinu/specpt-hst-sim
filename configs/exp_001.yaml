@@ -1,0 +1,14 @@
+name: exp_001_d_model_768
+description: >
+  Increase d_model from 512 to 768 to address the capacity bottleneck
+  identified in the baseline run. Validation NMAD (0.0303) and catastrophic
+  outliers (23.24%) flatlined from epoch 100 while training loss kept
+  dropping, indicating the frozen autoencoder's 512-dim representation is
+  limiting downstream transformer capacity. Increasing d_model to 768 gives
+  each attention head more dimensions (96 vs 64) and the FFN more room to
+  transform features, targeting both the NMAD gap (needs 0.010 improvement)
+  and the outlier plateau.
+parent: defaults
+model:
+  d_model: 768
+stage: capacity_increase
