@@ -21,14 +21,14 @@
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
 | exp_000_baseline | defaults.yaml | wijvni9f | super-disco-12 | 0.0303 | 0.0313 | 23.24% | -0.0023 | 0.366 | 0.349 | Baseline. Stopped early at epoch 244/400. LR still warming up. NMAD still improving. Capacity bottleneck suspected. |
+| exp_004 | configs/exp_004.yaml | gx70j2j8 | stoic-spaceship-16 | 0.0335 | 0.0346 | 23.42% | -0.0023 | 0.382 | 0.365 | lr 1e-4→5e-5. NMAD WORSENED (0.0335 vs 0.0303 baseline). Lower LR starved gradients — model underfits. Capacity bottleneck confirmed. |
 
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
 | exp_001 | configs/exp_001.yaml | 21346908 | — | — | — | — | — | — | — | d_model 512→768. Capacity increase. Submitted. Job 21346908. |
 | exp_002 | configs/exp_002.yaml | 21346914 | — | — | — | — | — | — | — | encoder/decoder depth 3→6. Complementary to exp_001 width increase. Submitted. Job 21346914. |
-| exp_003 | configs/exp_003.yaml | q14jh32m | quiet-shadow-15 | — | — | — | — | — | — | mlp_dim 512→768. FAILED — shape mismatch with pretrained head weights. Zero metrics. |
-| exp_004 | configs/exp_004.yaml | — | — | — | — | — | — | — | — | lr 1e-4→5e-5. Address train-val loss gap and early plateau. Submitted. Job 21349236. |
+| exp_005 | configs/exp_005.yaml | — | — | — | — | — | — | — | — | num_mlp_blocks 5→7, lr reverted to 1e-4. Increase head depth without shape mismatch. Pending. |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
