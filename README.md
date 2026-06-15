@@ -16,9 +16,9 @@
 
 | Metric | Target | Best | Gap |
 |--------|--------|------|-----|
-| NMAD | < 0.020 | 0.0303 | 0.0103 |
-| Catastrophic outliers | < 1% | 23.24% | 22.24% |
-| ECE | < 0.1 | (not logged) | — |
+| NMAD | < 0.020 | **0.0279** | **0.0079** |
+| Catastrophic outliers | < 1% | 23.18% | 22.18% |
+| ECE | < 0.1 | — | — |
 
 ---
 
@@ -26,7 +26,9 @@
 
 | # | Name | Change | Status | NMAD | Outliers | Last Update |
 |----|------|--------|--------|------|----------|-------------|
-| exp_004 | LR 1e-4→5e-5 | learning rate reduction | Submitted. Job 21349236. | — | — | 2026-06-15 |
+| exp_001 | Width 512→768 | d_model increase (frozen — failed) | Submitted. Job 21346908. | — | — | 2026-06-12 |
+| exp_002 | Depth 3→6 | encoder/decoder depth increase (failed) | Submitted. Job 21346914. | — | — | 2026-06-12 |
+| exp_006 | Weight decay: 5e-5→1e-4 | weight_decay increase on deeper head | Submitted. Job 21349460. | — | — | 2026-06-15 |
 
 > ⚠️ **Autoencoder frozen.** Experiments exp_001 and exp_002 failed because they modified the autoencoder architecture (d_model / num_layers). The autoencoder is a pretrained, frozen model. Only the redshift estimator head (num_mlp_blocks, mlp_dim, dropout_rate, training params) can be changed. See diagnostics in [`EXPERIMENTS.md`](EXPERIMENTS.md) for details.
 
@@ -36,9 +38,11 @@
 
 | Rank | Experiment | NMAD | Outliers | Epochs | Notes |
 |------|-----------|------|----------|--------|-------|
-| 1 | `exp_000_baseline` | 0.0303 | 23.24% | 244 | Default config |
+| 1 | `exp_005` | **0.0279** | 23.18% | 249 | num_mlp_blocks 5→7, lr 1e-4. **NEW BEST** |
+| 2 | `exp_000_baseline` | 0.0303 | 23.24% | 244 | Default config |
+| 3 | `exp_004` | 0.0335 | 23.42% | — | lr 5e-5 — worse than baseline |
 
-*Last updated by orchestrator (hermes) at 2026-06-15 13:51 UTC*
+*Last updated by orchestrator (hermes) at 2026-06-15 17:19 UTC*
 
 ---
 

@@ -11,7 +11,7 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Active experiment: exp_006 (weight_decay 5e-5→1e-4, pending submission)
+- Active experiment: exp_006 (weight_decay 5e-5→1e-4, submitted — job 21349460)
 - Best NMAD: 0.0279 (exp_005 — num_mlp_blocks 5→7, improved 8% over baseline)
 - Total experiments completed: 6 (baseline + 3 failed + 2 completed with metrics)
 - Direction: Head capacity increase worked (NMAD 0.0279). Next: regularize deeper head with weight_decay 1e-4 to curb overfitting and let model train longer.

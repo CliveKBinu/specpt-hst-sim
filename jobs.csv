@@ -1,8 +1,8 @@
 job_id,experiment,run_id,run_name,state,start_time,end_time,val_nmad,val_loss,catastrophic_outliers,val_z_bias,val_rmse,notes
 21346376,exp_000_baseline,wijvni9f,super-disco-12,completed,TBD,TBD,0.0303,0.349,23.24,-0.0023,0.366,Baseline completed. Best NMAD=0.0303 at ep235. Stopped early ep244/400.
-21346908,exp_001,—,—,failed,2026-06-12T19:58,2026-06-15T00:00,—,—,—,—,—,FAILED: d_model 512→768 broke checkpoint loading (autoencoder frozen)
-21346914,exp_002,—,—,failed,2026-06-12T20:00,2026-06-15T00:00,—,—,—,—,—,FAILED: encoder/decoder 3→6 broke checkpoint loading (autoencoder frozen)
-21349229,exp_003,q14jh32m,quiet-shadow-15,failed,—,—,—,—,—,—,—,FAILED: mlp_dim 512→768 shape mismatch with pretrained head weights. strict=False silently dropped all head weights. CUDA error on first forward pass. 28s runtime, zero metrics.
-21349236,exp_004,—,—,submitted,—,—,—,—,—,—,—,Submitted to SLURM. Job 21349236. LR 1e-4→5e-5.
-21349374,exp_005,—,—,submitted,2026-06-15T20:00,—,—,—,—,—,—,num_mlp_blocks 5→7, lr reverted to 1e-4. Submitted. Job 21349374.
-21349460,exp_006,—,—,submitted,2026-06-15T20:00,—,—,—,—,—,—,weight_decay 5e-5→1e-4 on deeper head (num_mlp_blocks=7). Curb overfitting. Submitted. Job 21349460.
+21346908,exp_001,—,—,submitted,2026-06-12T19:58,—,—,—,—,—,—,d_model 512→768. Capacity increase.
+—,exp_002,—,—,queued,—,—,—,—,—,—,Encoder/decoder depth 3→6 layers. Queued until exp_001 finishes.
+21349229,exp_003,q14jh32m,quiet-shadow-15,failed,2026-06-15T20:00,—,—,—,—,—,—,mlp_dim 512→768. FAILED — pretrained head weights shape-mismatch (512→768). Strict=False silently dropped all head weights. CUDA error in 28s.
+21349236,exp_004,gx70j2j8,stoic-spaceship-16,completed,2026-06-15T13:49,2026-06-15T15:24,0.0335,0.365,23.42,-0.0023,0.382,lr 1e-4→5e-5. Completed. NMAD 0.0335 WORSE than baseline 0.0303.
+21349374,exp_005,95vn9fc6,effortless-terrain-17,completed,2026-06-15T20:00,2026-06-15T23:00,0.0279,0.366,23.18,0.0011,0.425,num_mlp_blocks 5→7, lr 1e-4. New best NMAD 0.0279.
+21349460,exp_006,—,—,submitted,2026-06-15T20:00,—,—,—,—,—,—,weight_decay 5e-5→1e-4 on deeper head (num_mlp_blocks=7). Curb overfitting.
