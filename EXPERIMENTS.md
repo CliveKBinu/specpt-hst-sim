@@ -27,8 +27,8 @@
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| exp_001 | configs/exp_001.yaml | 21346908 | — | — | — | — | — | — | — | d_model 512→768. Capacity increase. Submitted. Job 21346908. |
-| exp_002 | configs/exp_002.yaml | 21346914 | — | — | — | — | — | — | — | encoder/decoder depth 3→6. Complementary to exp_001 width increase. Submitted. Job 21346914. |
+| exp_001 | configs/exp_001.yaml | — | — | — | — | — | — | — | — | FAILED: d_model 512→768 broke checkpoint loading (autoencoder frozen). Job 21346908. |
+| exp_002 | configs/exp_002.yaml | ke9d4u5g | distinctive-cosmos-14 | — | — | — | — | — | — | FAILED: encoder/decoder 3→6 broke checkpoint loading (autoencoder frozen). Job 21346914. |
 | exp_006 | configs/exp_006.yaml | 21349460 | — | — | — | — | — | — | — | weight_decay 5e-5→1e-4 to regularize deeper head overfitting. Submitted. Job 21349460. |
 
 ## Diagnostics (failed/crashed runs)
