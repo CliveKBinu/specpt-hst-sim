@@ -59,19 +59,25 @@ Inputs:
 - Experiment history from EXPERIMENTS.md
 - Base config from configs/defaults.yaml
 
+⚠️ CRITICAL CONSTRAINT — AUTOENCODER IS FROZEN
+The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.
+NEVER change these autoencoder params — they would break checkpoint loading:
+- model.input_size = 7781 (FROZEN)
+- model.d_model = 512 (FROZEN)
+- model.nhead = 8 (FROZEN)
+- model.num_encoder_layers = 3 (FROZEN)
+- model.num_decoder_layers = 3 (FROZEN)
+- model.dim_feedforward = 2048 (FROZEN)
+- model.dropout = 0.1 (FROZEN, this is the autoencoder dropout)
+
+Only the redshift estimator head can be modified. Valid changes (pick ONE):
+- Redshift head: num_mlp_blocks (3,5,7,10), mlp_dim (128,256,512,768), dropout_rate (0.05,0.1,0.2,0.3)
+- Training: lr (5e-5,1e-4,2e-4,5e-4), batch_size (32,64,128,256), epochs (200,400,600,800)
+- Optimization: patience (20,50,100), weight_decay (1e-5,5e-5,1e-4,5e-4)
+
 Workflow:
 1. Review what changes were tried and what improved/degraded NMAD
-2. Choose ONE change (hyperparameter, architecture, or training):
-   - lr: 5e-5, 1e-4, 2e-4, 5e-4
-   - batch_size: 32, 64, 128, 256
-   - dropout: 0.05, 0.1, 0.15, 0.2, 0.3
-   - weight_decay: 1e-5, 5e-5, 1e-4, 5e-4
-   - num_encoder_layers / num_decoder_layers: 2, 3, 4, 6
-   - d_model: 256, 512, 768
-   - num_mlp_blocks: 3, 5, 7, 10
-   - mlp_dim: 256, 512, 768
-   - epochs: 200, 400, 600, 800
-   - patience: 20, 50, 100
+2. Choose ONE change from the VALID list above
 3. Strategy:
    - Improving → push further in same direction
    - Degrading → reverse or try alternative

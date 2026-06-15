@@ -11,10 +11,20 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Active experiment: exp_001 (d_model 512 → 768)
+- Active experiment: exp_001 (d_model 512 → 768) — FAILED (checkpoint mismatch)
 - Best NMAD: 0.0303 (from exp_000_baseline / super-disco-12)
 - Total experiments completed: 1
-- Direction: capacity increase (d_model 512 → 768)
+- Direction: pending (autoencoder frozen, next experiment must only modify redshift head)
+
+## Frozen Architecture Constraints
+The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.
+**Never change these params** — they break checkpoint loading:
+- input_size = 7781, d_model = 512, nhead = 8
+- num_encoder_layers = 3, num_decoder_layers = 3
+- dim_feedforward = 2048, dropout = 0.1
+
+Only the redshift estimator head can be modified: num_mlp_blocks, mlp_dim,
+dropout_rate, and training hyperparams (lr, batch_size, epochs, patience, weight_decay).
 
 ## Operating Rules
 1. One experiment at a time (one SLURM job on cluster)

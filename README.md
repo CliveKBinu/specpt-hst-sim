@@ -26,7 +26,9 @@
 
 | # | Name | Change | Status | NMAD | Outliers | Last Update |
 |---|---|---|---|---|---|---|
-| 001 | `d_model_768` | d_model 512 → 768 | submitted | — | — | 2026-06-12 |
+| — | (pending) | — | awaiting next cycle | — | — | — |
+
+> ⚠️ **Autoencoder frozen.** Experiments exp_001 and exp_002 failed because they modified the autoencoder architecture (d_model / num_layers). The autoencoder is a pretrained, frozen model. Only the redshift estimator head (num_mlp_blocks, mlp_dim, dropout_rate, training params) can be changed. See diagnostics in [`EXPERIMENTS.md`](EXPERIMENTS.md) for details.
 
 ---
 
@@ -36,7 +38,7 @@
 |------|-----------|------|----------|--------|-------|
 | 1 | `exp_000_baseline` | 0.0303 | 23.24% | 244 | Default config |
 
-*Last updated by orchestrator (hermes) at 2026-06-13 00:44 UTC*
+*Last updated by orchestrator (hermes) at 2026-06-13 01:01 UTC*
 
 ---
 
@@ -94,7 +96,7 @@ specpt-hst-sim/
 | Memory | deepseek-v4-flash | Active |
 | SLURM Cluster | — | sporcsubmit.rc.rit.edu |
 | W&B | — | ckb2084-rochester…/specpt-hst-sim |
-| Dead-letter queue | — | 1 entry |
+| Dead-letter queue | — | 0 entries |
 
 ---
 

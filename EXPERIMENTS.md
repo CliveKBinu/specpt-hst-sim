@@ -23,10 +23,17 @@
 | exp_000_baseline | defaults.yaml | wijvni9f | super-disco-12 | 0.0303 | 0.0313 | 23.24% | -0.0023 | 0.366 | 0.349 | Baseline. Stopped early at epoch 244/400. LR still warming up. NMAD still improving. Capacity bottleneck suspected. |
 
 ## Running Experiments
-| exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
-|-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| exp_001 | configs/exp_001.yaml | 21346908 | — | — | — | — | — | — | — | d_model 512→768. Capacity increase. Submitted. Job 21346908. |
-| exp_002 | configs/exp_002.yaml | 21346914 | — | — | — | — | — | — | — | submitted. Encoder/decoder depth 3→6. Job 21346914. |
+*None yet*
 
 ## Diagnostics (failed/crashed runs)
-*None yet*
+| exp | config | job_id | failure | root cause |
+|-----|--------|--------|---------|------------|
+| exp_001 | configs/exp_001.yaml | 21346908 | Checkpoint loading error: Missing state_dict keys for transformer layers 3-5 | `d_model` was increased from 512→768, changing autoencoder architecture. Checkpoint (d_model=512, 3 layers) was incompatible with the new model (d_model=768, 6 layers). **Autoencoder architecture is frozen** — only redshift head params can change. |
+| exp_002 | configs/exp_002.yaml | 21346914 | Checkpoint loading error (presumed): Missing state_dict keys for transformer layers 3-5 | `num_encoder_layers` and `num_decoder_layers` were increased from 3→6, changing autoencoder depth. Same root cause as exp_001. **Autoencoder architecture is frozen** — only redshift head params can change. |
+
+## Frozen Architecture Constraint
+The SpecPT autoencoder is a pretrained model with a fixed architecture. **Never change these params:**
+- `d_model = 512`, `nhead = 8`, `num_encoder_layers = 3`, `num_decoder_layers = 3`
+- `dim_feedforward = 2048`, `dropout = 0.1`, `input_size = 7781`
+
+Only redshift head params are valid: `num_mlp_blocks`, `mlp_dim`, `dropout_rate`, and training hyperparams.
