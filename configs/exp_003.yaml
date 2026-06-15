@@ -1,0 +1,15 @@
+name: exp_003_mlp_dim_768
+description: >
+  Increase redshift head MLP hidden dimension from 512 to 768 to address
+  the capacity bottleneck identified in the baseline run. Train loss (0.178)
+  is roughly half of val loss (0.349), and val NMAD plateaued at 0.0303 from
+  epoch 100, indicating the head lacks capacity to fully exploit the frozen
+  512-dim autoencoder representation. Widening the MLP hidden layers to 768
+  gives the head more representational room. Unlike exp_001 (d_model change
+  which broke the autoencoder checkpoint) and exp_002 (layer depth change
+  which also broke the autoencoder), this only modifies the redshift head
+  and should load the frozen autoencoder weights correctly.
+parent: defaults
+model:
+  mlp_dim: 768
+stage: head_capacity
