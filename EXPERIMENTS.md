@@ -3,29 +3,31 @@
 ## Current Best
 | Metric | Value | Experiment |
 |--------|-------|------------|
-| NMAD | 0.0303 | exp_000_baseline |
-| Catastrophic Outliers | 23.24% | exp_000_baseline |
+| NMAD | 0.0279 | exp_005 |
+| Catastrophic Outliers | 23.18% | exp_005 |
 | ECE | — | — |
-| RMSE | 0.366 | exp_000_baseline |
-| Val Loss | 0.349 | exp_000_baseline |
-| Train Loss | 0.178 | exp_000_baseline |
+| RMSE | 0.366 | exp_005 |
+| Val Loss | 0.366 | exp_005 |
+| Train Loss | — | — |
 
 ## Targets
 | Metric | Target | Current Best | Gap |
 |--------|--------|-------------|-----|
-| NMAD | < 0.020 | 0.0303 | 0.0103 |
-| Catastrophic Outliers | < 1% | 23.24% | 22.24% |
+| NMAD | < 0.020 | 0.0279 | 0.0079 |
+| Catastrophic Outliers | < 1% | 23.18% | 22.18% |
 | ECE | < 0.1 | — | — |
 
 ## Completed Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
 | exp_000_baseline | defaults.yaml | wijvni9f | super-disco-12 | 0.0303 | 0.0313 | 23.24% | -0.0023 | 0.366 | 0.349 | Baseline. Stopped early at epoch 244/400. LR still warming up. NMAD still improving. Capacity bottleneck suspected. |
+| exp_004 | configs/exp_004.yaml | — | — | — | 0.0335 | — | — | — | — | LR 1e-4→5e-5, job 21349236. NMAD 0.0335 WORSE than baseline 0.0303. Lower LR starved gradients — model underfits. |
+| exp_005 | configs/exp_005.yaml | 95vn9fc6 | effortless-terrain-17 | 0.0279 | 0.0279 | 23.18% | — | — | 0.366 | num_mlp_blocks 5→7, lr back to 1e-4. **NEW BEST NMAD 0.0279** (↓8%). Overfitting: val_loss 0.366 vs 0.349 baseline. Early stopping epoch 249/400 (patience=50). LR warmup only 50% complete. |
 
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| exp_004 | configs/exp_004.yaml | — | — | — | — | — | — | — | — | LR 1e-4→5e-5 for stable convergence. Addresses early plateau and train-val gap from exp_000. Submitted. Job 21349236. |
+| exp_006 | configs/exp_006.yaml | (none) | (none) | pending | pending | pending | — | — | — | weight_decay 5e-5→1e-4 to regularize deeper head overfitting. Submitted. Job 21349460. |
 
 ## Diagnostics (failed/crashed runs)
 | exp | config | job_id | failure | root cause |

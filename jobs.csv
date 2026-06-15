@@ -4,3 +4,5 @@ job_id,experiment,run_id,run_name,state,start_time,end_time,val_nmad,val_loss,ca
 21346914,exp_002,—,—,failed,2026-06-12T20:00,2026-06-15T00:00,—,—,—,—,—,FAILED: encoder/decoder 3→6 broke checkpoint loading (autoencoder frozen)
 21349229,exp_003,q14jh32m,quiet-shadow-15,failed,—,—,—,—,—,—,—,FAILED: mlp_dim 512→768 shape mismatch with pretrained head weights. strict=False silently dropped all head weights. CUDA error on first forward pass. 28s runtime, zero metrics.
 21349236,exp_004,—,—,submitted,—,—,—,—,—,—,—,Submitted to SLURM. Job 21349236. LR 1e-4→5e-5.
+21349374,exp_005,—,—,submitted,2026-06-15T20:00,—,—,—,—,—,—,num_mlp_blocks 5→7, lr reverted to 1e-4. Submitted. Job 21349374.
+21349460,exp_006,—,—,submitted,2026-06-15T20:00,—,—,—,—,—,—,weight_decay 5e-5→1e-4 on deeper head (num_mlp_blocks=7). Curb overfitting. Submitted. Job 21349460.
