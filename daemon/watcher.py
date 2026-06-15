@@ -291,7 +291,6 @@ def check_new_runs(state):
         unprocessed.append((rt, run))
 
     if not unprocessed:
-        state["last_check"] = time.time()
         return state
 
     unprocessed.sort(key=lambda x: x[0], reverse=True)
@@ -313,7 +312,7 @@ def check_new_runs(state):
                     "run_name": run.name,
                     "started_at": time.time(),
                 }
-                state["last_check"] = time.time()
+                state["last_check"] = int(rt) + 1
             else:
                 logger.error(f"Failed to trigger orchestrator for {run.id}")
         finally:
