@@ -11,10 +11,10 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Active experiment: exp_007 (num_mlp_blocks 7→10, weight_decay 1e-4→5e-5, submitted — job 21349504)
-- Best NMAD: 0.0279 (exp_005 — num_mlp_blocks 5→7, improved 8% over baseline)
-- Total experiments completed: 7 (baseline + 3 failed + 3 completed with metrics)
-- Direction: exp_006 (weight_decay 1e-4) made NMAD WORSE (0.0332). Regularization backfired — deeper head needs capacity not constriction. Reverting exp_006 and pushing capacity further: num_mlp_blocks 7→10, weight_decay back to 5e-5. NMAD still improving in exp_006 trajectory despite weaker result; capacity bottleneck remains the constraint.
+- Active experiment: exp_008 (num_mlp_blocks 10→12, push capacity further from exp_007's 0.02565 — job 21350035)
+- Best NMAD: 0.02565 (exp_007 — num_mlp_blocks 7→10, improved 8% over exp_005)
+- Total experiments completed: 8 (baseline + 3 failed + 4 completed with metrics)
+- Direction: exp_007 (num_mlp_blocks 7→10, weight_decay 5e-5) achieved NEW BEST NMAD 0.02565 (8% improvement over exp_005). The capacity bottleneck hypothesis is validated with three data points: 5 blocks → 0.0303, 7 blocks → 0.0279, 10 blocks → 0.02565 (~8% per step). Continuing to push capacity: num_mlp_blocks 10→12 for exp_008.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.

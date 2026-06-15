@@ -30,7 +30,8 @@
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
 | exp_001 | configs/exp_001.yaml | — | — | — | — | — | — | — | — | FAILED: d_model 512→768 broke checkpoint loading (autoencoder frozen). Job 21346908. |
 | exp_002 | configs/exp_002.yaml | ke9d4u5g | distinctive-cosmos-14 | — | — | — | — | — | — | FAILED: encoder/decoder 3→6 broke checkpoint loading (autoencoder frozen). Job 21346914. |
-| exp_007 | configs/exp_007.yaml | 21349504 | — | — | — | — | — | — | — | num_mlp_blocks 7→10, weight_decay 1e-4→5e-5 (revert reg). Push head capacity. Submitted. Job 21349504. |
+| exp_007 | configs/exp_007.yaml | 21349504 | — | — | — | — | — | — | — | — | num_mlp_blocks 7→10, weight_decay 1e-4→5e-5 (revert reg). Push head capacity. Submitted. Job 21349504. |
+| exp_008 | configs/exp_008.yaml | — | — | — | — | — | — | — | — | — | num_mlp_blocks=12. Pending. |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
