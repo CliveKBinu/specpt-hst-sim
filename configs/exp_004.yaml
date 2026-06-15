@@ -1,0 +1,14 @@
+name: exp_004_lr_5e5
+description: >
+  Reduce learning rate from 1e-4 to 5e-5 to address the train-val loss gap
+  (0.178 vs 0.349) and early plateau (epoch 100) in exp_000. The baseline
+  showed low train loss but high val loss, suggesting noisy convergence or
+  sharp minima from an aggressive LR. Halving the LR provides more stable
+  gradients and finer-grained optimization. The ReduceLROnPlateau scheduler
+  (factor=0.1, patience=20) can still drop to 5e-6, 5e-7, etc., giving
+  the optimizer more dynamic range. No architecture changes — autoencoder
+  and head dimensions remain identical to exp_000 (all weights load cleanly).
+parent: defaults
+training:
+  lr: 5.0e-5
+stage: lr_tuning
