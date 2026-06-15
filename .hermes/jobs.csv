@@ -2,4 +2,5 @@ job_id,experiment,run_id,run_name,state,start_time,end_time,val_nmad,val_loss,ca
 21346376,exp_000_baseline,wijvni9f,super-disco-12,completed,TBD,TBD,0.0303,0.349,23.24,-0.0023,0.366,Baseline completed. Best NMAD=0.0303 at ep235. Stopped early ep244/400.
 21346908,exp_001,—,—,submitted,2026-06-12T19:58,—,—,—,—,—,—,d_model 512→768. Capacity increase.
 —,exp_002,—,—,queued,—,—,—,—,—,—,Encoder/decoder depth 3→6 layers. Queued until exp_001 finishes.
-21349229,exp_003,—,—,submitted,2026-06-15T20:00,—,—,—,—,—,mlp_dim 512→768 head capacity increase
+21349229,exp_003,q14jh32m,quiet-shadow-15,failed,2026-06-15T20:00,—,—,—,—,—,—,mlp_dim 512→768. FAILED — pretrained head weights shape-mismatch (512→768). Strict=False silently dropped all head weights. CUDA error in 28s.
+21349236,exp_004,—,—,submitted,2026-06-15T13:49,—,—,—,—,—,—,lr 1e-4→5e-5

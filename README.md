@@ -25,8 +25,8 @@
 ## 🔬 Active Experiments
 
 | # | Name | Change | Status | NMAD | Outliers | Last Update |
-|---|---|---|---|---|---|---|
-| — | (pending) | — | awaiting next cycle | — | — | — |
+|----|------|--------|--------|------|----------|-------------|
+| exp_004 | LR 1e-4→5e-5 | learning rate reduction | Submitted. Job 21349236. | — | — | 2026-06-15 |
 
 > ⚠️ **Autoencoder frozen.** Experiments exp_001 and exp_002 failed because they modified the autoencoder architecture (d_model / num_layers). The autoencoder is a pretrained, frozen model. Only the redshift estimator head (num_mlp_blocks, mlp_dim, dropout_rate, training params) can be changed. See diagnostics in [`EXPERIMENTS.md`](EXPERIMENTS.md) for details.
 
@@ -38,7 +38,7 @@
 |------|-----------|------|----------|--------|-------|
 | 1 | `exp_000_baseline` | 0.0303 | 23.24% | 244 | Default config |
 
-*Last updated by orchestrator (hermes) at 2026-06-13 01:01 UTC*
+*Last updated by orchestrator (hermes) at 2026-06-15 13:51 UTC*
 
 ---
 

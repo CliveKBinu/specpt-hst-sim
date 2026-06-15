@@ -11,10 +11,10 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-|- Active experiment: exp_001 (d_model 512→768) — FAILED (checkpoint mismatch)
-|- Best NMAD: 0.0303 (from exp_000_baseline / super-disco-12)
-|- Total experiments completed: 2 (both failed — autoencoder change)
-|- Direction: pending (autoencoder frozen, next experiment must only modify redshift head)
+|- Active experiment: exp_004 (lr 1e-4→5e-5, job 21349236, submitted)
+|- Best NMAD: 0.0303 (unchanged — exp_003 produced zero metrics)
+|- Total experiments completed: 4 total (1 completed baseline, 3 failed, 1 submitted)
+|- Direction: lr tuning — 5e-5 for stable convergence. Previous head capacity changes (exp_001/002/003) all failed due to frozen param / weight shape constraints.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.

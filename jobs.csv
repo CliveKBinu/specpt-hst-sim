@@ -2,3 +2,5 @@ job_id,experiment,run_id,run_name,state,start_time,end_time,val_nmad,val_loss,ca
 21346376,exp_000_baseline,wijvni9f,super-disco-12,completed,TBD,TBD,0.0303,0.349,23.24,-0.0023,0.366,Baseline completed. Best NMAD=0.0303 at ep235. Stopped early ep244/400.
 21346908,exp_001,—,—,failed,2026-06-12T19:58,2026-06-15T00:00,—,—,—,—,—,FAILED: d_model 512→768 broke checkpoint loading (autoencoder frozen)
 21346914,exp_002,—,—,failed,2026-06-12T20:00,2026-06-15T00:00,—,—,—,—,—,FAILED: encoder/decoder 3→6 broke checkpoint loading (autoencoder frozen)
+21349229,exp_003,q14jh32m,quiet-shadow-15,failed,—,—,—,—,—,—,—,FAILED: mlp_dim 512→768 shape mismatch with pretrained head weights. strict=False silently dropped all head weights. CUDA error on first forward pass. 28s runtime, zero metrics.
+21349236,exp_004,—,—,submitted,—,—,—,—,—,—,—,Submitted to SLURM. Job 21349236. LR 1e-4→5e-5.
