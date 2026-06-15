@@ -22,3 +22,10 @@ thumbs.db
 # Generated training data (large binary files)
 data/hst_grism_combined.h5
 data/training_format/
+
+# Ad-hoc wandb introspection scripts (root-level scratch)
+/_analyze_run.py
+/_analyze_run2.py
+/_fetch_run.py
+/_save_run.py
+/_run_data.json
