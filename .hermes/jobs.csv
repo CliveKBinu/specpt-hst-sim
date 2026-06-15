@@ -4,4 +4,5 @@ job_id,experiment,run_id,run_name,state,start_time,end_time,val_nmad,val_loss,ca
 —,exp_002,—,—,queued,—,—,—,—,—,—,Encoder/decoder depth 3→6 layers. Queued until exp_001 finishes.
 21349229,exp_003,q14jh32m,quiet-shadow-15,failed,2026-06-15T20:00,—,—,—,—,—,—,mlp_dim 512→768. FAILED — pretrained head weights shape-mismatch (512→768). Strict=False silently dropped all head weights. CUDA error in 28s.
 21349236,exp_004,gx70j2j8,stoic-spaceship-16,completed,2026-06-15T13:49,2026-06-15T15:24,0.0335,0.365,23.42,-0.0023,0.382,lr 1e-4→5e-5. Completed. NMAD 0.0335 WORSE than baseline 0.0303.
-21346377,exp_005,—,—,pending,—,—,—,—,—,—,—,num_mlp_blocks 5→7, lr 1e-4. Head depth increase.
+21349374,exp_005,95vn9fc6,effortless-terrain-17,completed,2026-06-15T20:00,2026-06-15T23:00,0.0279,0.366,23.18,0.0011,0.425,num_mlp_blocks 5→7, lr 1e-4. New best NMAD 0.0279.
+—,exp_006,—,—,pending,—,—,—,—,—,—,weight_decay 5e-5→1e-4 on deeper head (num_mlp_blocks=7). Curb overfitting.

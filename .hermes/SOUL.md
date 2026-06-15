@@ -11,10 +11,10 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-|- Active experiment: exp_004 (lr 1e-4→5e-5, job 21349236, submitted)
-|- Best NMAD: 0.0303 (unchanged — exp_003 produced zero metrics)
-|- Total experiments completed: 4 total (1 completed baseline, 3 failed, 1 submitted)
-|- Direction: lr tuning — 5e-5 for stable convergence. Previous head capacity changes (exp_001/002/003) all failed due to frozen param / weight shape constraints.
+- Active experiment: exp_006 (weight_decay 5e-5→1e-4, pending submission)
+- Best NMAD: 0.0279 (exp_005 — num_mlp_blocks 5→7, improved 8% over baseline)
+- Total experiments completed: 6 (baseline + 3 failed + 2 completed with metrics)
+- Direction: Head capacity increase worked (NMAD 0.0279). Next: regularize deeper head with weight_decay 1e-4 to curb overfitting and let model train longer.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.
