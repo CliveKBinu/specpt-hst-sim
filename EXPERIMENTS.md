@@ -23,14 +23,14 @@
 | exp_000_baseline | defaults.yaml | wijvni9f | super-disco-12 | 0.0303 | 0.0313 | 23.24% | -0.0023 | 0.366 | 0.349 | Baseline. Stopped early at epoch 244/400. LR still warming up. NMAD still improving. Capacity bottleneck suspected. |
 | exp_004 | configs/exp_004.yaml | gx70j2j8 | stoic-spaceship-16 | 0.0335 | 0.0346 | 23.42% | -0.0023 | 0.382 | 0.365 | lr 1e-4→5e-5. NMAD WORSENED (0.0335 vs 0.0303 baseline). Lower LR starved gradients — model underfits. Capacity bottleneck confirmed. |
 | exp_005 | configs/exp_005.yaml | 95vn9fc6 | effortless-terrain-17 | 0.0279 | 0.0279 | 23.18% | 0.0011 | 0.425 | 0.366 | num_mlp_blocks 5→7, lr 1e-4. NMAD IMPROVED 8% to 0.0279 (new best). Overfitting: val_loss rose, early stopping at epoch 249. NMAD still decreasing at termination. |
-| exp_006 | configs/exp_006.yaml | 21349460 | apricot-oath-18 | 0.0332 | 0.0342 | — | — | — | — | weight_decay 5e-5→1e-4. NMAD WORSE (0.0332 vs 0.0279 exp_005, 0.0303 baseline). Regularization backfired on deeper head. |
+| exp_006 | configs/exp_006.yaml | oy9u11a1 | apricot-oath-18 | 0.0332 | 0.0342 | 23.98% | 0.0003 | 0.387 | 0.361 | weight_decay 5e-5→1e-4. NMAD WORSENED (0.0332 vs 0.0279 best). Regularization backfired — deeper head needs capacity, not constriction. Trained 193/400 epochs. NMAD still improving at termination. |
 
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
 | exp_001 | configs/exp_001.yaml | — | — | — | — | — | — | — | — | FAILED: d_model 512→768 broke checkpoint loading (autoencoder frozen). Job 21346908. |
 | exp_002 | configs/exp_002.yaml | ke9d4u5g | distinctive-cosmos-14 | — | — | — | — | — | — | FAILED: encoder/decoder 3→6 broke checkpoint loading (autoencoder frozen). Job 21346914. |
-| exp_007 | configs/exp_007.yaml | — | — | — | — | — | — | — | — | num_mlp_blocks 5→10 (was 7 in exp_005/006), weight_decay 1e-4→5e-5 (revert regularization). Push capacity direction. |
+| exp_007 | configs/exp_007.yaml | 21349504 | — | — | — | — | — | — | — | num_mlp_blocks 7→10, weight_decay 1e-4→5e-5 (revert reg). Push head capacity. Submitted. Job 21349504. |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |

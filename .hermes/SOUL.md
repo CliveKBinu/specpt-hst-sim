@@ -11,10 +11,10 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Active experiment: exp_006 (weight_decay 5e-5→1e-4, submitted — job 21349460)
+- Active experiment: exp_007 (num_mlp_blocks 7→10, weight_decay 1e-4→5e-5, submitted — job 21349504)
 - Best NMAD: 0.0279 (exp_005 — num_mlp_blocks 5→7, improved 8% over baseline)
-- Total experiments completed: 6 (baseline + 3 failed + 2 completed with metrics)
-- Direction: Head capacity increase worked (NMAD 0.0279). Next: regularize deeper head with weight_decay 1e-4 to curb overfitting and let model train longer.
+- Total experiments completed: 7 (baseline + 3 failed + 3 completed with metrics)
+- Direction: exp_006 (weight_decay 1e-4) made NMAD WORSE (0.0332). Regularization backfired — deeper head needs capacity not constriction. Reverting exp_006 and pushing capacity further: num_mlp_blocks 7→10, weight_decay back to 5e-5. NMAD still improving in exp_006 trajectory despite weaker result; capacity bottleneck remains the constraint.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.

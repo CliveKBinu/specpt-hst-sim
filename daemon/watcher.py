@@ -70,12 +70,15 @@ def load_state():
             state["failed_runs"] = {}
         if "pending_runs" not in state:
             state["pending_runs"] = {}
+        if "experiments_triggered" not in state:
+            state["experiments_triggered"] = 0
         return state
     return {
         "last_check": 0,
         "processed_runs": [],
         "failed_runs": {},
         "pending_runs": {},
+        "experiments_triggered": 0,
     }
 
 
@@ -313,6 +316,7 @@ def check_new_runs(state):
                     "started_at": time.time(),
                 }
                 state["last_check"] = int(rt) + 1
+                state["experiments_triggered"] = state.get("experiments_triggered", 0) + 1
             else:
                 logger.error(f"Failed to trigger orchestrator for {run.id}")
         finally:
@@ -388,12 +392,14 @@ def cycle(state):
     processed = len(state.get("processed_runs", []))
     pending = len(state.get("pending_runs", {}))
     failed = len(state.get("failed_runs", {}))
+    triggered = state.get("experiments_triggered", 0)
     dead = count_dead_letter()
     logger.info(
         f"[CYCLE] {elapsed:.1f}s | "
         f"{processed} processed | "
         f"{pending} pending | "
         f"{failed} failed | "
+        f"{triggered} triggered | "
         f"{dead} dead-letter"
     )
 
@@ -418,6 +424,10 @@ if __name__ == "__main__":
         "--project", type=str, default=None,
         help=f"W&B project (default: {DEFAULT_PROJECT})",
     )
+    parser.add_argument(
+        "--max-experiments", type=int, default=None,
+        help="Process N terminal runs then exit (default: infinite)",
+    )
     args = parser.parse_args()
     if args.entity:
         WANDB_ENTITY = args.entity
@@ -432,9 +442,11 @@ if __name__ == "__main__":
         logger.addHandler(file_handler)
 
     mode = os.environ.get("WATCHER_MODE", "latest").lower()
+    max_exp = getattr(args, 'max_experiments', None)
     logger.info(
         f"Starting watcher "
-        f"(interval={CHECK_INTERVAL}s, mode={mode}, once={args.once})"
+        f"(interval={CHECK_INTERVAL}s, mode={mode}, once={args.once}"
+        f"{f', max_experiments={max_exp}' if max_exp else ''})"
     )
 
     state = load_state()
@@ -455,11 +467,22 @@ if __name__ == "__main__":
         save_state(state)
         logger.info("Exiting (--once flag)")
     else:
-        logger.info("Entering main loop")
+        max_exp = args.max_experiments
+        logger.info(
+            f"Entering main loop"
+            f"{f' (max {max_exp} experiments)' if max_exp else ''}"
+        )
         while True:
             try:
                 state = cycle(state)
                 save_state(state)
+                triggered = state.get("experiments_triggered", 0)
+                if max_exp and triggered >= max_exp:
+                    logger.info(
+                        f"Reached {max_exp} experiments "
+                        f"({triggered} triggered), exiting"
+                    )
+                    break
                 time.sleep(CHECK_INTERVAL)
             except KeyboardInterrupt:
                 logger.info("Shutting down watcher")

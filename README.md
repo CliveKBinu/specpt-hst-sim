@@ -16,8 +16,8 @@
 
 | Metric | Target | Best | Gap |
 |--------|--------|------|-----|
-| NMAD | < 0.020 | **0.0279** | **0.0079** |
-| Catastrophic outliers | < 1% | 23.18% | 22.18% |
+| NMAD | < 0.020 | **0.0279** (exp_005) | **0.0079** |
+| Catastrophic outliers | < 1% | 23.18% (exp_005) | 22.18% |
 | ECE | < 0.1 | — | — |
 
 ---
@@ -28,8 +28,9 @@
 |----|------|--------|--------|------|----------|-------------|
 | exp_001 | Width 512→768 | d_model increase (frozen) | **Failed.** Job 21346908. | — | — | 2026-06-12 |
 | exp_002 | Depth 3→6 | encoder/decoder depth increase (frozen) | **Failed.** Job 21346914. | — | — | 2026-06-12 |
-| exp_005 | num_mlp_blocks 5→7 | Head capacity increase | **NEW BEST** | **0.0279** | 23.18% | 2026-06-15 |
-| exp_006 | Weight decay: 5e-5→1e-4 | Regularization on deeper head | Submitted. Job 21349460. | — | — | 2026-06-15 |
+| exp_005 | num_mlp_blocks 5→7 | Head capacity increase | **BEST** | **0.0279** | 23.18% | 2026-06-15 |
+| exp_006 | Weight decay: 5e-5→1e-4 | Regularization on deeper head | **Completed.** NMAD worsened 0.0332. | 0.0332 | 23.98% | 2026-06-15 |
+| exp_007 | num_mlp_blocks 7→10 | Push head capacity further, revert reg | **Submitted.** Job 21349504. | — | — | 2026-06-15 |
 
 > ⚠️ **Autoencoder frozen.** Experiments exp_001 and exp_002 failed because they modified the autoencoder architecture (d_model / num_layers). The autoencoder is a pretrained, frozen model. Only the redshift estimator head (num_mlp_blocks, mlp_dim, dropout_rate, training params) can be changed. See diagnostics in [`EXPERIMENTS.md`](EXPERIMENTS.md) for details.
 
@@ -39,11 +40,12 @@
 
 | Rank | Experiment | NMAD | Outliers | Epochs | Notes |
 |------|-----------|------|----------|--------|-------|
-| 1 | `exp_005` | **0.0279** | 23.18% | 249 | num_mlp_blocks 5→7, lr 1e-4. **NEW BEST** |
+| 1 | `exp_005` | **0.0279** | 23.18% | 249 | num_mlp_blocks 5→7, lr 1e-4. **BEST** |
 | 2 | `exp_000_baseline` | 0.0303 | 23.24% | 244 | Default config |
-| 3 | `exp_004` | 0.0335 | 23.42% | — | lr 5e-5 — worse than baseline |
+| 3 | `exp_006` | 0.0332 | 23.98% | 193 | weight_decay 1e-4 — regularization backfired |
+| 4 | `exp_004` | 0.0335 | 23.42% | — | lr 5e-5 — worse than baseline |
 
-*Last updated by orchestrator (hermes) at 2026-06-15 17:19 UTC*
+*Last updated by orchestrator (hermes) at 2026-06-15 23:30 UTC*
 
 ---
 

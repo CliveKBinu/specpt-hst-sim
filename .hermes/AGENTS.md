@@ -8,6 +8,15 @@ training optimization loop.
 - Environment variables: `SPECPT_RUN_ID`, `SPECPT_RUN_NAME`, `SPECPT_RUN_STATE`
 - Project files: `.hermes/SOUL.md`, `EXPERIMENTS.md`, `jobs.csv`
 
+## Source of Truth
+
+| File | Role | Authoritative for |
+|------|------|--------------------|
+| EXPERIMENTS.md | Ground truth | Experiment status, metrics, diagnostics, history |
+| jobs.csv | Machine-readable mirror | Job IDs, state, run timestamps — must agree with EXPERIMENTS.md |
+| SOUL.md | Project identity | Current state, best metrics, frozen constraints, direction |
+| README.md | Human-facing summary | Regenerated from above three files each cycle |
+
 ## Workflow
 
 ### Step 1: Load State
@@ -147,22 +156,29 @@ Workflow:
    - Best NMAD (update if the analyzed run improved the best NMAD)
    - Total experiments completed (increment if new experiment was created)
    - Direction (summarize the current direction based on recent changes)
-2. Update EXPERIMENTS.md:
+2. VERIFY: After writing each file, re-read it and confirm:
+   - SOUL.md "Last updated" timestamp is current UTC time
+   - SOUL.md "Active experiment" matches the experiment just processed
+   - SOUL.md "Best NMAD" matches EXPERIMENTS.md Current Best
+   - EXPERIMENTS.md Running section matches jobs.csv submitted rows
+   - README.md Active Experiments table matches EXPERIMENTS.md Running section
+   If any mismatch, re-write and re-verify.
+3. Update EXPERIMENTS.md:
    - VERIFY the new experiment is in the Running table. If not, ADD it immediately.
    - If Runner succeeded: update the row's status from "pending" to "submitted", fill in job_id
    - If Runner failed: update the row's status from "pending" to "runner_failed"
    - Never delete history — always append or modify existing rows
-3. Update jobs.csv:
+4. Update jobs.csv:
    - If Runner succeeded: add a row with the job ID and status=submitted
    - If Runner failed: add a row with status=runner_failed and note the error
-4. Update README.md:
+5. Update README.md:
    - Regenerate the Active Experiments table from EXPERIMENTS.md Running section
    - Regenerate the Leaderboard table from EXPERIMENTS.md, sorted by NMAD (ascending)
    - Update "Current Best" from .hermes/SOUL.md Current State
    - Update last-updated timestamp to current UTC time
    - Update dead-letter count from daemon/.dead_letter.jsonl (count lines)
    - Do NOT modify the static sections (Mission, Architecture, Status)
-5. When writing files, use UTF-8 encoding.
+6. When writing files, use UTF-8 encoding.
 
 Return: confirmation of state update
 ```
@@ -181,3 +197,5 @@ Use model `opencode-go/deepseek-v4-flash` for the memory subagent.
 - Never submit without writing a config first
 - Never change more than one variable per experiment
 - Never stop the loop without explicit user permission
+- SOUL.md "Current State" must be updated after every cycle — never leave it stale
+- After writing any state file, re-read it to verify the update landed
