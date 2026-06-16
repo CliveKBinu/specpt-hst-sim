@@ -11,10 +11,13 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Active experiment: exp_008 (num_mlp_blocks 10→12, push capacity further from exp_007's 0.02565 — job 21350035)
-- Best NMAD: 0.02565 (exp_007 — num_mlp_blocks 7→10, improved 8% over exp_005)
+- Last updated: 2026-06-15T21:30 UTC
+- Active experiment: exp_008_v2 (num_mlp_blocks=12, new DESI autoencoder weights) — job 21351039
+- Best NMAD: 0.02565 (exp_007 — num_mlp_blocks 7→10, weight_decay 5e-5)
+- Best config: num_mlp_blocks=10, lr=1e-4, weight_decay=5e-5
 - Total experiments completed: 8 (baseline + 3 failed + 4 completed with metrics)
-- Direction: exp_007 (num_mlp_blocks 7→10, weight_decay 5e-5) achieved NEW BEST NMAD 0.02565 (8% improvement over exp_005). The capacity bottleneck hypothesis is validated with three data points: 5 blocks → 0.0303, 7 blocks → 0.0279, 10 blocks → 0.02565 (~8% per step). Continuing to push capacity: num_mlp_blocks 10→12 for exp_008.
+- Total experiments running: 1
+- Direction: exp_007 validated capacity bottleneck (5→7→10 blocks, NMAD 0.0303→0.0279→0.02565). Now testing num_mlp_blocks=12 with new DESI autoencoder weights (SpecPT_DESI_combined_autoencoder_150_new.pth). Also added post-training test evaluation (z-plot + UMAP) to train.py.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.
