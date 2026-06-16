@@ -29,3 +29,4 @@ data/training_format/
 /_fetch_run.py
 /_save_run.py
 /_run_data.json
+checkpoints/

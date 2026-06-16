@@ -20,6 +20,8 @@ train = [
     "scipy",
     "pandas",
     "numpy",
+    "umap-learn>=0.5",
+    "matplotlib>=3.7",
 ]
 
 analyze = [

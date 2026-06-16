@@ -1,6 +1,5 @@
 import argparse
 import os
-import pickle
 import yaml
 import torch
 import wandb
@@ -125,20 +124,18 @@ def main():
     redshift_model.to(device)
 
     data = load_grism_data(data_cfg["path"])
-    print(f"[DEBUG] data: {len(data)} rows, cols={list(data.columns)}", flush=True)
     train_df, val_df, test_df = split_data(
         data,
         val_split=data_cfg.get("val_split", 0.1),
         test_split=data_cfg.get("test_split", 0.1),
     )
-    print(f"[DEBUG] train={len(train_df)}, val={len(val_df)}, test={len(test_df)}", flush=True)
 
-    train_loader, val_loader, _ = create_dataloaders(
+    train_loader, val_loader, test_loader = create_dataloaders(
         train_df, val_df, test_df,
         batch_size=train_cfg["batch_size"],
         num_workers=0,
     )
-    print(f"[DEBUG] train_loader={len(train_loader)} batches, val_loader={len(val_loader)} batches", flush=True)
+    os.makedirs("outputs/plots", exist_ok=True)
 
     criterion = NMADLoss(normalization_factor="std")
     optimizer = torch.optim.AdamW(
@@ -170,20 +167,17 @@ def main():
         start_epoch += 1
 
     for epoch in range(start_epoch, train_cfg["epochs"]):
-        print(f"[DEBUG] Starting epoch {epoch+1}", flush=True)
         redshift_model.train()
         loss_epoch = 0.0
         batch_count = 0
 
         for X, Y, idx, t_id in train_loader:
-            print(f"[DEBUG] train batch {batch_count+1}: X={X.shape}", flush=True)
             X, Y = X.to(device), Y.to(device)
             optimizer.zero_grad()
             preds = redshift_model(X)
             loss = criterion(preds, Y)
 
             if torch.isnan(loss) or torch.isinf(loss):
-                print(f"[DEBUG] NaN/Inf loss at batch {batch_count+1}", flush=True)
                 continue
 
             loss.backward()
@@ -204,12 +198,10 @@ def main():
 
         with torch.no_grad():
             for X, Y, idx, t_id in val_loader:
-                print(f"[DEBUG] val batch {val_count+1}: X={X.shape}", flush=True)
                 X, Y = X.to(device), Y.to(device)
                 preds = redshift_model(X)
                 val_loss_batch = criterion(preds, Y)
                 if torch.isnan(val_loss_batch) or torch.isinf(val_loss_batch):
-                    print(f"[DEBUG] NaN/Inf val loss at batch {val_count+1}")
                     continue
                 val_loss_epoch += val_loss_batch.item()
                 val_count += 1
@@ -264,6 +256,136 @@ def main():
         if patience_counter >= patience:
             print(f"Early stopping at epoch {epoch+1}")
             break
+
+    # ========== POST-TRAINING TEST EVALUATION ==========
+    print("\n" + "="*60)
+    print("POST-TRAINING EVALUATION ON TEST SET")
+    print("="*60)
+
+    best_ckpt_path = "checkpoints/best_model.pth"
+    if os.path.exists(best_ckpt_path):
+        load_checkpoint(best_ckpt_path, redshift_model, optimizer, scheduler, device)
+        print(f"Loaded best checkpoint from {best_ckpt_path}")
+
+    redshift_model.eval()
+    test_true = []
+    test_preds = []
+    test_target_ids = []
+
+    with torch.no_grad():
+        for X, Y, idx, t_id in test_loader:
+            X, Y = X.to(device), Y.to(device)
+            preds = redshift_model(X)
+            test_true.extend(Y.cpu().numpy().flatten().tolist())
+            test_preds.extend(preds.cpu().numpy().flatten().tolist())
+            test_target_ids.extend(list(t_id))
+
+    test_true = np.array(test_true)
+    test_preds = np.array(test_preds)
+
+    test_metrics = compute_metrics(test_true, test_preds)
+    print(f"\nTest Metrics:")
+    print(f"  NMAD:  {test_metrics['nmad']:.5f}")
+    print(f"  \u03b7:     {test_metrics['eta']:.2f}%")
+    print(f"  RMSE:  {test_metrics['rmse']:.5f}")
+    print(f"  Bias:  {test_metrics['bias']:.5f}")
+
+    wandb.log({
+        "test_nmad": test_metrics["nmad"],
+        "test_eta": test_metrics["eta"],
+        "test_rmse": test_metrics["rmse"],
+        "test_bias": test_metrics["bias"],
+    })
+
+    # ========== TRUE vs PREDICTED Z PLOT ==========
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib.gridspec import GridSpec
+
+    delz = (test_true - test_preds) / (1 + test_true)
+    frac = 0.15
+    min_lim = -0.05
+    max_lim = np.ceil(test_true.max()) + 0.1
+
+    fig = plt.figure(figsize=(5.7, 7))
+    gs = GridSpec(2, 1, height_ratios=[3, 1], wspace=0.1, hspace=0.01)
+    ax1 = fig.add_subplot(gs[0, 0])
+    ax2 = fig.add_subplot(gs[1, 0], sharex=ax1)
+
+    ax1.scatter(test_true, test_preds, marker=".", s=10, c="blue", alpha=0.6)
+    ax1.plot([min_lim, max_lim], [min_lim, max_lim], c="k", zorder=9)
+    x_line = np.linspace(0, max_lim)
+    ax1.plot(x_line, (1 + x_line) * frac + x_line, c="k", linestyle="dotted", zorder=9)
+    ax1.plot(x_line, (1 + x_line) * -frac + x_line, c="k", linestyle="dotted", zorder=9)
+    ax1.text(min_lim + 0.07, max_lim - 0.1, f"NMAD: {test_metrics['nmad']:.4f}", fontsize=11)
+    ax1.text(min_lim + 0.07, max_lim - 0.2, f"\u03b7: {test_metrics['eta']:.2f}%", fontsize=11)
+    ax1.set_ylabel(r"Predicted $z$", fontsize=16)
+    ax1.set_xlim(min_lim, max_lim)
+    ax1.set_ylim(min_lim, max_lim)
+    ax1.set_title("Test Set: True vs Predicted Redshift")
+    ax1.minorticks_on()
+    plt.setp(ax1.get_xticklabels(), visible=False)
+
+    ax2.scatter(test_true, delz, marker=".", s=10, c="blue", alpha=0.6)
+    ax2.axhline(y=0, c="k", zorder=9)
+    ax2.axhline(y=-frac, c="k", linestyle="dotted", zorder=9)
+    ax2.axhline(y=frac, c="k", linestyle="dotted", zorder=9)
+    ax2.set_ylabel(r"$\Delta z/(1+z)$", fontsize=14)
+    ax2.set_xlabel(r"True $z$", fontsize=16)
+    ax2.minorticks_on()
+
+    plt.tight_layout()
+    plt.savefig("outputs/plots/test_z_comparison.png", dpi=150, bbox_inches="tight")
+    wandb.log({"test_redshift_plot": wandb.Image(fig)})
+    plt.close(fig)
+    print("Saved: outputs/plots/test_z_comparison.png")
+
+    # ========== UMAP 3D PLOT ==========
+    import umap
+
+    features_list = []
+    with torch.no_grad():
+        for X, Y, idx, t_id in test_loader:
+            X = X.to(device)
+            x = X.unsqueeze(1)
+            x = redshift_model.pretrained_model.forward_conv(x)
+            x = x.flatten(start_dim=1)
+            x = redshift_model.proj_to_d_model(x)
+            x = x.unsqueeze(0)
+            encoded = redshift_model.encoder(x)
+            encoded = encoded.squeeze(0)
+            attn_out, _ = redshift_model.attention(encoded, encoded, encoded)
+            x = attn_out + encoded
+            feat = redshift_model.mlp_blocks(x)
+            features_list.append(feat.cpu().numpy())
+
+    features = np.concatenate(features_list, axis=0)
+
+    reducer = umap.UMAP(n_components=3, n_neighbors=15, min_dist=0.1, random_state=42, metric="euclidean")
+    embedding = reducer.fit_transform(features)
+
+    fig_3d = plt.figure(figsize=(10, 8))
+    ax_3d = fig_3d.add_subplot(111, projection="3d")
+    scatter = ax_3d.scatter(
+        embedding[:, 0], embedding[:, 1], embedding[:, 2],
+        c=test_true, cmap="seismic", alpha=0.6, s=20, edgecolors="w", linewidth=0.5,
+    )
+    ax_3d.set_title("Test Set: 3D UMAP of Learned Features", fontsize=14, pad=20)
+    ax_3d.set_xlabel("UMAP 1", fontsize=12)
+    ax_3d.set_ylabel("UMAP 2", fontsize=12)
+    ax_3d.set_zlabel("UMAP 3", fontsize=12)
+    cbar = plt.colorbar(scatter, ax=ax_3d, pad=0.1, shrink=0.8)
+    cbar.set_label("Redshift (z)", fontsize=12)
+    plt.tight_layout()
+    plt.savefig("outputs/plots/test_umap_3d.png", dpi=150, bbox_inches="tight")
+    wandb.log({"test_umap_3d": wandb.Image(fig_3d)})
+    plt.close(fig_3d)
+    print("Saved: outputs/plots/test_umap_3d.png")
+
+    print("="*60)
+    print("EVALUATION COMPLETE")
+    print("="*60)
 
     wandb.finish()
 
