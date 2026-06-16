@@ -32,7 +32,7 @@
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
 | exp_001 | configs/exp_001.yaml | 21346908 | — | — | — | — | — | — | — | d_model 512→768. Capacity increase. Submitted. Job 21346908. |
 | exp_002 | configs/exp_002.yaml | 21346914 | — | — | — | — | — | — | — | encoder/decoder depth 3→6. Complementary to exp_001 width increase. Submitted. Job 21346914. |
-| exp_009 | configs/exp_009.yaml | — | — | — | — | — | — | — | — | lr 1e-4→2e-4, num_mlp_blocks=12. Compensate gradient dispersion in deeper head. Pending. |
+| exp_009 | configs/exp_009.yaml | — | — | — | — | — | — | — | — | lr 1e-4→2e-4, num_mlp_blocks=12. Compensate gradient dispersion in deeper head. Submitted. Job 21351040. |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
