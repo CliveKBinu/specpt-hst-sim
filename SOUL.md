@@ -11,13 +11,14 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Last updated: 2026-06-15T12:14 UTC
-- Active experiment: exp_007 (configs/exp_007.yaml) — num_mlp_blocks 7→10, weight_decay 1e-4→5e-5
-- Best NMAD: 0.0279 (exp_005 / effortless-terrain-17)
-- Best config: num_mlp_blocks=7, lr=1e-4
-- Total experiments completed: 7 (of which 3 failed)
-- Total experiments running: 1
-- Direction: exp_006 regularization backfired (NMAD 0.0332). Reverting and pushing capacity: num_mlp_blocks 7→10. Capacity bottleneck remains the constraint.
+- Last updated: 2026-06-17T15:00 UTC
+- Active experiment: exp_011 (mlp_dim 512→1024, no pretrained head, 12 blocks, DESI autoencoder) — trains head from scratch to test width hypothesis. Job 21352840 PENDING.
+- Best NMAD: 0.02295 (exp_008_v2 — num_mlp_blocks=12 + DESI autoencoder, rural-bush-21)
+- Best config: num_mlp_blocks=12, mlp_dim=512, lr=1e-4, DESI autoencoder
+- Total experiments completed: 10 completed + 5 failed = 15 total
+- Total experiments running: 1 (exp_011 — job 21352840 PENDING)
+- Total experiments submitted: 13 tracked + 11 early untracked baseline runs
+- Direction: exp_009 (lr 2e-4, NMAD 0.02611) confirmed higher LR degrades. exp_010 failed on mlp_dim change (pretrained head weights locked). exp_011 retries wider head WITHOUT pretrained weights, training from scratch.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.
