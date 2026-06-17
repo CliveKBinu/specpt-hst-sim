@@ -24,12 +24,17 @@ class ImprovedResidualMLPBlock(nn.Module):
         self.swish = Swish()
         self.layer_norm = nn.LayerNorm(output_dim)
         self.dropout = nn.Dropout(dropout_rate)
+        self.residual_proj = (
+            nn.Linear(input_dim, output_dim) if input_dim != output_dim else None
+        )
 
     def forward(self, x):
         residual = x
         x = self.swish(self.linear1(x))
         x = self.dropout(x)
         x = self.linear2(x)
+        if self.residual_proj is not None:
+            residual = self.residual_proj(residual)
         x = x + residual
         x = self.layer_norm(x)
         return self.swish(x)
