@@ -26,13 +26,15 @@
 | exp_006 | configs/exp_006.yaml | oy9u11a1 | apricot-oath-18 | 0.0332 | 0.0342 | 23.98% | 0.0003 | 0.387 | 0.361 | weight_decay 5e-5→1e-4. NMAD WORSENED (0.0332 vs 0.0279 best). Regularization backfired — deeper head needs capacity, not constriction. Trained 193/400 epochs. NMAD still improving at termination. |
 || exp_007 | configs/exp_007.yaml | n84weil0 | distinctive-bee-19 | 0.02565 | 0.02565 | 23.61% | -0.00231 | 0.389 | 0.358 | num_mlp_blocks 7→10, weight_decay 1e-4→5e-5 (revert reg). NEW BEST NMAD 0.02565 (8% improvement over exp_005). NMAD still improving at termination epoch 257. LR decayed 1e-4→5.16e-05. |
 || exp_008 | configs/exp_008.yaml | ld28scut | drawn-sun-20 | 0.02568 | 0.02655 | 22.82% | -0.00045 | 0.375 | 0.348 | num_mlp_blocks 10→12, lr 1e-4, wd 5e-5. NMAD 0.02568 plateaued (statistically tied with exp_007 0.02565). Capacity saturating at ~10 blocks. Catastrophic outliers improved to 22.82% (new best). Early stopped ep 219/400. |
+|| exp_008_v2 | (inline config) | 2cnzeyqt | rural-bush-21 | **0.02295** | 0.02385 | 23.31% | -0.00369 | 0.393 | 0.358 | num_mlp_blocks=12 + DESI combined autoencoder + lr=1e-4. NEW BEST NMAD 0.02295 (10.5% over exp_007). Catastrophic outliers 22.86% at best ep240. Early stopped ep242/400. Test NMAD 0.02726. |
 
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
 | exp_001 | configs/exp_001.yaml | 21346908 | — | — | — | — | — | — | — | d_model 512→768. Capacity increase. Submitted. Job 21346908. |
 | exp_002 | configs/exp_002.yaml | 21346914 | — | — | — | — | — | — | — | encoder/decoder depth 3→6. Complementary to exp_001 width increase. Submitted. Job 21346914. |
-| exp_009 | configs/exp_009.yaml | — | — | — | — | — | — | — | — | lr 1e-4→2e-4, num_mlp_blocks=12. Compensate gradient dispersion in deeper head. Submitted. Job 21351040. |
+|| exp_009 | configs/exp_009.yaml | — | — | — | — | — | — | — | — | lr 1e-4→2e-4, num_mlp_blocks=12. Compensate gradient dispersion in deeper head. Submitted. Job 21351040. |
+|| exp_010 | configs/exp_010.yaml | — | — | — | — | — | — | — | — | mlp_dim 512→1024, head width after depth saturation at 12 blocks. Pending. |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
