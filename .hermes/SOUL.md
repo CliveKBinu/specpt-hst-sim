@@ -11,13 +11,14 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Last updated: 2026-06-15T21:30 UTC
-- Active experiment: exp_008_v2 (num_mlp_blocks=12, new DESI autoencoder weights) — job 21351039
-- Best NMAD: 0.02565 (exp_007 — num_mlp_blocks 7→10, weight_decay 5e-5)
-- Best config: num_mlp_blocks=10, lr=1e-4, weight_decay=5e-5
-- Total experiments completed: 8 (baseline + 3 failed + 4 completed with metrics)
-- Total experiments running: 1
-- Direction: exp_007 validated capacity bottleneck (5→7→10 blocks, NMAD 0.0303→0.0279→0.02565). Now testing num_mlp_blocks=12 with new DESI autoencoder weights (SpecPT_DESI_combined_autoencoder_150_new.pth). Also added post-training test evaluation (z-plot + UMAP) to train.py.
+| - Last updated: 2026-06-17T13:26 UTC
+|- Active experiment: exp_011 (mlp_dim 512→1024, no pretrained head, 12 blocks, DESI autoencoder) — trains head from scratch to test width hypothesis
+|- Best NMAD: 0.02295 (exp_008_v2 — num_mlp_blocks=12 + DESI autoencoder weights) — **NEW BEST** 🎉
+|- Best config: num_mlp_blocks=12, mlp_dim=512, lr=1e-4, DESI autoencoder weights
+|- Best Catastrophic Outliers: 22.86% (exp_008_v2 — num_mlp_blocks=12 + DESI, best at ep240)
+|- Total experiments completed: 10 completed + 5 failed = 15 total
+|- Total experiments running: 1 (exp_011 — config ready)
+|- Direction: exp_010 (mlp_dim 512→1024) failed identically to exp_003 — pretrained head weights locked at mlp_dim=512. exp_011 retries mlp_dim=1024 WITHOUT pretrained head weights (pretrained_redshift=""), training the wider head from scratch. This cleanly tests whether increased head width improves NMAD.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.
