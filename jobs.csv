@@ -7,7 +7,8 @@ job_id,experiment,run_id,run_name,state,start_time,end_time,val_nmad,val_loss,ca
 21349374,exp_005,95vn9fc6,effortless-terrain-17,completed,2026-06-15T20:00,2026-06-15T23:00,0.0279,0.366,23.18,0.0011,0.425,num_mlp_blocks 5→7, lr 1e-4. New best NMAD 0.0279.
 21349460,exp_006,oy9u11a1,apricot-oath-18,completed,2026-06-15T20:00,2026-06-15T23:00,0.0332,0.361,23.98,0.0003,0.387,weight_decay 5e-5->1e-4. NMAD 0.0332 WORSE than best 0.0279. Trained 193 epochs.
 21349504,exp_007,n84weil0,distinctive-bee-19,completed,2026-06-15T23:00,2026-06-16T02:30,0.02565,0.358,23.61,-0.00231,0.389,num_mlp_blocks 7→10, weight_decay 1e-4→5e-5 (revert reg). NEW BEST NMAD 0.02565 (8% over exp_005). Ep257 early stop.
-21350035,exp_008,—,—,submitted,2026-06-15T19:51,—,—,—,—,—,—,num_mlp_blocks=12. Push capacity further from exp_007's 0.02565.
-21351039,exp_008_v2,—,—,submitted,2026-06-15T21:30,—,—,—,—,—,RE-SUBMITTED with new DESI autoencoder weights + train.py eval improvements.
-21351040,exp_009,—,—,completed,2026-06-16T—,—,—,—,—,—,lr 1e-4→2e-4, 12 blocks. Not in queue — assumed completed.
-21352771,exp_010,—,—,submitted,2026-06-17T—,—,—,—,—,—,mlp_dim 512→1024, head width increase after depth saturation at 12 blocks.
+21350035,exp_008,ld28scut,drawn-sun-20,completed,2026-06-15T19:51,2026-06-16T05:00,0.02568,0.358,23.25,-0.00045,0.375,num_mlp_blocks=12. Completed. NMAD 0.02568 plateaued. Catastrophic outliers 23.25%.
+21351039,exp_008_v2,2cnzeyqt,rural-bush-21,completed,2026-06-15T21:30,2026-06-17T08:38,0.02295,0.358,23.31,-0.00369,0.393,Completed. NEW BEST NMAD 0.02295 (10.5% over exp_007). Test NMAD 0.02726. Ep242/400.
+21351040,exp_009,2689fu6f,proud-sea-21,completed,2026-06-16T14:12,2026-06-17T08:16,0.02611,0.360,23.07,—,0.360,lr 1e-4→2e-4, 12 blocks, DESI autoencoder. Completed. NMAD 0.02611. Test NMAD 0.03283. Ep154/400.
+21352771,exp_010,nsomfkte,noble-frog-23,failed,2026-06-17T14:54,2026-06-17T10:54,—,—,—,—,—,FAILED: mlp_dim 512→1024 head weight shape mismatch (identical to exp_003). Died in 21s (model init), zero metrics logged.
+21352840,exp_011,—,—,submitted,2026-06-17T14:00,—,—,—,—,—,—,mlp_dim=1024,num_mlp_blocks=12,pretrained_redshift="" (train head from scratch), DESI autoencoder

@@ -17,6 +17,8 @@
 | Catastrophic Outliers | < 1% | 22.86% | 21.86% |
 | ECE | < 0.1 | — | — |
 
+*Last updated: 2026-06-17T14:00 UTC*
+
 ## Completed Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
@@ -25,9 +27,9 @@
 | exp_005 | configs/exp_005.yaml | 95vn9fc6 | effortless-terrain-17 | 0.0279 | 0.0279 | 23.18% | 0.0011 | 0.425 | 0.366 | num_mlp_blocks 5→7, lr 1e-4. NMAD IMPROVED 8% to 0.0279 (new best). Overfitting: val_loss rose, early stopping at epoch 249. NMAD still decreasing at termination. |
 | exp_006 | configs/exp_006.yaml | oy9u11a1 | apricot-oath-18 | 0.0332 | 0.0342 | 23.98% | 0.0003 | 0.387 | 0.361 | weight_decay 5e-5→1e-4. NMAD WORSENED (0.0332 vs 0.0279 best). Regularization backfired — deeper head needs capacity, not constriction. Trained 193/400 epochs. NMAD still improving at termination. |
 | exp_007 | configs/exp_007.yaml | n84weil0 | distinctive-bee-19 | 0.02565 | 0.02565 | 23.61% | -0.00231 | 0.389 | 0.358 | num_mlp_blocks 7→10, weight_decay 1e-4→5e-5 (revert reg). NEW BEST NMAD 0.02565 (8% improvement over exp_005). NMAD still improving at termination epoch 257. LR decayed 1e-4→5.16e-05. |
-| exp_008 | configs/exp_008.yaml | ld28scut | drawn-sun-20 | 0.02568 | 0.02655 | 22.82% | -0.00045 | 0.375 | 0.348 | num_mlp_blocks 10→12, lr 1e-4, wd 5e-5. NMAD 0.02568 plateaued (statistically tied with exp_007 0.02565). Capacity saturating at ~10 blocks. Catastrophic outliers improved to 22.82% (new best). Early stopped ep 219/400. |
-| exp_008_v2 | configs/exp_008.yaml | 21351039 | — | 0.02295 | 0.02295 | 22.86% | — | — | — | num_mlp_blocks=12 + DESI combined autoencoder weights. NEW BEST NMAD 0.02295 (11% over exp_008). Major improvement — DESI autoencoder pretraining helps. |
-| exp_009 | configs/exp_009.yaml | 21351040 | proud-sea-21 | — | — | — | — | — | — | lr 1e-4→2e-4, num_mlp_blocks=12, DESI autoencoder. Completed successfully. Metrics TBD (need W&B fetch). |
+| exp_008 | configs/exp_008.yaml | ld28scut | drawn-sun-20 | 0.02568 | 0.02655 | 23.25% | -0.00045 | 0.375 | 0.348 | num_mlp_blocks 10→12, lr 1e-4, wd 5e-5. NMAD 0.02568 plateaued (statistically tied with exp_007 0.02565). Capacity saturating at ~10 blocks. Early stopped ep 219/400. |
+| exp_008_v2 | configs/exp_008.yaml | 2cnzeyqt | rural-bush-21 | **0.02295** | 0.02385 | 23.31% | -0.00369 | 0.393 | 0.358 | num_mlp_blocks=12 + DESI combined autoencoder weights. NEW BEST NMAD 0.02295 (11% over exp_008). Test NMAD 0.02726. Ep242/400. |
+| exp_009 | configs/exp_009.yaml | 2689fu6f | proud-sea-21 | 0.02611 | 0.02706 | 23.07% | — | — | 0.360 | lr 1e-4→2e-4, num_mlp_blocks=12, DESI autoencoder. Completed. NMAD 0.02611 (worse than exp_008_v2 0.02295). Test NMAD 0.03283. Ep154/400. |
 
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
@@ -37,7 +39,26 @@
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
 |-----|----------|--------|---------|-----------|
-| exp_001 | (unknown) | (unknown) | d_model 512→768 | Modified model.d_model which is a FROZEN autoencoder param. Checkpoint key mismatch — autoencoder checkpoint has d_model=512, cannot load into model with d_model=768. Run died in ~30s during model init, zero metrics logged. |
+| exp_001 | kind-snowball-13 | 2enr6gyg | d_model 512→768 | Modified model.d_model which is a FROZEN autoencoder param. Checkpoint key mismatch — autoencoder checkpoint has d_model=512, cannot load into model with d_model=768. Run died in ~30s during model init, zero metrics logged. |
 | exp_002 | distinctive-cosmos-14 | ke9d4u5g | num_encoder_layers 3→6, num_decoder_layers 3→6 | Modified frozen autoencoder depth. Checkpoint key mismatch — autoencoder checkpoint has 3 layers, cannot load into model with 6 layers. Run died in 29s during model init, zero metrics logged. |
 | exp_003 | quiet-shadow-15 | q14jh32m | mlp_dim 512→768 (head-only) | Changed mlp_dim from 512 to 768 but pretrained head weights are for mlp_dim=512. With strict=False, all head Linear layer weights shape-mismatched and silently dropped by PyTorch, leaving randomly initialized head. CUDA error on first forward pass. Run died in 28s, zero metrics logged. |
 | exp_010 | noble-frog-23 | nsomfkte | mlp_dim 512→1024, num_mlp_blocks=12 | Same root cause as exp_003 — changed mlp_dim from 512 to 1024, but pretrained DESI redshift head weights are for mlp_dim=512. PyTorch's strict=False does NOT allow size mismatches (only missing/extra keys). 60 tensor mismatches across 12 mlp_blocks. CUDA RuntimeError at model init in 21s, zero metrics logged. SLURM job 21352771 on skl-a-50 (A100). |
+
+## Early Untracked Runs
+These are early test baseline runs on the HST augmented autoencoder before the tracking system was operational. All failed during model init or data loading and are kept for historical reference.
+
+| run_name | run_id | state | notes |
+|----------|--------|-------|-------|
+| swept-lake-1 | f7rovfr1 | failed | Early test baseline (pre-tracking) |
+| royal-totem-2 | 3lgznraa | failed | Early test baseline (pre-tracking) |
+| fragrant-plasma-3 | b4ot3x2b | failed | Early test baseline (pre-tracking) |
+| wandering-firebrand-4 | cos4bv9c | failed | Early test baseline (pre-tracking) |
+| elated-sun-5 | o1wa1qkr | failed | Early test baseline (pre-tracking) |
+| resilient-glitter-6 | wbb06713 | failed | Early test baseline (pre-tracking) |
+| dutiful-planet-7 | lkxytnm1 | failed | Early test baseline (pre-tracking) |
+| vague-wind-8 | 4hqjpxd9 | failed | Early test baseline (pre-tracking) |
+| twilight-dream-9 | hmjmutda | failed | Early test baseline (pre-tracking) |
+| sandy-flower-10 | vvv6icm1 | failed | Early test baseline (pre-tracking) |
+| amber-spaceship-11 | r832efo5 | failed | Early test baseline (pre-tracking) |
+
+Also, SLURM job 21346405 (failed) and 21346407 (completed) correspond to early test runs before systematic experiment tracking began.

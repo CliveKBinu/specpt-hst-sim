@@ -16,8 +16,8 @@
 
 | Metric | Target | Best | Gap |
 |--------|--------|------|-----|
-| NMAD | < 0.020 | **0.02565** (exp_007) | **0.00565** |
-| Catastrophic outliers | < 1% | 23.61% (exp_007) | 22.61% |
+| NMAD | < 0.020 | **0.02295** (exp_008_v2) | **0.00295** |
+| Catastrophic outliers | < 1% | **22.86%** (exp_008_v2 ep240; final 23.31%) | **21.86%** |
 | ECE | < 0.1 | — | — |
 
 ---
@@ -25,11 +25,8 @@
 ## 🔬 Active Experiments
 
 | # | Name | Change | Status | NMAD | Outliers | Last Update |
-|----|------|--------|--------|------|----------|-------------|
-| exp_001 | Width 512→768 | d_model increase (frozen) | **Failed.** Job 21346908. | — | — | 2026-06-12 |
-| exp_002 | Depth 3→6 | encoder/decoder depth increase (frozen) | **Failed.** Job 21346914. | — | — | 2026-06-12 |
-| exp_007 | num_mlp_blocks 7→10 | Head capacity increase, revert weight_decay | **Completed.** NEW BEST NMAD 0.02565. | **0.02565** | 23.61% | 2026-06-16 |
-| exp_008 | num_mlp_blocks 10→12 | Push head capacity further | **Pending.** Job 21350035. | — | — | 2026-06-16 |
+|---|------|--------|--------|------|----------|-------------|
+| exp_011 | mlp_dim 512→1024, no pretrained head, 12 blocks, DESI AE | Wider head trained from scratch — tests if width improves NMAD after depth saturation | **Pending.** Job 21352840. | — | — | 2026-06-17 |
 
 > ⚠️ **Autoencoder frozen.** Experiments exp_001 and exp_002 failed because they modified the autoencoder architecture (d_model / num_layers). The autoencoder is a pretrained, frozen model. Only the redshift estimator head (num_mlp_blocks, mlp_dim, dropout_rate, training params) can be changed. See diagnostics in [`EXPERIMENTS.md`](EXPERIMENTS.md) for details.
 
@@ -39,13 +36,19 @@
 
 | Rank | Experiment | NMAD | Outliers | Epochs | Notes |
 |------|-----------|------|----------|--------|-------|
-| 1 | `exp_007` | **0.02565** | 23.61% | 257 | num_mlp_blocks 7→10, weight_decay 5e-5. **NEW BEST** |
-| 2 | `exp_005` | **0.0279** | 23.18% | 249 | num_mlp_blocks 5→7, lr 1e-4 |
-| 3 | `exp_000_baseline` | 0.0303 | 23.24% | 244 | Default config |
-| 4 | `exp_006` | 0.0332 | 23.98% | 193 | weight_decay 1e-4 — regularization backfired |
-| 5 | `exp_004` | 0.0335 | 23.42% | — | lr 5e-5 — worse than baseline |
+| 1 | `exp_008_v2` | **0.02295** | **23.31%** | 242 | num_mlp_blocks=12 + DESI autoencoder. **NEW BEST NMAD.** (+10.5% over exp_007) |
+| 2 | `exp_007` | **0.02565** | 23.61% | 257 | num_mlp_blocks 7→10, weight_decay 5e-5 |
+| 3 | `exp_008` | **0.02568** | 23.25% | 219 | num_mlp_blocks 10→12. Capacity saturating. |
+| 4 | `exp_009` | **0.02611** | 23.07% | 154 | lr 2e-4, DESI autoencoder. Higher LR worsened NMAD. |
+| 5 | `exp_005` | **0.0279** | 23.18% | 249 | num_mlp_blocks 5→7, lr 1e-4 |
+| 6 | `exp_000_baseline` | 0.0303 | 23.24% | 244 | Default config |
+| 7 | `exp_006` | 0.0332 | 23.98%† | 193 | weight_decay 1e-4 — regularization backfired |
+| 8 | `exp_004` | 0.0335 | 23.42% | — | lr 5e-5 — worse than baseline |
 
-*Last updated by orchestrator (hermes) at 2026-06-16 03:00 UTC*
+*\*exp_008_v2 best catastrophic outliers was 22.86% at epoch 240 (final: 23.31%)*
+*†exp_006 final catastrophic outliers from W&B: 24.50% (best: 23.98%)*
+
+*Last updated by orchestrator (hermes) at 2026-06-17 15:00 UTC*
 
 ---
 
