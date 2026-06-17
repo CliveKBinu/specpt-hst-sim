@@ -112,11 +112,14 @@ def main():
         dropout_rate=model_cfg["dropout"],
     )
 
-    rz_path = os.path.expanduser(data_cfg["pretrained_redshift"])
-    state_dict = torch.load(rz_path, map_location=device)
-    autoencoder_prefixes = ("encoder.", "proj_to_d_model.", "pretrained_model.")
-    head_only = {k: v for k, v in state_dict.items() if not k.startswith(autoencoder_prefixes)}
-    redshift_model.load_state_dict(head_only, strict=False)
+    rz_path = os.path.expanduser(data_cfg.get("pretrained_redshift", "") or "")
+    if rz_path:
+        state_dict = torch.load(rz_path, map_location=device)
+        autoencoder_prefixes = ("encoder.", "proj_to_d_model.", "pretrained_model.")
+        head_only = {k: v for k, v in state_dict.items() if not k.startswith(autoencoder_prefixes)}
+        redshift_model.load_state_dict(head_only, strict=False)
+    else:
+        print("No pretrained redshift head weights — initializing head from scratch.")
 
     for param in redshift_model.pretrained_model.parameters():
         param.requires_grad = False

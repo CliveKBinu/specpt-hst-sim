@@ -34,7 +34,8 @@
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| exp_011 | configs/exp_011.yaml | — | — | — | — | — | — | — | — | mlp_dim 512→1024 (wider head), pretrained_redshift="" (train head from scratch). Tests if increased head width improves NMAD now that shape-mismatch constraint is removed. Submitted. |
+| exp_011 | configs/exp_011.yaml | — | — | — | — | — | — | — | — | mlp_dim 512→1024 (wider head), pretrained_redshift="" (train head from scratch). Tests if increased head width improves NMAD now that shape-mismatch constraint is removed. Submitted but crashed — code bug (pretrained_redshift="" → torch.load("")). Reproduced in exp_012 with fix. |
+| exp_012 | configs/exp_012.yaml | — | — | — | — | — | — | — | — | mlp_dim 512→1024 (wider head), num_mlp_blocks=12, pretrained_redshift="" (init from scratch), DESI autoencoder. First real test of wider head — code bug preventing exp_011 is now fixed. Tests if increased head width improves NMAD after depth saturation. |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
