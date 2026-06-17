@@ -426,7 +426,11 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--max-experiments", type=int, default=None,
-        help="Process N terminal runs then exit (default: infinite)",
+        help="Process N terminal runs total then exit (cumulative across restarts)",
+    )
+    parser.add_argument(
+        "--max-new", type=int, default=None,
+        help="Process N new runs in this session then exit (resets on restart)",
     )
     args = parser.parse_args()
     if args.entity:
@@ -446,7 +450,8 @@ if __name__ == "__main__":
     logger.info(
         f"Starting watcher "
         f"(interval={CHECK_INTERVAL}s, mode={mode}, once={args.once}"
-        f"{f', max_experiments={max_exp}' if max_exp else ''})"
+        f"{f', max_experiments={max_exp}' if max_exp else ''}"
+        f"{f', max_new={args.max_new}' if args.max_new else ''})"
     )
 
     state = load_state()
@@ -468,19 +473,31 @@ if __name__ == "__main__":
         logger.info("Exiting (--once flag)")
     else:
         max_exp = args.max_experiments
+        max_new = args.max_new
+        session_triggered = 0
+        prev_total = state.get("experiments_triggered", 0)
         logger.info(
             f"Entering main loop"
-            f"{f' (max {max_exp} experiments)' if max_exp else ''}"
+            f"{f' (max {max_exp} total)' if max_exp else ''}"
+            f"{f' (max {max_new} new this session)' if max_new else ''}"
         )
         while True:
             try:
                 state = cycle(state)
                 save_state(state)
-                triggered = state.get("experiments_triggered", 0)
-                if max_exp and triggered >= max_exp:
+                new_total = state.get("experiments_triggered", 0)
+                session_triggered += new_total - prev_total
+                prev_total = new_total
+                if max_exp and new_total >= max_exp:
                     logger.info(
-                        f"Reached {max_exp} experiments "
-                        f"({triggered} triggered), exiting"
+                        f"Reached {max_exp} total experiments "
+                        f"({new_total} triggered), exiting"
+                    )
+                    break
+                if max_new and session_triggered >= max_new:
+                    logger.info(
+                        f"Reached {max_new} new experiments "
+                        f"in this session, exiting"
                     )
                     break
                 time.sleep(CHECK_INTERVAL)
