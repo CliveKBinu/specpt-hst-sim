@@ -11,4 +11,4 @@ job_id,experiment,run_id,run_name,state,start_time,end_time,val_nmad,val_loss,ca
 21351039,exp_008_v2,—,—,submitted,2026-06-15T21:00,—,—,—,—,—,—,num_mlp_blocks=12+DESI combined autoencoder weights. Pending wait for analyst.
 21351040,exp_009,—,proud-sea-21,completed,2026-06-16T14:12,2026-06-17T00:00,—,—,—,—,—,lr 1e-4->2e-4, num_mlp_blocks=12. Completed. Run proud-sea-21 finished successfully.
 21352771,exp_010,nsomfkte,noble-frog-23,failed,2026-06-17T00:00,2026-06-17T00:00,—,—,—,—,—,FAILED: mlp_dim 512→1024 head weight shape mismatch (same as exp_003). 60 tensor mismatches. CUDA RuntimeError in 21s at model init.
-15|,exp_011,—,—,pending,—,—,—,—,—,—,mlp_dim=1024,num_mlp_blocks=12,pretrained_redshift="" (train head from scratch), DESI autoencoder
+15|21352840,exp_011,—,—,submitted,—,—,—,—,—,—,mlp_dim=1024,num_mlp_blocks=12,pretrained_redshift="" (train head from scratch), DESI autoencoder
