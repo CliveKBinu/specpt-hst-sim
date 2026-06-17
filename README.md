@@ -26,7 +26,7 @@
 
 | # | Name | Change | Status | NMAD | Outliers | Last Update |
 |---|------|--------|--------|------|----------|-------------|
-| exp_011 | mlp_dim 512→1024, no pretrained head, 12 blocks, DESI AE | Wider head trained from scratch — tests if width improves NMAD after depth saturation | **Pending.** Job 21352840. | — | — | 2026-06-17 |
+| exp_013 | mlp_dim 1024, 12 blocks, DESI AE, pretrained_redshift="" | Retry of exp_012 with residual projection code fix. Tests if increased head width improves NMAD. | ✅ **Submitted.** Job 21353794 | — | — | 2026-06-17 |
 
 > ⚠️ **Autoencoder frozen.** Experiments exp_001 and exp_002 failed because they modified the autoencoder architecture (d_model / num_layers). The autoencoder is a pretrained, frozen model. Only the redshift estimator head (num_mlp_blocks, mlp_dim, dropout_rate, training params) can be changed. See diagnostics in [`EXPERIMENTS.md`](EXPERIMENTS.md) for details.
 
@@ -48,7 +48,7 @@
 *\*exp_008_v2 best catastrophic outliers was 22.86% at epoch 240 (final: 23.31%)*
 *†exp_006 final catastrophic outliers from W&B: 24.50% (best: 23.98%)*
 
-*Last updated by orchestrator (hermes) at 2026-06-17 15:00 UTC*
+*Last updated by orchestrator (hermes) at 2026-06-17 21:27 UTC*
 
 ---
 

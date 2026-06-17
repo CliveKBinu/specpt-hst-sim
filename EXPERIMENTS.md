@@ -17,7 +17,7 @@
 | Catastrophic Outliers | < 1% | 22.86% | 21.86% |
 | ECE | < 0.1 | — | — |
 
-*Last updated: 2026-06-17T19:07 UTC*
+*Last updated: 2026-06-17T21:27 UTC*
 
 ## Completed Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
@@ -34,9 +34,7 @@
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| exp_011 | configs/exp_011.yaml | ee7l4hgl | peach-pine-24 | — | — | — | — | — | — | mlp_dim 512→1024 (wider head), pretrained_redshift="" (train head from scratch). Tests if increased head width improves NMAD now that shape-mismatch constraint is removed. FAILED at init — pretrained_redshift="" → torch.load("") crash. Code fixed. |
-| exp_012 | configs/exp_012.yaml | — | — | — | — | — | — | — | — | mlp_dim 512→1024 (wider head), num_mlp_blocks=12, pretrained_redshift="" (init from scratch), DESI autoencoder. First real test of wider head — code bug preventing exp_011 is now fixed. Tests if increased head width improves NMAD after depth saturation. |
-| exp_013 | configs/exp_013.yaml | — | — | — | — | — | — | — | — | Wider head test: mlp_dim 512→1024 with residual dimension fix applied. Retry of exp_012 after code bug fix. |
+| exp_013 | configs/exp_013.yaml | — | — | — | — | — | — | — | — | Wider head test: mlp_dim 512→1024 with residual dimension fix applied. Retry of exp_012 after code bug fix. Job 21353794 submitted. |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
@@ -46,6 +44,7 @@
 | exp_003 | quiet-shadow-15 | q14jh32m | mlp_dim 512→768 (head-only) | Changed mlp_dim from 512 to 768 but pretrained head weights are for mlp_dim=512. With strict=False, all head Linear layer weights shape-mismatched and silently dropped by PyTorch, leaving randomly initialized head. CUDA error on first forward pass. Run died in 28s, zero metrics logged. |
 | exp_010 | noble-frog-23 | nsomfkte | mlp_dim 512→1024 (head-width pivot) | Identical to exp_003 failure but with mlp_dim 512→1024 and 12 MLP blocks. All 12 mlp_blocks.* tensors size-mismatched (60 total). strict=False does NOT allow size mismatches — only missing/extra keys. RuntimeError at model init. Died in 21s, zero metrics logged. |
 | exp_011 | peach-pine-24 | ee7l4hgl | pretrained_redshift="" → torch.load("") crash | pretrained_redshift="" bypassed the guard, passed empty string path to torch.load(), raising FileNotFoundError. Not a shape-mismatch like exp_010 — different root cause. Code fixed with guard before torch.load(). Died during model init, zero metrics logged. |
+| exp_012 | sparkling-wood-25 | 2e9b7ic2 | mlp_dim 1024 → residual dim mismatch | mlp_dim=1024, num_mlp_blocks=12, ImprovedResidualMLPBlock residual connection size mismatch — residual target dim (512) ≠ MLP output dim (1024). Added residual projection layer to fix. Died during model init, zero metrics logged. |
 
 ## Early Untracked Runs
 These are early test baseline runs on the HST augmented autoencoder before the tracking system was operational. All failed during model init or data loading and are kept for historical reference.

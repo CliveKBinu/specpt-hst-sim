@@ -149,38 +149,85 @@ Inputs:
 - .hermes/SOUL.md — project identity
 - ./EXPERIMENTS.md — experiment log (root)
 - ./jobs.csv — job tracking (root)
+- ./README.md — human-facing summary (root)
 
-Workflow:
-1. Update .hermes/SOUL.md "Current State" section:
-   - Active experiment (set to the name of the experiment just created, or "none" if no new one)
-   - Best NMAD (update if the analyzed run improved the best NMAD)
-   - Total experiments completed (increment if new experiment was created)
-   - Direction (summarize the current direction based on recent changes)
-2. VERIFY: After writing each file, re-read it and confirm:
-   - .hermes/SOUL.md "Last updated" timestamp is current UTC time
-   - .hermes/SOUL.md "Active experiment" matches the experiment just processed
-   - .hermes/SOUL.md "Best NMAD" matches ./EXPERIMENTS.md Current Best
-   - ./EXPERIMENTS.md Running section matches ./jobs.csv submitted rows
-   - ./README.md Active Experiments table matches ./EXPERIMENTS.md Running section
-   If any mismatch, re-write and re-verify.
-3. Update ./EXPERIMENTS.md:
-   - VERIFY the new experiment is in the Running table. If not, ADD it immediately.
-   - If Runner succeeded: update the row's status from "pending" to "submitted", fill in job_id
-   - If Runner failed: update the row's status from "pending" to "runner_failed"
-   - Never delete history — always append or modify existing rows
-4. Update ./jobs.csv:
-   - If Runner succeeded: add a row with the job ID and status=submitted
-   - If Runner failed: add a row with status=runner_failed and note the error
-5. Update ./README.md:
-   - Regenerate the Active Experiments table from ./EXPERIMENTS.md Running section
-   - Regenerate the Leaderboard table from ./EXPERIMENTS.md, sorted by NMAD (ascending)
-   - Update "Current Best" from .hermes/SOUL.md Current State
-   - Update last-updated timestamp to current UTC time
-   - Update dead-letter count from daemon/.dead_letter.jsonl (count lines)
-   - Do NOT modify the static sections (Mission, Architecture, Status)
-6. When writing files, use UTF-8 encoding.
+Workflow — DO THESE IN ORDER, DO NOT SKIP ANY STEP:
 
-Return: confirmation of state update
+Step A: READ all files first
+- Read .hermes/SOUL.md, ./EXPERIMENTS.md, ./jobs.csv, ./README.md
+- Read analyst and runner results from the current cycle
+
+Step B: UPDATE ./EXPERIMENTS.md
+- If a new experiment was created: add a row to the Running table
+  | exp_N | configs/exp_N.yaml | — | — | — | — | — | — | — | — | <description> |
+- If Runner succeeded: update Running row status from "pending" to "submitted", fill in job_id
+- If Runner failed: move the row from Running to Diagnostics, add failure diagnosis
+- If an experiment in Running has state=failed or completed in jobs.csv: move it to the correct section
+- NEVER delete history — always append or modify existing rows
+
+Step C: UPDATE ./jobs.csv
+- If Runner succeeded: add a row with job_id, status=submitted
+- If Runner failed: add a row with status=failed and note the error
+- If a new experiment was submitted: add its row
+
+Step D: UPDATE .hermes/SOUL.md
+Replace the "Current State" section with:
+```
+## Current State (updated by agents)
+- Last updated: <current UTC time>
+- Active experiment: <experiment name and brief description, or "none">
+- Best NMAD: <value> (<experiment name>)
+- Best Catastrophic Outliers: <value> (<experiment name>)
+- Total experiments completed: <count from EXPERIMENTS.md Completed section>
+- Total experiments running: <count from EXPERIMENTS.md Running section>
+- Direction: <1-2 sentence summary of current optimization direction>
+```
+Count completed/running by counting ROWS in the respective EXPERIMENTS.md tables. Do NOT double-count.
+
+Step E: UPDATE ./README.md — YOU MUST DO THIS. DO NOT SKIP.
+Update ONLY these sections, leave all other sections unchanged:
+
+1. "Active Experiments" table — copy rows from EXPERIMENTS.md Running section:
+```
+## 🔬 Active Experiments
+
+| # | Name | Change | Status | NMAD | Outliers | Last Update |
+|---|------|--------|--------|------|----------|-------------|
+| exp_NNN | <one-line change> | <brief rationale> | <status> | <value or —> | <value or —> | YYYY-MM-DD |
+```
+Status format: ✅ Submitted, ⏳ Running, ❌ Failed
+
+2. "Leaderboard" table — copy from EXPERIMENTS.md Completed section, sorted by NMAD ascending:
+```
+## 🏆 Leaderboard
+
+| Rank | Experiment | NMAD | Outliers | Epochs | Notes |
+|------|-----------|------|----------|--------|-------|
+```
+Only include experiments with numeric NMAD values.
+
+3. "Current Best" row at top of README — update from SOUL.md:
+```
+| Metric | Target | Best | Gap |
+|--------|--------|------|-----|
+| NMAD | < 0.020 | **<value>** (<experiment>) | **<gap>** |
+| Catastrophic outliers | < 1% | **<value>** (<experiment>) | **<gap>** |
+| ECE | < 0.1 | — | — |
+```
+
+4. Update the "Last updated" line below the leaderboard to current UTC time.
+
+Step F: VERIFY — re-read all 4 files and confirm:
+- ./EXPERIMENTS.md Running section only contains truly pending/submitted experiments
+- ./jobs.csv has matching rows for all experiments in EXPERIMENTS.md
+- ./README.md Active Experiments matches EXPERIMENTS.md Running section
+- ./README.md Leaderboard matches EXPERIMENTS.md Completed section
+- .hermes/SOUL.md counts match actual table row counts
+If any mismatch, fix and re-verify.
+
+When writing files, use UTF-8 encoding.
+
+Return: confirmation of state update with file counts
 ```
 
 Use model `opencode-go/deepseek-v4-flash` for the memory subagent.
