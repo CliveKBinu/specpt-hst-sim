@@ -31,12 +31,13 @@
 | exp_008_v2 | configs/exp_008.yaml | 2cnzeyqt | rural-bush-21 | **0.02295** | 0.02385 | 23.31% | -0.00369 | 0.393 | 0.358 | num_mlp_blocks=12 + DESI combined autoencoder + lr=1e-4. NEW BEST NMAD 0.02295 (10.5% over exp_007). Test NMAD 0.02726. Early stopped ep242/400. |
 | exp_009 | configs/exp_009.yaml | 2689fu6f | proud-sea-21 | 0.02611 | 0.02706 | 23.07% | — | — | 0.360 | lr 1e-4→2e-4, num_mlp_blocks=12, DESI autoencoder. Higher LR worsened NMAD (0.02611 vs 0.02295). Test NMAD 0.03283. Ep154/400 (early stopped). |
 | exp_013 | configs/exp_013.yaml | fpw7o9pz | ruby-surf-26 | 0.01382 | 0.01539 | 24.85% | — | 0.399 | 0.377 | mlp_dim 1024, blocks=12, DESI autoencoder, residual fix. NEW BEST NMAD 0.01382! Severe overfitting: train_loss=0.040 vs val_loss=0.377 (9.7x gap). |
-| exp_014 | configs/exp_014.yaml | — | — | 0.01640 | 0.01870 | 23.78% | — | 0.429 | 0.384 | dropout_rate=0.1 added to head. NMAD worsened 0.01382→0.01640. Overfitting gap unchanged at 9.6x. Dropout 0.1 too weak to regularize 12-block 1024-dim head. Epochs: 295. |
+| exp_014 | configs/exp_014.yaml | m03w5sgt | comic-sea-27 | 0.01640 | 0.01870 | 23.78% | — | 0.429 | 0.384 | dropout_rate=0.1 added to head. NMAD worsened 0.01382→0.01640. Overfitting gap unchanged at 9.6x. Dropout 0.1 too weak to regularize 12-block 1024-dim head. Epochs: 295. |
+| exp_015 | configs/exp_015.yaml | bi2vfuwc | fragrant-blaze-28 | 0.02156 | 0.02248 | 23.37% | — | 0.3875 | 0.3669 | dropout_rate=0.2. NMAD worsened to 0.02156 (56% worse than 0.01382 best). Dropout 0.0→0.1→0.2 shows monotonic degradation — regularization is wrong lever. Early stopped epoch 200/400. |
 
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| exp_015 | configs/exp_015.yaml | — | — | — | — | — | — | — | — | dropout_rate=0.2 — stronger regularization (9.6x overfitting gap persists; dropout 0.1 was too weak). |
+| exp_016 | configs/exp_016.yaml | — | — | — | — | — | — | — | — | weight_decay 5e-5→1e-5: reduce regularization since dropout and higher wd consistently harmed. Analyst recommends weight_decay sweep. |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |

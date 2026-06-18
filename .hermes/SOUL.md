@@ -11,15 +11,13 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Last updated: 2026-06-18 15:13 UTC
-- Active experiment: exp_014 (dropout_rate=0.1, mlp_dim=1024, blocks=12) — submitted, running on cluster
-- Next experiment: exp_015 (dropout_rate=0.2) — pending, queue held
-- Best NMAD: 0.01382 (exp_013)
+- Last updated: 2026-06-18 17:54 UTC
+- Active experiment: exp_016 (weight_decay=1e-5) — submitting to cluster
+- Best NMAD: 0.01382 (exp_013) — UNCHANGED
 - Best Catastrophic Outliers: 22.86% (exp_008_v2)
-- Total experiments completed: 9
-- Total experiments running: 1 (exp_014)
-- Total experiments pending: 1 (exp_015)
-- Direction: Regularization under test. exp_013 achieved NMAD 0.01382 (TARGET ACHIEVED) with 9.4x train/val overfitting gap. exp_014 (dropout=0.1) running on cluster. exp_015 (dropout=0.2) queued pending exp_014 completion.
+- Total experiments completed: 12
+- Total experiments running: 1 (exp_016)
+- Direction: Alternative regularization strategy. Dropout 0.0→0.1→0.2 all harmed. weight_decay 5e-5→1e-5 (reduce regularizaion) tested to see if lower weight_decay helps the high-capacity 12-block 1024-dim head.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.
