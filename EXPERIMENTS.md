@@ -36,7 +36,7 @@
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
 | exp_014 | configs/exp_014.yaml | — | — | — | — | — | — | — | — | Add dropout_rate=0.1 to redshift head to combat severe overfitting (9.7x train/val gap). Same base as exp_013 (mlp_dim=1024, blocks=12, DESI autoencoder). |
-| exp_015 | configs/exp_015.yaml | — | — | — | — | — | — | — | — | (queued — backup: if dropout_rate=0.1 is not enough, escalate to dropout_rate=0.2 for stronger regularization against 9.7x overfitting gap) |
+| exp_015 | configs/exp_015.yaml | — | — | — | — | — | — | — | — | PROMOTED from queued — dropout_rate=0.2 next experiment (9.4x overfitting gap needs stronger regularization) |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
