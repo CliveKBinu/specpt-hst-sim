@@ -157,6 +157,7 @@ Workflow:
 2. Follow .hermes/AGENTS.md (analyst -> experimenter -> runner -> memory)
 3. Use delegate_task with model {DELEGATE_MODEL} for analyst and experimenter subagents
 4. Execute the full chain and exit
+5. **IMPORTANT: After each phase, send a WhatsApp DM status update using `HERMES_HOME="$HOME/AppData/Local/hermes" hermes send -t "whatsapp:Clive K Binu (dm)" "<phase> — <status>" -q`** (see specpt-orchestrator skill for exact messages)
 
 Do not ask for confirmation. Execute autonomously."""
 
