@@ -38,6 +38,7 @@
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
 | exp_016 | configs/exp_016.yaml | — | — | — | — | — | — | — | — | weight_decay 5e-5→1e-5: reduce regularization since dropout and higher wd consistently harmed. Analyst recommends weight_decay sweep. |
+| exp_017 | configs/exp_017.yaml | — | — | — | — | — | — | — | — | weight_decay 1e-5→5e-4: exp_016 lowered wd and NMAD degraded 52% — test higher regularization (opposite direction). |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
