@@ -42,7 +42,14 @@ dropout_rate, and training hyperparams (lr, batch_size, epochs, patience, weight
 7. Never stop the loop without explicit user permission
 
 ## Agent Chain
-watcher → orchestrator → analyst → experimenter → runner → memory → loop
+watcher → trigger → hermes chat -q --profile specpt-hst -s specpt-orchestrator
+    ├── terminal → Analyst (Pro)
+    ├── terminal → Experimenter (Pro)
+    ├── verify: config + EXPERIMENTS.md
+    ├── delegate_task → Runner (flash)
+    ├── verify: squeue + git log + jobs.csv
+    ├── delegate_task → Memory (flash)
+    └── verify: re-read all 4 state files
 
 ## Forbidden
 - Never submit without writing EXPERIMENTS.md entry first

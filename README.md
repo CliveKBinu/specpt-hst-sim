@@ -59,11 +59,15 @@ W&B run finishes
     ↓
 watcher.py (polls every 60s)
     ↓
-trigger.py → hermes orchestrator
-    ├── Analyst   (deepseek-v4-pro)  — reads W&B metrics, diagnoses issues
-    ├── Experimenter (deepseek-v4-pro) — generates next experiment config
-    ├── Runner    (deepseek-v4-flash) — commits, SSH to SLURM, submits job
-    └── Memory    (deepseek-v4-flash) — updates state files, EXPERIMENTS.md, README
+trigger.py → hermes chat -q --profile specpt-hst -s specpt-orchestrator
+    │                 (skill loaded via -s, AGENTS.md embedded in skill)
+    ├── terminal → Analyst      (deepseek-v4-pro)   — W&B analysis, returns JSON
+    ├── terminal → Experimenter (deepseek-v4-pro)   — next config, returns JSON
+    ├── 3.5 Verify experimenter side-effects (config file, EXPERIMENTS.md row)
+    ├── delegate_task → Runner  (deepseek-v4-flash) — git + SSH + sbatch
+    ├── 4.5 Verify runner side-effects (squeue, git log, jobs.csv)
+    ├── delegate_task → Memory  (deepseek-v4-flash) — update state files
+    └── 5.5 Verify memory side-effects (re-read all 4 state files)
     ↓
 SLURM trains on cluster
     ↓
