@@ -11,13 +11,13 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Last updated: 2026-06-18 17:54 UTC
-- Active experiment: exp_016 (weight_decay=1e-5) — submitting to cluster
+- Last updated: 2026-06-18 UTC
+- Active experiment: exp_018 (mlp_dim 1024→768, wd=5e-5) — submitted to cluster, job 21355569
 - Best NMAD: 0.01382 (exp_013) — UNCHANGED
 - Best Catastrophic Outliers: 22.86% (exp_008_v2)
-- Total experiments completed: 12
-- Total experiments running: 1 (exp_016)
-- Direction: Alternative regularization strategy. Dropout 0.0→0.1→0.2 all harmed. weight_decay 5e-5→1e-5 (reduce regularizaion) tested to see if lower weight_decay helps the high-capacity 12-block 1024-dim head.
+- Total experiments completed: 14 (exp_017 just completed)
+- Total experiments running: 1 (exp_018)
+- Direction: Capacity reduction after all regularization levers (all 4 wd variants, dropout 0.1/0.2) exhausted and degraded. Testing mlp_dim 1024→768 to structurally reduce head capacity while preserving 12-block depth.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.
