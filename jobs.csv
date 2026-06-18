@@ -14,5 +14,5 @@ job_id,experiment,run_id,run_name,state,start_time,end_time,val_nmad,val_loss,ca
 21352840,exp_011,ee7l4hgl,peach-pine-24,failed,2026-06-17T14:00,—,—,—,—,—,—,mlp_dim=1024,num_mlp_blocks=12,pretrained_redshift="" (train head from scratch), DESI autoencoder
 21353301,exp_012,2e9b7ic2,sparkling-wood-25,failed,2026-06-17T19:06,2026-06-17T19:07,—,—,—,—,—,FAILED: mlp_dim 1024 head weight shape mismatch (identical to exp_003). Residual connection dim mismatch. Code fixed for exp_013.
 21353794,exp_013,fpw7o9pz,ruby-surf-26,completed,2026-06-17T21:25,2026-06-18T10:00,0.01382,0.377,24.85,,0.399,COMPLETED. NEW BEST NMAD 0.01382! Width hypothesis confirmed. mlp_dim=1024, blocks=12, DESI autoencoder, residual fix. Severe overfitting: train_loss=0.040 vs val_loss=0.377 (9.7x gap).
-21354881,exp_014,—,—,submitted,2026-06-18T14:35,—,—,—,—,—,—,dropout_rate=0.1 added to head for regularization. mlp_dim=1024, blocks=12, DESI autoencoder.
+21354881,exp_014,m03w5sgt,comic-sea-27,completed,2026-06-18T14:35,2026-06-18T18:30,0.01640,0.384,23.78,,0.429,COMPLETED. dropout_rate=0.1. NMAD 0.01640 (worse than 0.01382 best). Overfitting persists at 9.6x. Ep295/400.
 pending,exp_015,—,—,pending,2026-06-18T11:00,—,—,—,—,—,—,PROMOTED from queued — dropout_rate=0.2 next experiment (9.4x overfitting gap needs stronger regularization)
