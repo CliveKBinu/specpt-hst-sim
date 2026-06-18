@@ -11,16 +11,15 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Last updated: 2026-06-18 UTC
-- Active experiment: exp_014 (dropout_rate=0.1, mlp_dim=1024, num_mlp_blocks=12, DESI autoencoder)
-- Best NMAD: 0.01382 (exp_013 — mlp_dim=1024, num_mlp_blocks=12, DESI autoencoder, residual fix)
-- Best config: mlp_dim=1024, num_mlp_blocks=12, lr=1e-4, wd=5e-5, DESI autoencoder, dropout_rate=0.0
-- Best Catastrophic Outliers: 22.86% (exp_008_v2 best at ep240; final 23.31%)
+- Last updated: 2026-06-18 15:13 UTC
+- Active experiment: exp_014 (dropout_rate=0.1, mlp_dim=1024, blocks=12) — submitted, running on cluster
+- Next experiment: exp_015 (dropout_rate=0.2) — pending, queue held
+- Best NMAD: 0.01382 (exp_013)
+- Best Catastrophic Outliers: 22.86% (exp_008_v2)
 - Total experiments completed: 9
-- Total experiments failed: 6
 - Total experiments running: 1 (exp_014)
-- Total tracked experiments: 16 (9 completed + 6 failed + 1 running)
-- Direction: Regularization under test. exp_013 achieved NMAD 0.01382 (TARGET ACHIEVED!) but with severe overfitting (9.7x train/val gap). exp_014 adds dropout_rate=0.1 to redshift head to combat overfitting while preserving the NMAD gain.
+- Total experiments pending: 1 (exp_015)
+- Direction: Regularization under test. exp_013 achieved NMAD 0.01382 (TARGET ACHIEVED) with 9.4x train/val overfitting gap. exp_014 (dropout=0.1) running on cluster. exp_015 (dropout=0.2) queued pending exp_014 completion.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.
