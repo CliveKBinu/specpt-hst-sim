@@ -40,6 +40,7 @@
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
 | exp_018 | configs/exp_018.yaml | — | — | — | — | — | — | — | — | mlp_dim 1024→768: all regularization levers exhausted and degraded. Reduce head capacity structurally (fewer params) to address 9.7x overfitting gap while preserving wide-representation benefits from exp_013. |
+| exp_019 | configs/exp_019.yaml | — | — | — | — | — | — | — | — | batch_size 128→256: preserve exp_013 optimal architecture (mlp_dim=1024, 12 blocks). Larger batch = smoother gradients to reduce 9.7x overfitting via optimization dynamics — a new lever, not architecture or regularization. |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
