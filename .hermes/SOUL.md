@@ -11,16 +11,16 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Last updated: 2026-06-17T22:00 UTC
-- Active experiment: exp_013 (mlp_dim=1024, num_mlp_blocks=12, DESI autoencoder, pretrained_redshift="") — retry of wider head hypothesis with residual projection fix. Job 21353794 SUBMITTED.
-- Best NMAD: 0.02295 (exp_008_v2 — num_mlp_blocks=12 + DESI autoencoder, rural-bush-21)
-- Best config: num_mlp_blocks=12, mlp_dim=512, lr=1e-4, DESI autoencoder
+- Last updated: 2026-06-18 UTC
+- Active experiment: exp_014 (dropout_rate=0.1, mlp_dim=1024, num_mlp_blocks=12, DESI autoencoder)
+- Best NMAD: 0.01382 (exp_013 — mlp_dim=1024, num_mlp_blocks=12, DESI autoencoder, residual fix)
+- Best config: mlp_dim=1024, num_mlp_blocks=12, lr=1e-4, wd=5e-5, DESI autoencoder, dropout_rate=0.0
 - Best Catastrophic Outliers: 22.86% (exp_008_v2 best at ep240; final 23.31%)
-- Total experiments completed: 8
+- Total experiments completed: 9
 - Total experiments failed: 6
-- Total experiments running: 1 (exp_013)
-- Total tracked experiments: 15 (8 completed + 6 failed + 1 running)
-- Direction: Width hypothesis under test. exp_012 (sparkling-wood-25) failed — residual connection dim mismatch when mlp_dim > 512. Code fixed with residual projection in ImprovedResidualMLPBlock. exp_013 retries the same wider head config (mlp_dim=1024, 12 blocks, DESI autoencoder, train from scratch) with the code fix applied. This cleanly tests whether increased head width improves NMAD after depth saturation at 12 blocks.
+- Total experiments running: 1 (exp_014)
+- Total tracked experiments: 16 (9 completed + 6 failed + 1 running)
+- Direction: Regularization under test. exp_013 achieved NMAD 0.01382 (TARGET ACHIEVED!) but with severe overfitting (9.7x train/val gap). exp_014 adds dropout_rate=0.1 to redshift head to combat overfitting while preserving the NMAD gain.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.
