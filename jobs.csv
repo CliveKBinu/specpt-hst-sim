@@ -16,5 +16,6 @@ job_id,experiment,run_id,run_name,state,start_time,end_time,val_nmad,val_loss,ca
 21353794,exp_013,fpw7o9pz,ruby-surf-26,completed,2026-06-17T21:25,2026-06-18T10:00,0.01382,0.377,24.85,,0.399,COMPLETED. NEW BEST NMAD 0.01382! Width hypothesis confirmed. mlp_dim=1024, blocks=12, DESI autoencoder, residual fix. Severe overfitting: train_loss=0.040 vs val_loss=0.377 (9.7x gap).
 21354881,exp_014,m03w5sgt,comic-sea-27,completed,2026-06-18T14:35,2026-06-18T18:30,0.01640,0.384,23.78,,0.429,COMPLETED. dropout_rate=0.1. NMAD 0.01640 (worse than 0.01382 best). Overfitting persists at 9.6x. Ep295/400.
 21355063,exp_015,bi2vfuwc,fragrant-blaze-28,completed,2026-06-18T11:00,2026-06-18T13:54,0.02156,0.3669,23.37,—,0.3875,COMPLETED. dropout_rate=0.2. NMAD 0.02156 (worse than 0.01382 best). Monotonic degradation: 0.0→0.1→0.2 all worsened. Ep200/400.
-21355096,exp_016,—,—,submitted,—,—,—,—,—,—,—,weight_decay=1e-5 — reduce regularization after dropout degraded NMAD
-21355463,exp_017,—,—,submitted,2026-06-18T19:25,—,—,—,—,—,weight_decay=5e-4 — higher regularization after wd=1e-5 degraded NMAD
+21355096,exp_016,c1y7wiur,celestial-wildflower-29,completed,—,—,0.02100,0.3728,24.04,—,0.3875,COMPLETED. weight_decay=1e-5 worsened NMAD 52% (0.01382→0.02100). Overfitting gap 9.1x unchanged. Early stopped ep210/400.
+21355463,exp_017,syo645wg,iconic-flower-30,completed,2026-06-18T19:25,,0.02132,0.3688,23.84,,0.4058,COMPLETED. weight_decay=5e-4. NMAD 0.02132 (worse than 0.01382 best). Ep220/400.
+,exp_018,,,pending,,,,,,,,mlp_dim 1024→768: reduce head capacity to address 9.7x overfitting gap

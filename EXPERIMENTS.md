@@ -33,12 +33,13 @@
 | exp_013 | configs/exp_013.yaml | fpw7o9pz | ruby-surf-26 | 0.01382 | 0.01539 | 24.85% | — | 0.399 | 0.377 | mlp_dim 1024, blocks=12, DESI autoencoder, residual fix. NEW BEST NMAD 0.01382! Severe overfitting: train_loss=0.040 vs val_loss=0.377 (9.7x gap). |
 | exp_014 | configs/exp_014.yaml | m03w5sgt | comic-sea-27 | 0.01640 | 0.01870 | 23.78% | — | 0.429 | 0.384 | dropout_rate=0.1 added to head. NMAD worsened 0.01382→0.01640. Overfitting gap unchanged at 9.6x. Dropout 0.1 too weak to regularize 12-block 1024-dim head. Epochs: 295. |
 | exp_015 | configs/exp_015.yaml | bi2vfuwc | fragrant-blaze-28 | 0.02156 | 0.02248 | 23.37% | — | 0.3875 | 0.3669 | dropout_rate=0.2. NMAD worsened to 0.02156 (56% worse than 0.01382 best). Dropout 0.0→0.1→0.2 shows monotonic degradation — regularization is wrong lever. Early stopped epoch 200/400. |
+| exp_016 | configs/exp_016.yaml | c1y7wiur | celestial-wildflower-29 | 0.02100 | 0.02100 | 24.04 | — | 0.3875 | 0.3728 | weight_decay=1e-5 worsened NMAD 52% (0.01382→0.02100). Overfitting gap 9.1x unchanged. Early stopped ep210/400. Recommendation: tune regularization opposite direction. |
+| exp_017 | configs/exp_017.yaml | syo645wg | iconic-flower-30 | 0.02132 | 0.0245 | 23.84% | — | 0.4058 | 0.3688 | weight_decay=5e-4 worsened NMAD 54% (0.01382→0.02132). Both regularization directions degraded — wd is exhausted. Early stopped ep220/400. Recommendation: hold_direction, revert to wd=5e-5. |
 
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| exp_016 | configs/exp_016.yaml | — | — | — | — | — | — | — | — | weight_decay 5e-5→1e-5: reduce regularization since dropout and higher wd consistently harmed. Analyst recommends weight_decay sweep. |
-| exp_017 | configs/exp_017.yaml | — | — | — | — | — | — | — | — | weight_decay 1e-5→5e-4: exp_016 lowered wd and NMAD degraded 52% — test higher regularization (opposite direction). |
+| exp_018 | configs/exp_018.yaml | — | — | — | — | — | — | — | — | mlp_dim 1024→768: all regularization levers exhausted and degraded. Reduce head capacity structurally (fewer params) to address 9.7x overfitting gap while preserving wide-representation benefits from exp_013. |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
