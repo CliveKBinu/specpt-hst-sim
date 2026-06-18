@@ -185,6 +185,8 @@ def trigger_orchestrator(run_id, run_name, state):
             [HERMES_BIN, "chat", "-q", prompt,
              "--provider", "opencode-go",
              "--model", WORKING_MODEL,
+             "--profile", "specpt-hst",
+             "--skills", "specpt-orchestrator",
              "--accept-hooks",
              "--quiet"],
             cwd=repo,

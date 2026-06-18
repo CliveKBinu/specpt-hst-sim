@@ -118,6 +118,8 @@ def trigger(run_id, state, run_name=None, timeout=1800):
         [HERMES_BIN, "chat", "-q", prompt,
          "--provider", "opencode-go",
          "--model", WORKING_MODEL,
+         "--profile", "specpt-hst",
+         "--skills", "specpt-orchestrator",
          "--accept-hooks",
          "--quiet"],
         cwd=repo,
