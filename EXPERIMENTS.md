@@ -30,12 +30,13 @@
 | exp_008 | configs/exp_008.yaml | ld28scut | drawn-sun-20 | 0.02568 | 0.02655 | 23.25% | -0.00045 | 0.375 | 0.348 | num_mlp_blocks 10→12, lr 1e-4, wd 5e-5. NMAD 0.02568 plateaued (statistically tied with exp_007 0.02565). Capacity saturating at ~10 blocks. Early stopped ep 219/400. |
 | exp_008_v2 | configs/exp_008.yaml | 2cnzeyqt | rural-bush-21 | **0.02295** | 0.02385 | 23.31% | -0.00369 | 0.393 | 0.358 | num_mlp_blocks=12 + DESI combined autoencoder + lr=1e-4. NEW BEST NMAD 0.02295 (10.5% over exp_007). Test NMAD 0.02726. Early stopped ep242/400. |
 | exp_009 | configs/exp_009.yaml | 2689fu6f | proud-sea-21 | 0.02611 | 0.02706 | 23.07% | — | — | 0.360 | lr 1e-4→2e-4, num_mlp_blocks=12, DESI autoencoder. Higher LR worsened NMAD (0.02611 vs 0.02295). Test NMAD 0.03283. Ep154/400 (early stopped). |
-| exp_013 | configs/exp_013.yaml | — | — | 0.01382 | 0.01539 | 24.85% | — | 0.399 | 0.377 | mlp_dim 1024, blocks=12, DESI autoencoder, residual fix. NEW BEST NMAD 0.01382! Severe overfitting: train_loss=0.040 vs val_loss=0.377 (9.7x gap). |
+| exp_013 | configs/exp_013.yaml | fpw7o9pz | ruby-surf-26 | 0.01382 | 0.01539 | 24.85% | — | 0.399 | 0.377 | mlp_dim 1024, blocks=12, DESI autoencoder, residual fix. NEW BEST NMAD 0.01382! Severe overfitting: train_loss=0.040 vs val_loss=0.377 (9.7x gap). |
 
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
 | exp_014 | configs/exp_014.yaml | — | — | — | — | — | — | — | — | Add dropout_rate=0.1 to redshift head to combat severe overfitting (9.7x train/val gap). Same base as exp_013 (mlp_dim=1024, blocks=12, DESI autoencoder). |
+| exp_015 | configs/exp_015.yaml | — | — | — | — | — | — | — | — | (queued — backup: if dropout_rate=0.1 is not enough, escalate to dropout_rate=0.2 for stronger regularization against 9.7x overfitting gap) |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
