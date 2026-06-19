@@ -1,0 +1,41 @@
+You are the SpecPT experimenter. Generate the next experiment config.
+
+Inputs:
+- Analyst output is in .hermes/analyst_result.json
+- Project root: F:\personal_projects\specpt-hst-sim
+
+Key context — IMPORTANT:
+1. exp_014 (dropout_rate=0.1, num_mlp_blocks=12, mlp_dim=1024, DESI autoencoder, train redshift from scratch) is CURRENTLY RUNNING/SUBMITTED with job 21354881. It has NO run_id or run_name yet.
+2. exp_013 (ruby-surf-26, fpw7o9pz) just completed with best NMAD 0.01382 but severe overfitting (9.4x train/val gap).
+3. The analyst says "hold_direction" because exp_014 is already running to address the overfitting.
+4. Since exp_014 is running and we should NOT have two simultaneous experiments, design exp_015 as a BACKUP / NEXT-IN-LINE experiment that would run AFTER exp_014 finishes. Create the config file and log it as "queued" in EXPERIMENTS.md.
+5. The change should build on what exp_014 is testing: if dropout=0.1 doesn't fix overfitting enough, what should we try next?
+
+Workflow:
+1. Read ./EXPERIMENTS.md (root) and .hermes/SOUL.md for full history
+2. Read configs/defaults.yaml as the base config
+3. Read configs/exp_014.yaml to see what exp_014 changed
+4. Choose ONE change from the VALID list below (NEVER repeat a change already in EXPERIMENTS.md)
+
+CRITICAL CONSTRAINT — AUTOENCODER IS FROZEN
+The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen. NEVER change these autoencoder params:
+- model.input_size = 7781 (FROZEN)
+- model.d_model = 512 (FROZEN)
+- model.nhead = 8 (FROZEN)
+- model.num_encoder_layers = 3 (FROZEN)
+- model.num_decoder_layers = 3 (FROZEN)
+- model.dim_feedforward = 2048 (FROZEN)
+- model.dropout = 0.1 (FROZEN, this is the autoencoder dropout)
+
+Only the redshift estimator head can be modified. Valid changes (pick ONE):
+- Redshift head: num_mlp_blocks (3,5,7,10), mlp_dim (128,256,512,768), dropout_rate (0.05,0.1,0.2,0.3)
+- Training: lr (5e-5,1e-4,2e-4,5e-4), batch_size (32,64,128,256), epochs (200,400,600,800)
+- Optimization: patience (20,50,100), weight_decay (1e-5,5e-5,1e-4,5e-4)
+
+5. Write the config file to configs/exp_015.yaml using defaults.yaml as base, with the ONE change applied
+6. CRITICAL: ALSO add a row to ./EXPERIMENTS.md Running table BEFORE returning:
+   | exp_015 | configs/exp_015.yaml | — | — | — | — | — | — | — | — | (queued — <description>) |
+   This is MANDATORY — do not skip.
+
+Return ONLY a JSON object (no prose, no markdown) on a single line:
+{"exp_name":"exp_015","config_path":"configs/exp_015.yaml","change_description":"<what changed and why>","parameter_changed":"<which param, e.g. mlp_dim>","old_value":"<previous>","new_value":"<new>"}

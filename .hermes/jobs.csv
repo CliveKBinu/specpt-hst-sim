@@ -19,5 +19,5 @@ job_id,experiment,run_id,run_name,state,start_time,end_time,val_nmad,val_loss,ca
 21355096,exp_016,c1y7wiur,celestial-wildflower-29,completed,—,—,0.02100,0.3728,24.04,—,0.3875,COMPLETED. weight_decay=1e-5 worsened NMAD 52% (0.01382→0.02100). Overfitting gap 9.1x unchanged. Early stopped ep210/400.
 21355463,exp_017,syo645wg,iconic-flower-30,completed,2026-06-18T19:25,,0.02132,0.3688,23.84,,0.4058,COMPLETED. weight_decay=5e-4. NMAD 0.02132 (worse than 0.01382 best). Ep220/400.
 21355569,exp_018,7ygfz3c1,sandy-frog-31,completed,,,0.02062,0.3722,23.74,,0.4113,mlp_dim 1024→768. NMAD 0.02062 WORSE than best 0.01382. Ep238/400.
-|21355739,exp_019,lff5uyf0,snowy-valley-32,finished,,,,,,,batch_size 128→256. NMAD 0.0167 (worse than 0.01382 best). 500-ep warmup never reached full 1e-4 LR. Ep355/400.
-|21357043,exp_020,,,,submitted,,,,,,,warmup_epochs 500→50
+21355739,exp_019,lff5uyf0,snowy-valley-32,finished,,,,,,,batch_size 128→256. NMAD 0.0167 (worse than 0.01382 best). 500-ep warmup never reached full 1e-4 LR. Ep355/400.
+21357043,exp_020,,,,submitted,,,,,,,warmup_epochs 500→50

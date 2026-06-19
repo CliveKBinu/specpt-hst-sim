@@ -41,7 +41,6 @@
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-
 | exp_020 | configs/exp_020.yaml | — | — | — | — | — | — | — | — | warmup_epochs 500→50: exp_019's 500-epoch linear warmup starved the model — LR reached only 7.1e-5 by epoch 354, never trained at full 1e-4 LR. Shortening warmup to 50 epochs lets model reach full LR quickly, potentially breaking the 0.017 NMAD plateau. Keep all other exp_019 params (batch=256, mlp_dim=1024, 12 blocks, ReduceLROnPlateau). |
 
 ## Diagnostics (failed/crashed runs)

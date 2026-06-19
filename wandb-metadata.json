@@ -1,0 +1,85 @@
+{
+  "os":  "Linux-6.18.34-1.el9.x86_64-x86_64-with-glibc2.34",
+  "python":  "CPython 3.12.7",
+  "startedAt":  "2026-06-17T14:54:04.616454Z",
+  "args":  [
+    "--config",
+    "configs/exp_010.yaml",
+    "--wandb_entity",
+    "",
+    "--wandb_project",
+    ""
+  ],
+  "program":  "-m src.specpt.training.train",
+  "git":  {
+    "remote":  "https://github.com/CliveKBinu/specpt-hst-sim.git",
+    "commit":  "c3f27693474fe562b24a393ac3e5387e58f99092"
+  },
+  "email":  "ckb2084@g.rit.edu",
+  "root":  "/home/ckb2084/research/specpt-hst-sim",
+  "host":  "skl-a-50.rc.rit.edu",
+  "executable":  "/home/ckb2084/conda/envs/pytorch/bin/python",
+  "cpu_count":  36,
+  "cpu_count_logical":  36,
+  "gpu":  "NVIDIA A100-PCIE-40GB",
+  "gpu_count":  1,
+  "disk":  {
+    "/":  {
+      "total":  "34342961152",
+      "used":  "15730892800"
+    }
+  },
+  "memory":  {
+    "total":  "403804225536"
+  },
+  "cpu":  {
+    "count":  36,
+    "countLogical":  36
+  },
+  "gpu_nvidia":  [
+    {
+      "name":  "NVIDIA A100-PCIE-40GB",
+      "memoryTotal":  "42949672960",
+      "cudaCores":  6912,
+      "architecture":  "Ampere"
+    }
+  ],
+  "slurm":  {
+    "cluster_name":  "sporc",
+    "conf":  "/etc/slurm/slurm.conf",
+    "cpus_on_node":  "1",
+    "gpus_on_node":  "1",
+    "gtids":  "0",
+    "job_account":  "redshift",
+    "job_cpus_per_node":  "1",
+    "job_end_time":  "1781877024",
+    "job_gid":  "5003",
+    "job_gpus":  "1",
+    "job_id":  "21352771",
+    "job_name":  "SpecPT_Exp",
+    "job_nodelist":  "skl-a-50",
+    "job_num_nodes":  "1",
+    "job_partition":  "sporc",
+    "job_qos":  "qos_tier3",
+    "job_start_time":  "1781707824",
+    "job_uid":  "2898835",
+    "job_user":  "ckb2084",
+    "jobid":  "21352771",
+    "localid":  "0",
+    "mem_per_node":  "131072",
+    "nnodes":  "1",
+    "nodeid":  "0",
+    "nodelist":  "skl-a-50",
+    "oom_kill_step":  "0",
+    "prio_process":  "0",
+    "procid":  "0",
+    "script_context":  "prolog_task",
+    "submit_dir":  "/home/ckb2084/research/specpt-hst-sim",
+    "submit_host":  "sporcsubmit.rc.rit.edu",
+    "task_pid":  "2942748",
+    "tasks_per_node":  "1",
+    "topology_addr":  "spine-01.spine-03.skl-a-50",
+    "topology_addr_pattern":  "switch.switch.node"
+  },
+  "cudaVersion":  "13.2"
+}
