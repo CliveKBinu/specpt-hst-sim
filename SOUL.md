@@ -11,13 +11,13 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Last updated: 2026-06-17T22:00 UTC
-- Active experiment: exp_013 (mlp_dim=1024, 12 blocks, DESI autoencoder, pretrained_redshift="") — retry with residual projection fix. Job 21353794 SUBMITTED.
-- Best NMAD: 0.02295 (exp_008_v2 — num_mlp_blocks=12 + DESI autoencoder, rural-bush-21)
-- Best config: num_mlp_blocks=12, mlp_dim=512, lr=1e-4, DESI autoencoder
-- Total experiments completed: 8, failed: 6, running: 1 (exp_013)
-- Total tracked: 15 (8 completed + 6 failed + 1 running)
-- Direction: Width hypothesis under test. exp_012 failed — residual dim mismatch. Code fixed. exp_013 retries wider head (mlp_dim=1024) with projection fix.
+- Last updated: 2026-06-19 08:10 UTC
+- Active experiment: exp_020: warmup_epochs 500→50 (preserving exp_019's batch=256, mlp_dim=1024, 12 blocks) — preparing to submit
+- Best NMAD: 0.01382 (exp_013)
+- Best Catastrophic Outliers: 22.86% (exp_008_v2)
+- Total experiments completed: 16
+- Total experiments running: 0
+- Direction: exp_019 (batch=256) improved NMAD from 0.02062 (exp_018) → 0.0167 but revealed critical LR warmup bottleneck: 500-epoch linear warmup starved the model, which never trained at full 1e-4 LR. Pivoting to LR warmup fix: warmup_epochs 500→50 so model trains at full 1e-4 for most of the run. All other params preserved from exp_019.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.

@@ -35,12 +35,14 @@
 | exp_015 | configs/exp_015.yaml | bi2vfuwc | fragrant-blaze-28 | 0.02156 | 0.02248 | 23.37% | — | 0.3875 | 0.3669 | dropout_rate=0.2. NMAD worsened to 0.02156 (56% worse than 0.01382 best). Dropout 0.0→0.1→0.2 shows monotonic degradation — regularization is wrong lever. Early stopped epoch 200/400. |
 | exp_016 | configs/exp_016.yaml | c1y7wiur | celestial-wildflower-29 | 0.02100 | 0.02100 | 24.04 | — | 0.3875 | 0.3728 | weight_decay=1e-5 worsened NMAD 52% (0.01382→0.02100). Overfitting gap 9.1x unchanged. Early stopped ep210/400. Recommendation: tune regularization opposite direction. |
 | exp_017 | configs/exp_017.yaml | syo645wg | iconic-flower-30 | 0.02132 | 0.0245 | 23.84% | — | 0.4058 | 0.3688 | weight_decay=5e-4 worsened NMAD 54% (0.01382→0.02132). Both regularization directions degraded — wd is exhausted. Early stopped ep220/400. Recommendation: hold_direction, revert to wd=5e-5. |
+|| exp_018 | configs/exp_018.yaml | 7ygfz3c1 | sandy-frog-31 | 0.02062 | 0.02093 | 23.74% | — | 0.4113 | 0.3722 | mlp_dim 1024→768 reduced overfitting gap 9.7x→8.5x but NMAD degraded 49% (0.01382→0.02062). Fifth consecutive post-exp_013 degradation. Recommendation: hold_direction. Ep238/400 (early stopped). |
+|| exp_019 | configs/exp_019.yaml | lff5uyf0 | snowy-valley-32 | 0.0167 | 0.0167 | 24.70 | — | 0.399 | 0.370 | batch_size 128→256: larger batch for smoother gradients. NMAD 0.0167 (21% worse than 0.01382 best, but 19% better than exp_018 0.02062). Overfitting gap 10.2x. Critical: 500-epoch warmup starved model — LR only 7.1e-5 at ep355, never reached full 1e-4. ReduceLROnPlateau never triggered. Ep355/400 early stop. |
 
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| exp_018 | configs/exp_018.yaml | — | — | — | — | — | — | — | — | mlp_dim 1024→768: all regularization levers exhausted and degraded. Reduce head capacity structurally (fewer params) to address 9.7x overfitting gap while preserving wide-representation benefits from exp_013. |
-| exp_019 | configs/exp_019.yaml | — | — | — | — | — | — | — | — | batch_size 128→256: preserve exp_013 optimal architecture (mlp_dim=1024, 12 blocks). Larger batch = smoother gradients to reduce 9.7x overfitting via optimization dynamics — a new lever, not architecture or regularization. |
+
+| exp_020 | configs/exp_020.yaml | — | — | — | — | — | — | — | — | warmup_epochs 500→50: exp_019's 500-epoch linear warmup starved the model — LR reached only 7.1e-5 by epoch 354, never trained at full 1e-4 LR. Shortening warmup to 50 epochs lets model reach full LR quickly, potentially breaking the 0.017 NMAD plateau. Keep all other exp_019 params (batch=256, mlp_dim=1024, 12 blocks, ReduceLROnPlateau). |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |

@@ -11,13 +11,13 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Last updated: 2026-06-18 UTC
-- Active experiment: exp_018 (mlp_dim 1024→768, wd=5e-5) — submitted to cluster, job 21355569
-- Best NMAD: 0.01382 (exp_013) — UNCHANGED
+- Last updated: 2026-06-19 08:10 UTC
+- Active experiment: exp_020: warmup_epochs 500→50 (preserving exp_019's batch=256, mlp_dim=1024, 12 blocks) — submitting to cluster
+- Best NMAD: 0.01382 (exp_013)
 - Best Catastrophic Outliers: 22.86% (exp_008_v2)
-- Total experiments completed: 14 (exp_017 just completed)
-- Total experiments running: 1 (exp_018)
-- Direction: Capacity reduction after all regularization levers (all 4 wd variants, dropout 0.1/0.2) exhausted and degraded. Testing mlp_dim 1024→768 to structurally reduce head capacity while preserving 12-block depth.
+- Total experiments completed: 16
+- Total experiments running: 0
+- Direction: exp_019 (batch=256) improved NMAD from 0.02062 (exp_018) → 0.0167 but revealed critical LR warmup bottleneck: 500-epoch linear warmup starved the model, which never trained at full 1e-4 LR. Pivoting to LR warmup fix: warmup_epochs 500→50 so model trains at full 1e-4 for most of the run. All other params preserved from exp_019.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.
