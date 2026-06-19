@@ -45,6 +45,7 @@
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
 | exp_022 | configs/exp_022.yaml | — | — | — | — | — | — | — | — | epochs 400→600: exp_021 peaked at epoch 373 (NMAD 0.01506) then degraded in final 27 epochs. Extending to 600 epochs gives ReduceLROnPlateau more time to trigger LR reductions and find the true minimum beyond the initial peak. Preserves all exp_021 params (patience=100, batch=256, mlp_dim=1024, 12 blocks, lr=1e-4, wd=5e-5, warmup=50). |
+| exp_023 | configs/exp_023.yaml | — | — | — | — | — | — | — | — | lr 1e-4→5e-5: batch/warmup/patience/epochs direction exhausted (hold_direction). Seven consecutive experiments cannot reproduce exp_013's 0.01382; severe 10x overfitting persists. Lower LR slows learning in the high-capacity 12-block/1024-dim head, potentially improving generalization. |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
