@@ -21,4 +21,4 @@ job_id,experiment,run_id,run_name,state,start_time,end_time,val_nmad,val_loss,ca
 21355569,exp_018,7ygfz3c1,sandy-frog-31,completed,,,0.02062,0.3722,23.74,,0.4113,mlp_dim 1024→768. NMAD 0.02062 WORSE than best 0.01382. Ep238/400.
 21355739,exp_019,lff5uyf0,snowy-valley-32,finished,,,,,,,batch_size 128→256. NMAD 0.0167 (worse than 0.01382 best). 500-ep warmup never reached full 1e-4 LR. Ep355/400.
 21357043,exp_020,mjt4144y,deep-dew-33,finished,2026-06-19T14:00,2026-06-19T20:00,0.01909,0.3739,23.55,,0.402,COMPLETED. warmup_epochs 500→50. Best NMAD 0.01909 (worse than best 0.01382 and worse than exp_019 0.0167). LR reached 6.36e-5. Early stopped ep318/400. Severe overfitting: train_loss 0.038 vs val_loss 0.374.
-,exp_021,,,pending,,,,,,,patience 50→100
+21357770,exp_021,x5j6t95u,amber-gorge-34,finished,2026-06-19T14:00,2026-06-19T20:00,0.01506,0.3719,24.07,,0.4448,patience 50→100. Best NMAD 0.01506 (better than exp_020 0.01909). All-time best 0.01382 (exp_013).
