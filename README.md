@@ -26,7 +26,7 @@
 
 | # | Name | Change | Status | NMAD | Outliers | Last Update |
 |---|------|--------|--------|------|----------|-------------|
-| exp_020 | warmup_epochs 500→50, batch=256, mlp_dim=1024, 12 blocks | Fix LR warmup starvation (warmup_epochs 500→50) | 📤 **Submitting…** | — | — | 2026-06-19 |
+| exp_020 | warmup_epochs 500→50, batch=256, mlp_dim=1024, 12 blocks | Fix LR warmup starvation (warmup_epochs 500→50) | 📤 **Submitted.** Job 21357043 | — | — | 2026-06-19 |
 
 > ℹ️ **exp_019** (batch_size 128→256) finished: NMAD 0.0167 — 19% better than exp_018, but 500-epoch warmup starved the model. LR only 7.1e-5 at ep355, never reached full 1e-4. exp_020 shortens warmup to 50 epochs.
 

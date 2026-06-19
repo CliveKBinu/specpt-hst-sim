@@ -12,7 +12,7 @@ systematic experimentation.
 
 ## Current State (updated by agents)
 - Last updated: 2026-06-19 08:10 UTC
-- Active experiment: exp_020: warmup_epochs 500→50 (preserving exp_019's batch=256, mlp_dim=1024, 12 blocks) — preparing to submit
+- Active experiment: exp_020: warmup_epochs 500→50 (preserving exp_019's batch=256, mlp_dim=1024, 12 blocks) — submitted to cluster, job 21357043
 - Best NMAD: 0.01382 (exp_013)
 - Best Catastrophic Outliers: 22.86% (exp_008_v2)
 - Total experiments completed: 16
