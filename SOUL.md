@@ -11,13 +11,13 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Last updated: 2026-06-19 08:10 UTC
-- Active experiment: exp_020: warmup_epochs 500→50 (preserving exp_019's batch=256, mlp_dim=1024, 12 blocks) — submitted to cluster, job 21357043
+- Last updated: 2026-06-19 18:20 UTC
+- Active experiment: exp_022: epochs 400→600 (patience=100, batch=256, mlp_dim=1024, 12 blocks, lr=1e-4, wd=5e-5, warmup=50) — submitted to cluster, job 21357893
 - Best NMAD: 0.01382 (exp_013)
 - Best Catastrophic Outliers: 22.86% (exp_008_v2)
-- Total experiments completed: 16
-- Total experiments running: 0
-- Direction: exp_019 (batch=256) improved NMAD from 0.02062 (exp_018) → 0.0167 but revealed critical LR warmup bottleneck: 500-epoch linear warmup starved the model, which never trained at full 1e-4 LR. Pivoting to LR warmup fix: warmup_epochs 500→50 so model trains at full 1e-4 for most of the run. All other params preserved from exp_019.
+- Total experiments completed: 17
+- Total experiments running: 1
+- Direction: exp_021 (patience 50→100) completed: best NMAD 0.01506 (19% better than exp_020 0.01909) but still 9% above all-time best 0.01382 (exp_013). Full 400 epochs trained — NMAD peaked at epoch 373 then degraded in final 27 epochs. Train/val loss gap ~10x persists. Extending epochs 400→600 (exp_022) to give ReduceLROnPlateau more time to trigger LR reductions and find the true minimum beyond the initial peak. All other params preserved from exp_021.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.
