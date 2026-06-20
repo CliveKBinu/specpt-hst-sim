@@ -17,7 +17,7 @@
 | Catastrophic Outliers | < 1% | 22.86% | 21.86% |
 | ECE | < 0.1 | — | — |
 
-*Last updated: 2026-06-19 18:20 UTC*
+*Last updated: 2026-06-19 23:52 UTC*
 
 ## Completed Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
@@ -39,13 +39,14 @@
 | exp_019 | configs/exp_019.yaml | lff5uyf0 | snowy-valley-32 | 0.0167 | 0.0167 | 24.70 | — | 0.399 | 0.370 | batch_size 128→256: larger batch for smoother gradients. NMAD 0.0167 (21% worse than 0.01382 best, but 19% better than exp_018 0.02062). Overfitting gap 10.2x. Critical: 500-epoch warmup starved model — LR only 7.1e-5 at ep355, never reached full 1e-4. ReduceLROnPlateau never triggered. Ep355/400 early stop. |
 | exp_020 | configs/exp_020.yaml | mjt4144y | deep-dew-33 | 0.01909 | 0.01953 | 23.55% | — | 0.402 | 0.3739 | warmup_epochs 500→50: warmup fix worked, LR ascended to 6.36e-5, but NMAD WORSENED to 0.01909 (worse than exp_019 0.0167, 38% worse than best 0.01382). Severe overfitting: train_loss 0.038 vs val_loss 0.374 (gap 0.3308). Outliers rising 23.0%→23.6%. Early stop ep318/400. NMAD still decreasing at termination — longer patience may help. |
 | exp_021 | configs/exp_021.yaml | x5j6t95u | amber-gorge-34 | 0.01506 | 0.01727 | 24.07% | — | 0.4448 | 0.3719 | patience 50→100: exp_020 early-stopped while NMAD still decreasing. Longer patience enabled full 400-epoch training. Best NMAD 0.01506 at epoch 373 but degraded in final 27 epochs. Train/val loss gap ~10x — severe overfitting persists. LR barely decayed (1e-4→8e-5). |
+| exp_022 | configs/exp_022.yaml | h15nlcte | elated-bird-35 | 0.01712 | 0.01755 | 23.99% | — | 0.419 | 0.368 | epochs 400→600 backfired: early-stopped ep342/600. Best NMAD 0.01712 at ep341 (worse than exp_021 0.01506). LR barely moved (6.8e-5). 7th consecutive post-exp_013 degradation. |
 
 
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| exp_022 | configs/exp_022.yaml | — | — | — | — | — | — | — | — | epochs 400→600: exp_021 peaked at epoch 373 (NMAD 0.01506) then degraded in final 27 epochs. Extending to 600 epochs gives ReduceLROnPlateau more time to trigger LR reductions and find the true minimum beyond the initial peak. Preserves all exp_021 params (patience=100, batch=256, mlp_dim=1024, 12 blocks, lr=1e-4, wd=5e-5, warmup=50). |
-| exp_023 | configs/exp_023.yaml | — | — | — | — | — | — | — | — | lr 1e-4→5e-5: batch/warmup/patience/epochs direction exhausted (hold_direction). Seven consecutive experiments cannot reproduce exp_013's 0.01382; severe 10x overfitting persists. Lower LR slows learning in the high-capacity 12-block/1024-dim head, potentially improving generalization. |
+| exp_023 | configs/exp_023.yaml | 21358171 | — | — | — | — | — | — | — | lr 1e-4→5e-5: hold_direction — lower LR for better generalization in high-capacity 12-block/1024-dim head. |
+| exp_024 | configs/exp_024.yaml | — | — | — | — | — | — | — | — | weight_decay 5e-5→1e-4: at lr=5e-5 the effective regularization (lr*wd) halved vs lr=1e-4 baseline; doubling wd restores original regularization balance while keeping lower LR for generalization. |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
