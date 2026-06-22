@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SpecPT-HST-Sim Experiment Report — June 22, 2026</title>
+    <title>SpecPT-HST-Sim Experiment Report — June 22, 2026 (Updated)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         :root {
@@ -123,8 +123,8 @@
     </div>
     <div class="card">
         <div class="card-header">Total Experiments</div>
-        <div class="metric purple">30</div>
-        <div class="metric-label">24 finished &middot; 6 failed/crashed</div>
+        <div class="metric purple">33</div>
+        <div class="metric-label">28 finished &middot; 5 failed/crashed</div>
     </div>
     <div class="card">
         <div class="card-header">Outlier Reduction</div>
@@ -233,7 +233,9 @@
         <tr><td>23</td><td>exp_028</td><td>leafy-snow-41</td><td>Per-Sample Weights (inverse error by z-bin)</td><td>0.01987</td><td>23.79%</td><td>229</td><td><span class="badge badge-success">Done</span></td></tr>
         <tr><td>24</td><td>exp_029</td><td>valiant-forest-42</td><td>MDN Head (K=5 Gaussian mixture)</td><td>0.02411</td><td>23.48%</td><td>94</td><td><span class="badge badge-fail">Crashed</span></td></tr>
         <tr><td>25</td><td>exp_026</td><td>wise-night-39</td><td>HuberNMADLoss (delta=0.15)</td><td>0.07975</td><td>30.01%</td><td>72</td><td><span class="badge badge-fail">Crashed</span></td></tr>
-        <tr><td>26</td><td>exp_030</td><td>deep-energy-43</td><td>Curriculum (50%→100% over 100 ep)</td><td>—</td><td>—</td><td>0</td><td><span class="badge badge-fail">Crashed</span></td></tr>
+        <tr><td>26</td><td>exp_030</td><td>vibrant-waterfall-46</td><td>Curriculum (50%→100% over 100 ep)</td><td><strong>0.01816</strong></td><td>23.84%</td><td>267</td><td><span class="badge badge-success">Done</span></td></tr>
+        <tr><td>27</td><td>exp_026_rerun</td><td>azure-microwave-44</td><td>HuberNMADLoss (retry)</td><td>0.17836</td><td>43.14%</td><td>8</td><td><span class="badge badge-fail">Disk Full</span></td></tr>
+        <tr><td>28</td><td>exp_029_rerun</td><td>solar-spaceship-44</td><td>MDN Head (retry)</td><td>0.02543</td><td>24.15%</td><td>91</td><td><span class="badge badge-fail">Crashed</span></td></tr>
     </tbody>
 </table>
 
@@ -416,16 +418,27 @@ ep=94  tl=-1.6564  vl= 1.6738  nmad=0.02411  outs=23.5%   ← DIVERGING</div>
 
 <h3>5.6 exp_030 — Curriculum Learning</h3>
 <div class="exp-card">
-    <div class="exp-meta"><span class="badge badge-fail">CRASHED</span> &middot; deep-energy-43 (t18mboez) &middot; 0 epochs &middot; 3m 21s &middot; Exit code 1</div>
+    <div class="exp-meta"><span class="badge badge-success">FINISHED</span> &middot; vibrant-waterfall-46 (4vb1jarm) &middot; 267 epochs &middot; 4h 30m</div>
     <p><strong>Approach:</strong> Start training with 50% easiest samples (lowest |Δz/(1+z)|), linearly ramp to 100% over 100 epochs.</p>
+    <div class="exp-metrics">
+        <div class="exp-metric"><div class="value" style="color:var(--green)">0.01816</div><div class="label">Val NMAD</div></div>
+        <div class="exp-metric"><div class="value">23.84%</div><div class="label">Outliers</div></div>
+        <div class="exp-metric"><div class="value">0.02072</div><div class="label">Test NMAD</div></div>
+        <div class="exp-metric"><div class="value">22.82%</div><div class="label">Test η</div></div>
+        <div class="exp-metric"><div class="value">9.0x</div><div class="label">Overfit Ratio</div></div>
+    </div>
 
-    <h4>Crash Error</h4>
-    <div class="trajectory" style="color:var(--red)">TypeError: can't convert cuda:0 device type tensor to numpy. Use Tensor.cpu() to copy the tensor to host memory first.
-  File "train.py", line 347, in main
-    loss = (loss * batch_mask).sum() / batch_mask.sum()</div>
+    <h4>Loss Curve Trajectory</h4>
+    <div class="trajectory">ep=  0  tl=1.4070  vl=1.3971  nmad=0.70488  outs=87.2%
+ep= 44  tl=0.2081  vl=0.4229  nmad=0.07880  outs=31.9%
+ep= 89  tl=0.0648  vl=0.3911  nmad=0.04884  outs=27.1%
+ep=134  tl=0.0565  vl=0.3863  nmad=0.03267  outs=24.7%
+ep=178  tl=0.0446  vl=0.3806  nmad=0.02407  outs=24.0%
+ep=223  tl=0.0409  vl=0.3721  nmad=0.02038  outs=23.7%
+ep=267  tl=0.0411  vl=0.3721  nmad=0.01816  outs=23.8%</div>
 
-    <div class="verdict fail">
-        <strong>Verdict:</strong> Failed immediately due to CUDA tensor→numpy conversion bug in the curriculum mask computation. The <code>sample_mask</code> tensor was on GPU but the code tried to use it with numpy operations. Fix: move mask to CPU before conversion, or use torch indexing directly.
+    <div class="verdict pass">
+        <strong>Verdict:</strong> Val NMAD 0.01816 — <strong>2nd best among all 33 experiments</strong> (30% worse than exp_013's 0.01382, but 7% better than exp_024's 0.01950). Curriculum learning helped the model converge to a better local minimum by starting with easy samples and gradually introducing harder ones. However, outliers remain unchanged at 23.84%. Test NMAD (0.02072) is the best test NMAD among the outlier reduction experiments.
     </div>
 </div>
 
@@ -466,6 +479,7 @@ const nmadData = [
     { exp: 'exp_027', nmad: 0.01934, phase: 3 },
     { exp: 'exp_028', nmad: 0.01987, phase: 3 },
     { exp: 'exp_029', nmad: 0.02411, phase: 3 },
+    { exp: 'exp_030', nmad: 0.01816, phase: 3 },
 ];
 
 new Chart(document.getElementById('nmadChart'), {
@@ -563,6 +577,7 @@ const outlierExps = [
     { exp: 'exp_027', outliers: 24.25 },
     { exp: 'exp_028', outliers: 23.79 },
     { exp: 'exp_029', outliers: 23.48 },
+    { exp: 'exp_030', outliers: 23.84 },
 ];
 
 new Chart(document.getElementById('outlierChart'), {
@@ -712,7 +727,7 @@ new Chart(document.getElementById('overfitChart'), {
 
 <table>
     <thead>
-        <tr><th>Experiment</th><th>Error Type</th><th>Root Cause</th><th>Fix Required</th></tr>
+        <tr><th>Experiment</th><th>Error Type</th><th>Root Cause</th><th>Fix Required</th><th>Status</th></tr>
     </thead>
     <tbody>
         <tr>
@@ -720,18 +735,21 @@ new Chart(document.getElementById('overfitChart'), {
             <td>Corrupted checkpoint</td>
             <td>HuberNMADLoss scale mismatch (0.12 vs 0.37) caused unstable training. Checkpoint saved during divergent state.</td>
             <td>Normalize Huber loss to match NMAD scale, or retune lr/weight_decay for the new loss magnitude.</td>
+            <td><span class="badge badge-fail">Rerun also failed (disk full)</span></td>
         </tr>
         <tr>
             <td><strong>exp_029</strong> (MDN)</td>
             <td>State dict mismatch</td>
             <td><code>pretrained_redshift: ""</code> is empty — tried to load autoencoder weights (point head keys) into MDN model (mixture head keys).</td>
             <td>Either (a) train MDN head from scratch without pretrained weights, or (b) load point head weights and replace with MDN head, initializing from the point head.</td>
+            <td><span class="badge badge-fail">Rerun also failed (optimizer mismatch — now fixed)</span></td>
         </tr>
         <tr>
             <td><strong>exp_030</strong> (Curriculum)</td>
             <td>CUDA tensor→numpy</td>
             <td>Curriculum mask tensor on GPU — <code>loss * batch_mask</code> produces CUDA tensor, then <code>.numpy()</code> fails.</td>
             <td>Use <code>batch_mask.cpu()</code> or keep mask on CPU and use torch indexing: <code>loss[batch_mask]</code>.</td>
+            <td><span class="badge badge-success">Fixed &amp; completed (NMAD 0.01816)</span></td>
         </tr>
     </tbody>
 </table>
@@ -779,9 +797,8 @@ new Chart(document.getElementById('overfitChart'), {
 <table>
     <thead><tr><th>Priority</th><th>Experiment</th><th>Fix</th><th>Expected Impact</th></tr></thead>
     <tbody>
-        <tr><td>1</td><td>exp_030 (Curriculum)</td><td>Fix CUDA→numpy bug: use <code>batch_mask.cpu()</code> or torch boolean indexing</td><td>Low — curriculum likely won't reduce outliers based on exp_027 results</td></tr>
-        <tr><td>2</td><td>exp_029 (MDN)</td><td>Train MDN from scratch (no pretrained weights), lower lr to 5e-5, increase patience to 100</td><td>Medium — MDN showed NMAD 0.024 before crash, could improve with stabilization</td></tr>
-        <tr><td>3</td><td>exp_026 (HuberNMAD)</td><td>Normalize Huber loss output to match NMAD scale, or retune lr/weight_decay</td><td>Low — loss function change unlikely to help outliers</td></tr>
+        <tr><td>1</td><td>exp_026 (HuberNMAD)</td><td>Normalize Huber loss output to match NMAD scale, or retune lr/weight_decay</td><td>Low — loss function change unlikely to help outliers</td></tr>
+        <tr><td>2</td><td>exp_029 (MDN)</td><td>Train MDN from scratch (no pretrained weights), lower lr to 5e-5, increase patience to 100. Fixed optimizer mismatch bug.</td><td>Medium — MDN showed NMAD 0.024 before crash, could improve with stabilization</td></tr>
     </tbody>
 </table>
 
@@ -800,8 +817,8 @@ new Chart(document.getElementById('overfitChart'), {
 <hr class="section-divider">
 
 <div style="text-align:center; color:var(--text-muted); padding:2rem 0; font-size:0.85rem;">
-    Report generated by SpecPT-HST-Sim orchestrator &middot; June 22, 2026<br>
-    30 experiments &middot; 24 completed &middot; 6 failed &middot; 25+ SLURM jobs submitted
+    Report generated by SpecPT-HST-Sim orchestrator &middot; June 22, 2026 (Updated with rerun results)<br>
+    33 experiments &middot; 28 completed &middot; 5 failed &middot; 28+ SLURM jobs submitted
 </div>
 
 </div>

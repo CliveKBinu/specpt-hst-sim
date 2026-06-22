@@ -47,15 +47,16 @@
 | exp_027 | configs/exp_027.yaml | gkq9vb4q | playful-spaceship-38 | 0.01934 | 0.01934 | 24.25% | -0.00035 | 0.3694 | 0.3697 | Two-Stage (200+200, 4x outlier weight). NMAD 0.01934 — comparable to exp_024. Stage 2 outlier weighting did NOT reduce outliers (23.7%→24.2%). Early stopped ep241/400. |
 | exp_028 | configs/exp_028.yaml | etw2syi3 | leafy-snow-41 | 0.01987 | 0.01987 | 23.79% | -0.00124 | 0.3719 | 0.3686 | Per-Sample Weights (inverse error by redshift bin). No improvement. Outliers uniformly distributed across redshift bins — targeting redshift bins is wrong axis. |
 | exp_029 | configs/exp_029.yaml | pl0vpj93 | valiant-forest-42 | 0.02411 | 0.02411 | 23.48% | 0.00063 | 0.4514 | 1.6738 | MDN Head (K=5). CRASHED ep94 — state_dict mismatch (pretrained_redshift empty). Train loss went negative (-1.66). Val loss diverged 0.91→1.67. NMAD 74% worse. |
-| exp_030 | configs/exp_030.yaml | t18mboez | deep-energy-43 | — | — | — | — | — | — | Curriculum (50%→100% over 100 ep). CRASHED immediately — CUDA tensor→numpy bug in curriculum mask. |
+| exp_030 | configs/exp_030.yaml | 4vb1jarm | vibrant-waterfall-46 | 0.01816 | 0.01816 | 23.84% | 0.00156 | 0.3721 | 0.3721 | Curriculum (50%→100% over 100 ep). NMAD 0.01816 — 2nd best among all experiments! Test NMAD 0.02072. Outliers unchanged at 23.84%. |
+| exp_026_rerun | configs/exp_026.yaml | blft8duo | azure-microwave-44 | 0.17836 | 0.17836 | 43.14% | — | 0.1328 | 0.1342 | HuberNMADLoss retry. CRASHED ep8 — disk full on cluster (PytorchStreamWriter failed). |
+| exp_029_rerun | configs/exp_029.yaml | fcu8wxkj | solar-spaceship-44 | 0.02543 | 0.02543 | 24.15% | -1.5285 | 1.6628 | 1.6628 | MDN Head retry. CRASHED ep91 — optimizer state_dict mismatch on post-training checkpoint load (fixed in 28dd126). |
+| exp_030_rerun | configs/exp_030.yaml | 4vb1jarm | vibrant-waterfall-46 | 0.01816 | 0.01816 | 23.84% | 0.00156 | 0.3721 | 0.3721 | Curriculum retry. SUCCESS! NMAD 0.01816 (2nd best). 267 epochs. |
 
 
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| exp_026_rerun | configs/exp_026.yaml | 21362922 | — | — | — | — | — | — | — | HuberNMADLoss retry. Crash fixes: corrupted checkpoint handling, checkpoint cleanup. |
-| exp_029_rerun | configs/exp_029.yaml | 21362923 | — | — | — | — | — | — | — | MDN Head retry. Crash fixes: strict=False checkpoint loading, checkpoint cleanup. |
-| exp_030_rerun | configs/exp_030.yaml | 21362924 | — | — | — | — | — | — | — | Curriculum retry. Crash fixes: CUDA mask tensor conversion. |
+No experiments currently running.
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
