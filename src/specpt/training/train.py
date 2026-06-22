@@ -4,6 +4,7 @@ import yaml
 import torch
 import wandb
 import numpy as np
+import zipfile
 from pathlib import Path
 
 from ..model import SpecPT, EnhancedSpecPTForRedshift, EnhancedSpecPTForRedshiftMDN
@@ -57,8 +58,29 @@ def save_checkpoint(model, optimizer, scheduler, epoch, train_losses, val_losses
 
 
 def load_checkpoint(path, model, optimizer, scheduler=None, device="cpu"):
-    checkpoint = torch.load(path, map_location=device)
-    model.load_state_dict(checkpoint["model_state_dict"])
+    try:
+        checkpoint = torch.load(path, map_location=device)
+    except (RuntimeError, zipfile.BadZipFile, EOFError) as e:
+        print(f"Warning: Corrupted checkpoint at {path}: {e}")
+        print("  Skipping checkpoint load — model will use current weights")
+        return None, None, None, None
+    
+    model_state = checkpoint["model_state_dict"]
+    
+    # Try loading with strict=False to handle architecture mismatches
+    # (e.g., loading point-head checkpoint into MDN model)
+    missing, unexpected = model.load_state_dict(model_state, strict=False)
+    if missing or unexpected:
+        print(f"Checkpoint key mismatch — missing {len(missing)}, unexpected {len(unexpected)}")
+        if missing:
+            print(f"  Missing: {missing[:5]}...")
+        if unexpected:
+            print(f"  Unexpected: {unexpected[:5]}...")
+        # Only load shared keys (backbone weights)
+        shared_keys = {k: v for k, v in model_state.items() if k in model.state_dict()}
+        model.load_state_dict(shared_keys, strict=False)
+        print(f"  Loaded {len(shared_keys)} shared keys (backbone only)")
+    
     optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
     if scheduler and checkpoint.get("scheduler_state_dict"):
         scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
@@ -175,6 +197,13 @@ def main():
     train_cfg = cfg["training"]
     data_cfg = cfg["data"]
     wandb_cfg = cfg.get("wandb", {})
+
+    # Clean checkpoints directory to prevent cross-experiment contamination
+    ckpt_dir = "checkpoints"
+    if os.path.exists(ckpt_dir):
+        import shutil
+        shutil.rmtree(ckpt_dir)
+        print(f"Cleaned {ckpt_dir}/ to prevent stale checkpoints")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -340,8 +369,8 @@ def main():
 
             # Apply curriculum mask if available
             if curriculum_mask is not None:
-                # Get mask for current batch indices
-                batch_mask = curriculum_mask[idx]
+                # Get mask for current batch indices and move to device
+                batch_mask = torch.from_numpy(curriculum_mask[idx]).float().to(device)
                 if batch_mask.sum() == 0:
                     continue  # Skip batch if no samples selected
                 loss = (loss * batch_mask).sum() / batch_mask.sum()
@@ -611,8 +640,11 @@ def main():
 
     best_ckpt_path = "checkpoints/best_model.pth"
     if os.path.exists(best_ckpt_path):
-        load_checkpoint(best_ckpt_path, redshift_model, optimizer, scheduler, device)
-        print(f"Loaded best checkpoint from {best_ckpt_path}")
+        result = load_checkpoint(best_ckpt_path, redshift_model, optimizer, scheduler, device)
+        if result[0] is not None:
+            print(f"Loaded best checkpoint from {best_ckpt_path}")
+        else:
+            print(f"Could not load checkpoint — using last training state")
 
     redshift_model.eval()
     test_true = []
