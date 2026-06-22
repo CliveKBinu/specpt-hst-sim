@@ -165,6 +165,96 @@ class EnhancedSpecPTForRedshift(nn.Module):
         return redshift
 
 
+class MDNHead(nn.Module):
+    """Mixture Density Network head for uncertainty-aware redshift prediction.
+
+    Instead of predicting a single z value, outputs K Gaussian mixture components
+    with means, log-variances, and mixture weights.
+    """
+
+    def __init__(self, input_dim, output_features=1, num_mixtures=5):
+        super().__init__()
+        self.num_mixtures = num_mixtures
+        self.output_features = output_features
+
+        # Means: K means for each output feature
+        self.means = nn.Linear(input_dim, num_mixtures * output_features)
+        # Log-variances: K log-variances for each output feature
+        self.log_vars = nn.Linear(input_dim, num_mixtures * output_features)
+        # Mixture weights: K weights (softmax normalized)
+        self.mix_weights = nn.Linear(input_dim, num_mixtures)
+
+    def forward(self, x):
+        """
+        Args:
+            x: (batch_size, input_dim) features from MLP blocks
+
+        Returns:
+            means: (batch_size, num_mixtures * output_features)
+            log_vars: (batch_size, num_mixtures * output_features)
+            mix_weights: (batch_size, num_mixtures) - softmax normalized
+        """
+        means = self.means(x)
+        log_vars = self.log_vars(x)
+        mix_weights = F.softmax(self.mix_weights(x), dim=-1)
+        return means, log_vars, mix_weights
+
+
+class EnhancedSpecPTForRedshiftMDN(nn.Module):
+    """SpecPT with MDN head for uncertainty-aware redshift prediction."""
+
+    def __init__(
+        self,
+        pretrained_model,
+        output_features=1,
+        num_mlp_blocks=5,
+        mlp_dim=512,
+        dropout_rate=0.2,
+        num_mixtures=5,
+    ):
+        super().__init__()
+        self.encoder = pretrained_model.transformer_encoder
+        self.proj_to_d_model = pretrained_model.proj_to_d_model
+        self.pretrained_model = pretrained_model
+
+        for param in list(self.encoder.parameters())[-4:]:
+            param.requires_grad = True
+
+        self.mlp_blocks = nn.Sequential(
+            *[
+                ImprovedResidualMLPBlock(
+                    mlp_dim if i > 0 else 512, mlp_dim, dropout_rate
+                )
+                for i in range(num_mlp_blocks)
+            ]
+        )
+
+        self.mdn_head = MDNHead(mlp_dim, output_features, num_mixtures)
+        self.attention = nn.MultiheadAttention(embed_dim=512, num_heads=8)
+
+    def forward(self, x):
+        """
+        Returns:
+            means: (batch_size, num_mixtures * output_features)
+            log_vars: (batch_size, num_mixtures * output_features)
+            mix_weights: (batch_size, num_mixtures)
+        """
+        x = x.unsqueeze(1)
+        x = self.pretrained_model.forward_conv(x)
+        x = x.flatten(start_dim=1)
+        x = self.proj_to_d_model(x)
+        x = x.unsqueeze(0)
+        encoded_features = self.encoder(x)
+        encoded_features = encoded_features.squeeze(0)
+        attn_output, _ = self.attention(
+            encoded_features, encoded_features, encoded_features
+        )
+        x = attn_output + encoded_features
+        x = self.mlp_blocks(x)
+        means, log_vars, mix_weights = self.mdn_head(x)
+        return means, log_vars, mix_weights
+
+
 class SpectrumNormalizer:
     @staticmethod
     def median_normalize(spectrum):

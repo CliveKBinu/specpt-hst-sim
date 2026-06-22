@@ -40,13 +40,19 @@
 | exp_020 | configs/exp_020.yaml | mjt4144y | deep-dew-33 | 0.01909 | 0.01953 | 23.55% | — | 0.402 | 0.3739 | warmup_epochs 500→50: warmup fix worked, LR ascended to 6.36e-5, but NMAD WORSENED to 0.01909 (worse than exp_019 0.0167, 38% worse than best 0.01382). Severe overfitting: train_loss 0.038 vs val_loss 0.374 (gap 0.3308). Outliers rising 23.0%→23.6%. Early stop ep318/400. NMAD still decreasing at termination — longer patience may help. |
 | exp_021 | configs/exp_021.yaml | x5j6t95u | amber-gorge-34 | 0.01506 | 0.01727 | 24.07% | — | 0.4448 | 0.3719 | patience 50→100: exp_020 early-stopped while NMAD still decreasing. Longer patience enabled full 400-epoch training. Best NMAD 0.01506 at epoch 373 but degraded in final 27 epochs. Train/val loss gap ~10x — severe overfitting persists. LR barely decayed (1e-4→8e-5). |
 | exp_022 | configs/exp_022.yaml | h15nlcte | elated-bird-35 | 0.01712 | 0.01755 | 23.99% | — | 0.419 | 0.368 | epochs 400→600 backfired: early-stopped ep342/600. Best NMAD 0.01712 at ep341 (worse than exp_021 0.01506). LR barely moved (6.8e-5). 7th consecutive post-exp_013 degradation. |
+| exp_023 | configs/exp_023.yaml | l070d2wj | balmy-snow-36 | 0.016995 | 0.020748 | 23.60% | — | 0.400 | 0.371 | lr 1e-4→5e-5: hold_direction — best NMAD 0.016995 (improved vs recent experiments but 8th consecutive degradation vs 0.01382 best). NMAD oscillated 0.017-0.023. Completed 502/600 epochs. |
 
 
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| exp_023 | configs/exp_023.yaml | 21358171 | — | — | — | — | — | — | — | lr 1e-4→5e-5: hold_direction — lower LR for better generalization in high-capacity 12-block/1024-dim head. |
-| exp_024 | configs/exp_024.yaml | — | — | — | — | — | — | — | — | weight_decay 5e-5→1e-4: at lr=5e-5 the effective regularization (lr*wd) halved vs lr=1e-4 baseline; doubling wd restores original regularization balance while keeping lower LR for generalization. |
+| exp_024 | configs/exp_024.yaml | — | — | — | — | — | — | — | — | weight_decay 5e-5→1e-4 at lr=5e-5 (restore effective regularization balance in high-capacity head). Job 21359571 submitted and running. |
+| exp_025 | configs/exp_025.yaml | — | — | — | — | — | — | — | — | Test-Time Augmentation (TTA): n_aug=10, noise_std=0.01, shift=3, scale=[0.95,1.05]. Zero training cost, inference-only improvement. |
+| exp_026 | configs/exp_026.yaml | — | — | — | — | — | — | — | — | HuberNMADLoss: quadratic for small errors, linear for large. Delta=0.15 matches outlier threshold. |
+| exp_027 | configs/exp_027.yaml | — | — | — | — | — | — | — | — | Two-Stage Training: Stage 1 (200 epochs normal) + Stage 2 (200 epochs with outliers weighted 4x). |
+| exp_028 | configs/exp_028.yaml | — | — | — | — | — | — | — | — | Per-Sample Loss Weighting: inverse error weighting by redshift bin [0,0.5,1.0,1.5,2.0,3.0]. |
+| exp_029 | configs/exp_029.yaml | — | — | — | — | — | — | — | — | MDN Head: K=5 Gaussian mixture for uncertainty-aware prediction. |
+| exp_030 | configs/exp_030.yaml | — | — | — | — | — | — | — | — | Curriculum Learning: start with 50% easiest samples, ramp to 100% over 100 epochs. |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |

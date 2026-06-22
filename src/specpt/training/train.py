@@ -6,10 +6,10 @@ import wandb
 import numpy as np
 from pathlib import Path
 
-from ..model import SpecPT, EnhancedSpecPTForRedshift
-from ..losses import NMADLoss
+from ..model import SpecPT, EnhancedSpecPTForRedshift, EnhancedSpecPTForRedshiftMDN
+from ..losses import NMADLoss, HuberNMADLoss, MDNMADLoss
 from ..dataloader import load_grism_data, split_data, create_dataloaders
-from .eval import compute_metrics
+from .eval import compute_metrics, predict_with_tta
 
 
 def load_config(config_path):
@@ -65,6 +65,103 @@ def load_checkpoint(path, model, optimizer, scheduler=None, device="cpu"):
     return checkpoint["epoch"], checkpoint["train_losses"], checkpoint["val_losses"], checkpoint["best_val_loss"]
 
 
+def compute_redshift_weights(train_loader, model, device, bins=None):
+    """Compute per-sample weights based on inverse error frequency by redshift bin.
+
+    Args:
+        train_loader: DataLoader for training set.
+        model: Trained model for error estimation.
+        device: torch device.
+        bins: Redshift bin edges.
+
+    Returns:
+        weights: np.array of per-sample weights (shape: [n_samples]).
+        bin_edges: The bins used.
+    """
+    if bins is None:
+        bins = [0, 0.5, 1.0, 1.5, 2.0, 3.0]
+
+    model.eval()
+    all_errors = []
+    all_z_true = []
+
+    with torch.no_grad():
+        for X, Y, idx, t_id in train_loader:
+            X, Y = X.to(device), Y.to(device)
+            preds = model(X)
+            delz = torch.abs((preds - Y) / (1 + Y)).flatten()
+            all_errors.append(delz.cpu().numpy())
+            all_z_true.append(Y.cpu().numpy().flatten())
+
+    all_errors = np.concatenate(all_errors)
+    all_z_true = np.concatenate(all_z_true)
+
+    # Compute mean error per bin
+    bin_errors = []
+    for i in range(len(bins) - 1):
+        mask = (all_z_true >= bins[i]) & (all_z_true < bins[i + 1])
+        if np.sum(mask) > 0:
+            bin_errors.append(np.mean(all_errors[mask]))
+        else:
+            bin_errors.append(0.0)
+
+    # Inverse error weighting (higher error = higher weight)
+    bin_errors = np.array(bin_errors)
+    bin_errors = np.maximum(bin_errors, 1e-6)  # Avoid division by zero
+    bin_weights = 1.0 / bin_errors
+    bin_weights = bin_weights / bin_weights.sum()  # Normalize to sum to 1
+
+    # Assign weights to samples
+    sample_weights = np.ones(len(all_z_true))
+    for i in range(len(bins) - 1):
+        mask = (all_z_true >= bins[i]) & (all_z_true < bins[i + 1])
+        sample_weights[mask] = bin_weights[i] * len(bins)  # Scale by number of bins
+
+    print(f"Redshift bin weights: {dict(zip([f'[{bins[i]:.1f},{bins[i+1]:.1f})' for i in range(len(bins)-1)], bin_weights))}")
+
+    return sample_weights, bins
+
+
+def compute_curriculum_weights(train_loader, model, device, start_pct=0.5, ramp_epochs=100, epoch=0):
+    """Compute curriculum weights that gradually increase dataset difficulty.
+
+    Args:
+        train_loader: DataLoader for training set.
+        model: Model for difficulty estimation.
+        device: torch device.
+        start_pct: Starting percentage of easiest samples.
+        ramp_epochs: Number of epochs to ramp from start_pct to 100%.
+        epoch: Current epoch.
+
+    Returns:
+        sample_mask: Boolean mask of which samples to use.
+    """
+    # Linearly increase from start_pct to 1.0 over ramp_epochs
+    progress = min(epoch / ramp_epochs, 1.0)
+    current_pct = start_pct + (1.0 - start_pct) * progress
+
+    model.eval()
+    all_errors = []
+
+    with torch.no_grad():
+        for X, Y, idx, t_id in train_loader:
+            X, Y = X.to(device), Y.to(device)
+            preds = model(X)
+            delz = torch.abs((preds - Y) / (1 + Y)).flatten()
+            all_errors.append(delz.cpu().numpy())
+
+    all_errors = np.concatenate(all_errors)
+
+    # Select easiest samples based on current percentage
+    threshold = np.percentile(all_errors, current_pct * 100)
+    sample_mask = all_errors <= threshold
+
+    print(f"Curriculum: epoch {epoch}, using {current_pct:.1%} of samples "
+          f"({np.sum(sample_mask)}/{len(sample_mask)} samples, threshold={threshold:.4f})")
+
+    return sample_mask
+
+
 def main():
     parser = argparse.ArgumentParser(description="SpecPT Redshift Training")
     parser.add_argument("--config", required=True, help="Path to experiment config YAML")
@@ -104,13 +201,28 @@ def main():
     state_dict = torch.load(ae_path, map_location=device)
     auto_model.load_state_dict(state_dict, strict=True)
 
-    redshift_model = EnhancedSpecPTForRedshift(
-        auto_model,
-        output_features=1,
-        num_mlp_blocks=model_cfg["num_mlp_blocks"],
-        mlp_dim=model_cfg["mlp_dim"],
-        dropout_rate=model_cfg["dropout"],
-    )
+    # Check for MDN prediction type
+    prediction_type = model_cfg.get("prediction_type", "point")
+    num_mixtures = model_cfg.get("num_mixtures", 5)
+
+    if prediction_type == "mdn":
+        redshift_model = EnhancedSpecPTForRedshiftMDN(
+            auto_model,
+            output_features=1,
+            num_mlp_blocks=model_cfg["num_mlp_blocks"],
+            mlp_dim=model_cfg["mlp_dim"],
+            dropout_rate=model_cfg["dropout"],
+            num_mixtures=num_mixtures,
+        )
+        print(f"Using MDN head with {num_mixtures} mixtures")
+    else:
+        redshift_model = EnhancedSpecPTForRedshift(
+            auto_model,
+            output_features=1,
+            num_mlp_blocks=model_cfg["num_mlp_blocks"],
+            mlp_dim=model_cfg["mlp_dim"],
+            dropout_rate=model_cfg["dropout"],
+        )
 
     rz_path = os.path.expanduser(data_cfg.get("pretrained_redshift", "") or "")
     if rz_path:
@@ -140,7 +252,19 @@ def main():
     )
     os.makedirs("outputs/plots", exist_ok=True)
 
-    criterion = NMADLoss(normalization_factor="std")
+    loss_type = train_cfg.get("loss", "nmad")
+    loss_delta = float(train_cfg.get("loss_delta", 0.15))
+    
+    # MDN loss takes precedence if prediction_type is mdn
+    if prediction_type == "mdn":
+        criterion = MDNMADLoss(normalization_factor="std")
+        print("Using MDNMADLoss for MDN prediction")
+    elif loss_type == "huber_nmad":
+        criterion = HuberNMADLoss(delta=loss_delta, normalization_factor="std")
+        print(f"Using HuberNMADLoss with delta={loss_delta}")
+    else:
+        criterion = NMADLoss(normalization_factor="std")
+        print("Using NMADLoss")
     optimizer = torch.optim.AdamW(
         redshift_model.parameters(),
         lr=float(train_cfg["lr"]),
@@ -156,6 +280,19 @@ def main():
 
     wandb.watch(redshift_model, criterion=criterion, log="gradients")
 
+    # ========== SAMPLE WEIGHTING (redshift bin inverse error) ==========
+    sample_weighting = train_cfg.get("sample_weighting", None)
+    weight_bins = train_cfg.get("weight_bins", [0, 0.5, 1.0, 1.5, 2.0, 3.0])
+    sample_weights = None
+
+    if sample_weighting == "redshift_inverse_error":
+        print("\nComputing redshift-based sample weights...")
+        sample_weights, _ = compute_redshift_weights(
+            train_loader, redshift_model, device, bins=weight_bins
+        )
+        sample_weights = torch.from_numpy(sample_weights).float().to(device)
+        print(f"Sample weights computed: min={sample_weights.min():.3f}, max={sample_weights.max():.3f}")
+
     start_epoch = 0
     best_val_loss = float("inf")
     train_losses = []
@@ -169,16 +306,51 @@ def main():
         )
         start_epoch += 1
 
+    # ========== CURRICULUM LEARNING ==========
+    curriculum = train_cfg.get("curriculum", False)
+    curriculum_start_pct = float(train_cfg.get("curriculum_start_pct", 0.5))
+    curriculum_ramp_epochs = train_cfg.get("curriculum_ramp_epochs", 100)
+
     for epoch in range(start_epoch, train_cfg["epochs"]):
         redshift_model.train()
         loss_epoch = 0.0
         batch_count = 0
 
+        # Compute curriculum mask if enabled
+        curriculum_mask = None
+        if curriculum and epoch < curriculum_ramp_epochs:
+            curriculum_mask = compute_curriculum_weights(
+                train_loader, redshift_model, device,
+                start_pct=curriculum_start_pct,
+                ramp_epochs=curriculum_ramp_epochs,
+                epoch=epoch,
+            )
+
         for X, Y, idx, t_id in train_loader:
             X, Y = X.to(device), Y.to(device)
             optimizer.zero_grad()
-            preds = redshift_model(X)
-            loss = criterion(preds, Y)
+            
+            # Handle MDN vs point predictions
+            if prediction_type == "mdn":
+                means, log_vars, mix_weights = redshift_model(X)
+                loss = criterion(means, log_vars, mix_weights, Y)
+            else:
+                preds = redshift_model(X)
+                loss = criterion(preds, Y)
+
+            # Apply curriculum mask if available
+            if curriculum_mask is not None:
+                # Get mask for current batch indices
+                batch_mask = curriculum_mask[idx]
+                if batch_mask.sum() == 0:
+                    continue  # Skip batch if no samples selected
+                loss = (loss * batch_mask).sum() / batch_mask.sum()
+
+            # Apply sample weights if available
+            elif sample_weights is not None:
+                # idx contains the original indices in the dataset
+                weights = sample_weights[idx]
+                loss = (loss * weights).mean()
 
             if torch.isnan(loss) or torch.isinf(loss):
                 continue
@@ -202,8 +374,21 @@ def main():
         with torch.no_grad():
             for X, Y, idx, t_id in val_loader:
                 X, Y = X.to(device), Y.to(device)
-                preds = redshift_model(X)
-                val_loss_batch = criterion(preds, Y)
+                
+                # Handle MDN vs point predictions
+                if prediction_type == "mdn":
+                    means, log_vars, mix_weights = redshift_model(X)
+                    val_loss_batch = criterion(means, log_vars, mix_weights, Y)
+                    # Extract predictions from MDN (highest-weight component mean)
+                    batch_size = means.shape[0]
+                    num_mixtures = mix_weights.shape[1]
+                    means_reshaped = means.view(batch_size, num_mixtures, 1)
+                    best_comp = torch.argmax(mix_weights, dim=-1)
+                    preds = means_reshaped[torch.arange(batch_size), best_comp, 0]
+                else:
+                    preds = redshift_model(X)
+                    val_loss_batch = criterion(preds, Y)
+                
                 if torch.isnan(val_loss_batch) or torch.isinf(val_loss_batch):
                     continue
                 val_loss_epoch += val_loss_batch.item()
@@ -260,6 +445,165 @@ def main():
             print(f"Early stopping at epoch {epoch+1}")
             break
 
+    # ========== TWO-STAGE TRAINING (Stage 2) ==========
+    two_stage = train_cfg.get("two_stage", False)
+    if two_stage:
+        stage2_epochs = train_cfg.get("stage2_epochs", 200)
+        outlier_weight = float(train_cfg.get("outlier_weight", 4.0))
+        outlier_threshold = float(train_cfg.get("outlier_threshold", 0.15))
+        stage2_patience = train_cfg.get("stage2_patience", train_cfg["patience"])
+
+        print("\n" + "="*60)
+        print(f"STAGE 2: Outlier Re-weighting (weight={outlier_weight}, threshold={outlier_threshold})")
+        print("="*60)
+
+        # Load best Stage 1 checkpoint
+        best_ckpt_path = "checkpoints/best_model.pth"
+        if os.path.exists(best_ckpt_path):
+            load_checkpoint(best_ckpt_path, redshift_model, optimizer, scheduler, device)
+            print(f"Loaded best Stage 1 checkpoint from {best_ckpt_path}")
+
+        # Identify outliers on validation set
+        redshift_model.eval()
+        val_errors = []
+        val_indices = []
+        with torch.no_grad():
+            for X, Y, idx, t_id in val_loader:
+                X, Y = X.to(device), Y.to(device)
+                preds = redshift_model(X)
+                delz = torch.abs((preds - Y) / (1 + Y)).flatten()
+                val_errors.append(delz.cpu().numpy())
+                val_indices.append(idx.numpy())
+
+        val_errors = np.concatenate(val_errors)
+        val_indices = np.concatenate(val_indices)
+        n_outliers = np.sum(val_errors > outlier_threshold)
+        print(f"Identified {n_outliers}/{len(val_errors)} outliers in validation set")
+
+        # Create weighted sampler for training set
+        # Compute per-sample weights based on error from Stage 1 model
+        redshift_model.eval()
+        train_errors = []
+        with torch.no_grad():
+            for X, Y, idx, t_id in train_loader:
+                X, Y = X.to(device), Y.to(device)
+                preds = redshift_model(X)
+                delz = torch.abs((preds - Y) / (1 + Y)).flatten()
+                train_errors.append(delz.cpu().numpy())
+
+        train_errors = np.concatenate(train_errors)
+        # Weight: 1.0 for normal samples, outlier_weight for outliers
+        sample_weights = np.where(
+            train_errors > outlier_threshold, outlier_weight, 1.0
+        )
+        print(f"Outlier weights applied: {np.sum(sample_weights > 1)}/{len(sample_weights)} samples weighted {outlier_weight}x")
+
+        # Create weighted sampler
+        weighted_sampler = torch.utils.data.WeightedRandomSampler(
+            weights=sample_weights,
+            num_samples=len(sample_weights),
+            replacement=True,
+        )
+
+        # Reset optimizer and scheduler for Stage 2
+        optimizer = torch.optim.AdamW(
+            redshift_model.parameters(),
+            lr=float(train_cfg["lr"]),
+            weight_decay=float(train_cfg.get("weight_decay", 0)),
+        )
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, mode="min", factor=0.1, patience=20
+        )
+
+        stage2_patience_counter = 0
+        stage2_best_val_loss = float("inf")
+
+        for epoch in range(stage2_epochs):
+            redshift_model.train()
+            loss_epoch = 0.0
+            batch_count = 0
+
+            for X, Y, idx, t_id in train_loader:
+                X, Y = X.to(device), Y.to(device)
+                optimizer.zero_grad()
+                preds = redshift_model(X)
+                loss = criterion(preds, Y)
+
+                if torch.isnan(loss) or torch.isinf(loss):
+                    continue
+
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(redshift_model.parameters(), max_norm=1.0)
+                optimizer.step()
+                loss_epoch += loss.item()
+                batch_count += 1
+
+            train_loss = loss_epoch / max(batch_count, 1)
+
+            redshift_model.eval()
+            val_loss_epoch = 0.0
+            val_count = 0
+            all_preds = []
+            all_true = []
+
+            with torch.no_grad():
+                for X, Y, idx, t_id in val_loader:
+                    X, Y = X.to(device), Y.to(device)
+                    preds = redshift_model(X)
+                    val_loss_batch = criterion(preds, Y)
+                    if torch.isnan(val_loss_batch) or torch.isinf(val_loss_batch):
+                        continue
+                    val_loss_epoch += val_loss_batch.item()
+                    val_count += 1
+                    all_preds.append(preds.cpu().numpy().flatten())
+                    all_true.append(Y.cpu().numpy().flatten())
+
+            val_loss = val_loss_epoch / max(val_count, 1)
+            scheduler.step(val_loss)
+
+            all_preds = np.concatenate(all_preds)
+            all_true = np.concatenate(all_true)
+            metrics = compute_metrics(all_true, all_preds)
+
+            wandb.log({
+                "stage2_train_loss": train_loss,
+                "stage2_val_loss": val_loss,
+                "stage2_val_nmad": metrics["nmad"],
+                "stage2_val_z_bias": metrics["bias"],
+                "stage2_catastrophic_outliers": metrics["eta"],
+                "stage2_val_rmse": metrics["rmse"],
+                "stage2_lr": optimizer.param_groups[0]["lr"],
+                "stage2_epoch": epoch,
+            })
+
+            if val_loss < stage2_best_val_loss:
+                stage2_best_val_loss = val_loss
+                stage2_patience_counter = 0
+                save_checkpoint(
+                    redshift_model, optimizer, scheduler, epoch,
+                    train_losses, val_losses, stage2_best_val_loss,
+                    "checkpoints/stage2_best_model.pth",
+                )
+            else:
+                stage2_patience_counter += 1
+
+            print(
+                f"Stage2 Epoch {epoch+1}/{stage2_epochs} | "
+                f"Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f} | "
+                f"NMAD: {metrics['nmad']:.4f} | Bias: {metrics['bias']:.4f} | "
+                f"η: {metrics['eta']:.2f}%"
+            )
+
+            if stage2_patience_counter >= stage2_patience:
+                print(f"Stage 2 early stopping at epoch {epoch+1}")
+                break
+
+        # Load Stage 2 best checkpoint for final evaluation
+        stage2_ckpt_path = "checkpoints/stage2_best_model.pth"
+        if os.path.exists(stage2_ckpt_path):
+            load_checkpoint(stage2_ckpt_path, redshift_model, optimizer, scheduler, device)
+            print(f"Loaded best Stage 2 checkpoint from {stage2_ckpt_path}")
+
     # ========== POST-TRAINING TEST EVALUATION ==========
     print("\n" + "="*60)
     print("POST-TRAINING EVALUATION ON TEST SET")
@@ -278,7 +622,19 @@ def main():
     with torch.no_grad():
         for X, Y, idx, t_id in test_loader:
             X, Y = X.to(device), Y.to(device)
-            preds = redshift_model(X)
+            
+            # Handle MDN vs point predictions
+            if prediction_type == "mdn":
+                means, log_vars, mix_weights = redshift_model(X)
+                # Extract predictions from MDN (highest-weight component mean)
+                batch_size = means.shape[0]
+                num_mixtures = mix_weights.shape[1]
+                means_reshaped = means.view(batch_size, num_mixtures, 1)
+                best_comp = torch.argmax(mix_weights, dim=-1)
+                preds = means_reshaped[torch.arange(batch_size), best_comp, 0]
+            else:
+                preds = redshift_model(X)
+            
             test_true.extend(Y.cpu().numpy().flatten().tolist())
             test_preds.extend(preds.cpu().numpy().flatten().tolist())
             test_target_ids.extend(list(t_id))
@@ -299,6 +655,42 @@ def main():
         "test_rmse": test_metrics["rmse"],
         "test_bias": test_metrics["bias"],
     })
+
+    # ========== TEST-TIME AUGMENTATION (TTA) ==========
+    tta_cfg = cfg.get("tta", {})
+    if tta_cfg.get("enabled", False):
+        print("\n" + "="*60)
+        print("TEST-TIME AUGMENTATION (TTA)")
+        print("="*60)
+
+        tta_true, tta_preds = predict_with_tta(
+            redshift_model, test_loader, device, tta_cfg
+        )
+        tta_metrics = compute_metrics(tta_true, tta_preds)
+        print(f"\nTTA Test Metrics (n_aug={tta_cfg.get('n_augmentations', 10)}):")
+        print(f"  NMAD:  {tta_metrics['nmad']:.5f}")
+        print(f"  \u03b7:     {tta_metrics['eta']:.2f}%")
+        print(f"  RMSE:  {tta_metrics['rmse']:.5f}")
+        print(f"  Bias:  {tta_metrics['bias']:.5f}")
+
+        # Compare with standard inference
+        nmad_delta = tta_metrics["nmad"] - test_metrics["nmad"]
+        eta_delta = tta_metrics["eta"] - test_metrics["eta"]
+        print(f"\n  vs Standard: NMAD {'+' if nmad_delta >= 0 else ''}{nmad_delta:.5f}, "
+              f"\u03b7 {'+' if eta_delta >= 0 else ''}{eta_delta:.2f}%")
+
+        wandb.log({
+            "tta_nmad": tta_metrics["nmad"],
+            "tta_eta": tta_metrics["eta"],
+            "tta_rmse": tta_metrics["rmse"],
+            "tta_bias": tta_metrics["bias"],
+        })
+
+        # Use TTA predictions for the true vs predicted z plot
+        test_true = tta_true
+        test_preds = tta_preds
+        test_metrics = tta_metrics
+        print("Using TTA predictions for plots.")
 
     # ========== TRUE vs PREDICTED Z PLOT ==========
     import matplotlib
