@@ -24,9 +24,13 @@
 
 ## 🔬 Active Experiments
 
-No experiments currently running. See [Experiment Log](EXPERIMENTS.md) for full history.
+| # | Name | Change | Status | NMAD | Outliers | Last Update |
+|---|------|--------|--------|------|----------|-------------|
+| exp_026 rerun | HuberNMADLoss | Quadratic for small errors, linear for large. Delta=0.15. Fixed corrupted checkpoint handling. | 📤 **Submitted.** Job 21362922 | — | — | 2026-06-22 |
+| exp_029 rerun | MDN Head | K=5 Gaussian mixture. Fixed checkpoint loading (strict=False). Training from scratch. | 📤 **Submitted.** Job 21362923 | — | — | 2026-06-22 |
+| exp_030 rerun | Curriculum Learning | Start with 50% easiest, ramp to 100%. Fixed CUDA mask tensor bug. | 📤 **Submitted.** Job 21362924 | — | — | 2026-06-22 |
 
-> ℹ️ **Outlier Reduction Campaign Complete.** 6 approaches tested (TTA, HuberNMAD, Two-Stage, Per-Sample Weights, MDN, Curriculum). 3 completed successfully, 3 crashed. <strong>None reduced outliers below 23%.</strong> Outliers confirmed data-invariant across 26+ experiments. See [`reports/report_2026-06-22.html`](reports/report_2026-06-22.html) for full analysis.
+> ℹ️ **Outlier Reduction Campaign — Reruns.** 3 experiments that previously crashed are being rerun with bug fixes. See [`reports/report_2026-06-22.html`](reports/report_2026-06-22.html) for analysis of the first attempt.
 
 > ⚠️ **Autoencoder frozen.** Experiments exp_001 and exp_002 failed because they modified the autoencoder architecture (d_model / num_layers). The autoencoder is a pretrained, frozen model. Only the redshift estimator head (num_mlp_blocks, mlp_dim, dropout_rate, training params) can be changed. See diagnostics in [`EXPERIMENTS.md`](EXPERIMENTS.md) for details.
 

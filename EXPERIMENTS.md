@@ -53,7 +53,9 @@
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-No experiments currently running.
+| exp_026_rerun | configs/exp_026.yaml | 21362922 | — | — | — | — | — | — | — | HuberNMADLoss retry. Crash fixes: corrupted checkpoint handling, checkpoint cleanup. |
+| exp_029_rerun | configs/exp_029.yaml | 21362923 | — | — | — | — | — | — | — | MDN Head retry. Crash fixes: strict=False checkpoint loading, checkpoint cleanup. |
+| exp_030_rerun | configs/exp_030.yaml | 21362924 | — | — | — | — | — | — | — | Curriculum retry. Crash fixes: CUDA mask tensor conversion. |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
