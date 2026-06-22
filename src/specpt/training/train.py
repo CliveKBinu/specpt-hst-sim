@@ -80,6 +80,9 @@ def load_checkpoint(path, model, optimizer, scheduler=None, device="cpu"):
         shared_keys = {k: v for k, v in model_state.items() if k in model.state_dict()}
         model.load_state_dict(shared_keys, strict=False)
         print(f"  Loaded {len(shared_keys)} shared keys (backbone only)")
+        # Skip optimizer/scheduler loading — parameter groups won't match
+        print("  Skipping optimizer/scheduler loading (architecture mismatch)")
+        return checkpoint["epoch"], checkpoint["train_losses"], checkpoint["val_losses"], checkpoint["best_val_loss"]
     
     optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
     if scheduler and checkpoint.get("scheduler_state_dict"):
