@@ -46,13 +46,13 @@
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| exp_024 | configs/exp_024.yaml | — | — | — | — | — | — | — | — | weight_decay 5e-5→1e-4 at lr=5e-5 (restore effective regularization balance in high-capacity head). Job 21359571 submitted and running. |
-| exp_025 | configs/exp_025.yaml | — | — | — | — | — | — | — | — | Test-Time Augmentation (TTA): n_aug=10, noise_std=0.01, shift=3, scale=[0.95,1.05]. Zero training cost, inference-only improvement. |
-| exp_026 | configs/exp_026.yaml | — | — | — | — | — | — | — | — | HuberNMADLoss: quadratic for small errors, linear for large. Delta=0.15 matches outlier threshold. |
-| exp_027 | configs/exp_027.yaml | — | — | — | — | — | — | — | — | Two-Stage Training: Stage 1 (200 epochs normal) + Stage 2 (200 epochs with outliers weighted 4x). |
-| exp_028 | configs/exp_028.yaml | — | — | — | — | — | — | — | — | Per-Sample Loss Weighting: inverse error weighting by redshift bin [0,0.5,1.0,1.5,2.0,3.0]. |
-| exp_029 | configs/exp_029.yaml | — | — | — | — | — | — | — | — | MDN Head: K=5 Gaussian mixture for uncertainty-aware prediction. |
-| exp_030 | configs/exp_030.yaml | — | — | — | — | — | — | — | — | Curriculum Learning: start with 50% easiest samples, ramp to 100% over 100 epochs. |
+| exp_024 | configs/exp_024.yaml | 21359571 | — | — | — | — | — | — | — | weight_decay 5e-5→1e-4 at lr=5e-5 (restore effective regularization balance in high-capacity head). |
+| exp_025 | configs/exp_025.yaml | 21362553 | — | — | — | — | — | — | — | Test-Time Augmentation (TTA): n_aug=10, noise_std=0.01, shift=3, scale=[0.95,1.05]. |
+| exp_026 | configs/exp_026.yaml | 21362554 | — | — | — | — | — | — | — | HuberNMADLoss: quadratic for small errors, linear for large. Delta=0.15. |
+| exp_027 | configs/exp_027.yaml | 21362555 | — | — | — | — | — | — | — | Two-Stage Training: Stage 1 (200 ep) + Stage 2 (200 ep with outliers weighted 4x). |
+| exp_028 | configs/exp_028.yaml | 21362556 | — | — | — | — | — | — | — | Per-Sample Loss Weighting: inverse error weighting by redshift bin. |
+| exp_029 | configs/exp_029.yaml | 21362557 | — | — | — | — | — | — | — | MDN Head: K=5 Gaussian mixture for uncertainty-aware prediction. |
+| exp_030 | configs/exp_030.yaml | 21362566 | — | — | — | — | — | — | — | Curriculum Learning: start with 50% easiest, ramp to 100% over 100 epochs. |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
