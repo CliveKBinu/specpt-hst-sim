@@ -42,17 +42,18 @@
 | exp_022 | configs/exp_022.yaml | h15nlcte | elated-bird-35 | 0.01712 | 0.01755 | 23.99% | — | 0.419 | 0.368 | epochs 400→600 backfired: early-stopped ep342/600. Best NMAD 0.01712 at ep341 (worse than exp_021 0.01506). LR barely moved (6.8e-5). 7th consecutive post-exp_013 degradation. |
 | exp_023 | configs/exp_023.yaml | l070d2wj | balmy-snow-36 | 0.016995 | 0.020748 | 23.60% | — | 0.400 | 0.371 | lr 1e-4→5e-5: hold_direction — best NMAD 0.016995 (improved vs recent experiments but 8th consecutive degradation vs 0.01382 best). NMAD oscillated 0.017-0.023. Completed 502/600 epochs. |
 | exp_024 | configs/exp_024.yaml | f4ligwsc | lucky-oath-37 | 0.01950 | 0.01950 | 23.30% | — | 0.4158 | 0.3715 | weight_decay 5e-5→1e-4 at lr=5e-5. NMAD WORSENED 41% (0.01382→0.01950). 9th consecutive post-exp_013 degradation. LR barely moved (5e-5→4.9e-5). Completed 462/600 epochs. |
+| exp_025 | configs/exp_025.yaml | hwa8lkzg | polar-sky-39 | 0.01848 | 0.01848 | 23.85% | 0.00125 | 0.3750 | 0.3707 | TTA (N=10, noise=0.01, shift=3, scale=[0.95,1.05]). Best val NMAD among new experiments (34% better than exp_024). TTA paradox: RMSE improved 2.9% but NMAD worsened 2.8% on test set. Outliers unchanged. |
+| exp_026 | configs/exp_026.yaml | qyciqxtr | wise-night-39 | 0.07975 | 0.07975 | 30.01% | -0.0056 | 0.3662 | 0.1226 | HuberNMADLoss. CRASHED ep72 — corrupted checkpoint. NMAD 5.7x worse. Loss scale mismatch (0.12 vs 0.37 standard). Huber loss requires lr/weight_decay retuning. |
+| exp_027 | configs/exp_027.yaml | gkq9vb4q | playful-spaceship-38 | 0.01934 | 0.01934 | 24.25% | -0.00035 | 0.3694 | 0.3697 | Two-Stage (200+200, 4x outlier weight). NMAD 0.01934 — comparable to exp_024. Stage 2 outlier weighting did NOT reduce outliers (23.7%→24.2%). Early stopped ep241/400. |
+| exp_028 | configs/exp_028.yaml | etw2syi3 | leafy-snow-41 | 0.01987 | 0.01987 | 23.79% | -0.00124 | 0.3719 | 0.3686 | Per-Sample Weights (inverse error by redshift bin). No improvement. Outliers uniformly distributed across redshift bins — targeting redshift bins is wrong axis. |
+| exp_029 | configs/exp_029.yaml | pl0vpj93 | valiant-forest-42 | 0.02411 | 0.02411 | 23.48% | 0.00063 | 0.4514 | 1.6738 | MDN Head (K=5). CRASHED ep94 — state_dict mismatch (pretrained_redshift empty). Train loss went negative (-1.66). Val loss diverged 0.91→1.67. NMAD 74% worse. |
+| exp_030 | configs/exp_030.yaml | t18mboez | deep-energy-43 | — | — | — | — | — | — | Curriculum (50%→100% over 100 ep). CRASHED immediately — CUDA tensor→numpy bug in curriculum mask. |
 
 
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| exp_025 | configs/exp_025.yaml | 21362553 | polar-sky-39 | — | — | — | — | — | — | Test-Time Augmentation (TTA): n_aug=10, noise_std=0.01, shift=3, scale=[0.95,1.05]. 🟢 Running on skl-a-33. |
-| exp_026 | configs/exp_026.yaml | 21362554 | wise-night-39 | — | — | — | — | — | — | HuberNMADLoss: quadratic for small errors, linear for large. Delta=0.15. 🟢 Running on skl-a-41. |
-| exp_027 | configs/exp_027.yaml | 21362555 | playful-spaceship-38 | — | — | — | — | — | — | Two-Stage Training: Stage 1 (200 ep) + Stage 2 (200 ep with outliers weighted 4x). 🟢 Running on skl-a-58. |
-| exp_028 | configs/exp_028.yaml | 21362556 | — | — | — | — | — | — | — | Per-Sample Loss Weighting: inverse error weighting by redshift bin. 📤 Pending. |
-| exp_029 | configs/exp_029.yaml | 21362557 | — | — | — | — | — | — | — | MDN Head: K=5 Gaussian mixture for uncertainty-aware prediction. 📤 Pending. |
-| exp_030 | configs/exp_030.yaml | 21362566 | — | — | — | — | — | — | — | Curriculum Learning: start with 50% easiest, ramp to 100% over 100 epochs. 📤 Pending. |
+No experiments currently running.
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |

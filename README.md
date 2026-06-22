@@ -24,19 +24,9 @@
 
 ## 🔬 Active Experiments
 
-| # | Name | Change | Status | NMAD | Outliers | Last Update |
-|---|------|--------|--------|------|----------|-------------|
-| exp_024 | weight_decay 5e-5→1e-4 at lr=5e-5 | Restore effective regularization balance in high-capacity head | 📤 **Submitted.** Job 21359571 | — | — | 2026-06-20 |
-| exp_025 | Test-Time Augmentation (TTA) | n_aug=10, noise_std=0.01, shift=3, scale=[0.95,1.05] — inference-only improvement | 🟢 **Running.** Job 21362553 ( skl-a-33) | — | — | 2026-06-22 |
-| exp_026 | HuberNMADLoss | Quadratic for small errors, linear for large. Delta=0.15 matches outlier threshold | 🟢 **Running.** Job 21362554 ( skl-a-41) | — | — | 2026-06-22 |
-| exp_027 | Two-Stage Training | Stage 1 (200 ep) + Stage 2 (200 ep with outliers weighted 4x) | 🟢 **Running.** Job 21362555 ( skl-a-58) | — | — | 2026-06-22 |
-| exp_028 | Per-Sample Loss Weighting | Inverse error weighting by redshift bin [0,0.5,1.0,1.5,2.0,3.0] | 📤 **Pending.** Job 21362556 | — | — | 2026-06-22 |
-| exp_029 | MDN Head | K=5 Gaussian mixture for uncertainty-aware prediction | 📤 **Pending.** Job 21362557 | — | — | 2026-06-22 |
-| exp_030 | Curriculum Learning | Start with 50% easiest samples, ramp to 100% over 100 epochs | 📤 **Pending.** Job 21362566 | — | — | 2026-06-22 |
+No experiments currently running. See [Experiment Log](EXPERIMENTS.md) for full history.
 
-> ℹ️ **Outlier Reduction Campaign.** All 6 new experiments target the catastrophic outlier problem (23% → target <1%). See [`docs/OUTLIER_REDUCTION_PLAN.md`](docs/OUTLIER_REDUCTION_PLAN.md) for the full analysis and approach details.
-
-> ℹ️ **exp_023** (lr 1e-4→5e-5) completed: best NMAD 0.016995 (improved vs recent experiments but 8th consecutive degradation vs 0.01382 best). NMAD oscillated 0.017-0.023. Completed 502/600 epochs. **exp_024** increases weight_decay to 1e-4 at lr=5e-5 to restore effective regularization balance in the high-capacity head.
+> ℹ️ **Outlier Reduction Campaign Complete.** 6 approaches tested (TTA, HuberNMAD, Two-Stage, Per-Sample Weights, MDN, Curriculum). 3 completed successfully, 3 crashed. <strong>None reduced outliers below 23%.</strong> Outliers confirmed data-invariant across 26+ experiments. See [`reports/report_2026-06-22.html`](reports/report_2026-06-22.html) for full analysis.
 
 > ⚠️ **Autoencoder frozen.** Experiments exp_001 and exp_002 failed because they modified the autoencoder architecture (d_model / num_layers). The autoencoder is a pretrained, frozen model. Only the redshift estimator head (num_mlp_blocks, mlp_dim, dropout_rate, training params) can be changed. See diagnostics in [`EXPERIMENTS.md`](EXPERIMENTS.md) for details.
 
@@ -112,7 +102,10 @@ specpt-hst-sim/
 ├── daemon/               Watcher, trigger, webhook, W&B helpers
 │   ├── logs/             Orchestrator cycle logs
 │   └── *.py              Daemon scripts
+├── docs/                 Technical documentation
+├── reports/              Analysis reports (HTML)
 ├── scripts/              SLURM training scripts
+├── src/                  Source code (model, training, losses, dataloader)
 ├── EXPERIMENTS.md        Full experiment log
 ├── SOUL.md               Project identity + goals
 └── README.md             You are here

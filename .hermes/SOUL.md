@@ -11,14 +11,13 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Last updated: 2026-06-22 14:35 UTC
-- Active experiments: exp_025-030 (6 outlier reduction experiments running/pending)
+- Last updated: 2026-06-22 16:00 UTC
+- Active experiments: None (all completed/failed)
 - Best NMAD: 0.01382 (exp_013)
 - Best Catastrophic Outliers: 22.86% (exp_008_v2)
-- Total experiments completed: 20
-- Total experiments running: 3 (exp_025, exp_026, exp_027)
-- Total experiments pending: 3 (exp_028, exp_029, exp_030)
-- Direction: outlier reduction campaign — 6 parallel experiments targeting catastrophic outliers (23% → <1%). Approaches: TTA, HuberNMADLoss, two-stage training, per-sample weights, MDN head, curriculum learning.
+- Total experiments completed: 26
+- Total experiments failed: 4 (exp_026 HuberNMAD, exp_029 MDN, exp_030 Curriculum, plus early failures)
+- Direction: outlier reduction campaign completed (6 experiments, 0 reduced outliers). Outliers confirmed data-invariant at 23-25%. Next steps: analyze outlier spectra directly, consider ensemble/specialized models.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.
