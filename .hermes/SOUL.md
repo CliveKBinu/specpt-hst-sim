@@ -11,13 +11,14 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Last updated: 2026-06-19 18:47 UTC
-- Active experiment: exp_021: patience 50→100 (preserving exp_020's batch=256, mlp_dim=1024, 12 blocks, warmup=50) — submitted to cluster, job 21357770
+- Last updated: 2026-06-22 14:35 UTC
+- Active experiments: exp_025-030 (6 outlier reduction experiments running/pending)
 - Best NMAD: 0.01382 (exp_013)
 - Best Catastrophic Outliers: 22.86% (exp_008_v2)
-- Total experiments completed: 16
-- Total experiments running: 1
-- Direction: exp_020 (warmup 500→50, batch=256) got NMAD 0.01909 — warmer fix backfired, NMAD degraded from exp_019's 0.0167. The model still overfits severely (train_loss 0.038 vs val_loss 0.374). Pivoting to longer patience (50→100) so ReduceLROnPlateau has more time to trigger LR reductions and find a deeper minimum now that warmup=50 lets the model train at full LR for longer.
+- Total experiments completed: 20
+- Total experiments running: 3 (exp_025, exp_026, exp_027)
+- Total experiments pending: 3 (exp_028, exp_029, exp_030)
+- Direction: outlier reduction campaign — 6 parallel experiments targeting catastrophic outliers (23% → <1%). Approaches: TTA, HuberNMADLoss, two-stage training, per-sample weights, MDN head, curriculum learning.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.

@@ -47,24 +47,25 @@
 | Rank | Experiment | NMAD | Outliers | Epochs | Notes |
 |------|-----------|------|----------|--------|-------|
 | 1 | `exp_013` | **0.01382** | **24.85%** | 354 | mlp_dim=1024, 12 blocks, DESI AE, residual fix. **NEW BEST NMAD.** (+39.8% over exp_008_v2) |
-| 2 | `exp_021` | **0.01506** | **24.07%** | 400 | patience 50→100. Full 400 epochs. Peaked at ep373 (0.01506), degraded final 27 epochs. Train/val loss gap ~10x persists. |
-| 3 | `exp_014` | **0.01640** | **23.78%** | 295 | dropout_rate=0.1. NMAD worsened 0.01382→0.01640. Overfitting gap persists at 9.6x. Dropout 0.1 too weak. |
-| 4 | `exp_019` | **0.01670** | **24.70%** | 355 | batch_size 128→256. NMAD 0.0167 (21% worse than best, 19% better than exp_018). 500-ep warmup starved model. |
-| 5 | `exp_023` | **0.016995** | **23.60%** | 502 | lr 1e-4→5e-5: hold_direction — NMAD improved to 0.016995 but 8th consecutive degradation vs 0.01382 best. Completed 502/600 epochs. |
-| 6 | `exp_022` | **0.01712** | **23.99%** | 342 | epochs 400→600 backfired: early-stopped ep342/600. Best NMAD 0.01712 at ep341 (worse than exp_021 0.01506). 7th consecutive post-exp_013 degradation. |
-| 7 | `exp_020` | **0.01909** | **23.55%** | 318 | warmup_epochs 500→50. Warmup fix backfired — NMAD degraded from exp_019's 0.0167. Early stop ep318. |
-| 8 | `exp_018` | **0.02062** | **23.74%** | 238 | mlp_dim 1024→768. NMAD degraded 49% (0.01382→0.02062). 5th consecutive post-exp_013 degradation. |
-| 9 | `exp_016` | **0.02100** | **24.04%** | 210 | weight_decay=1e-5 worsened NMAD 52% (0.01382→0.02100). Overfitting gap 9.1x unchanged. |
-| 10 | `exp_017` | **0.02132** | **23.84%** | 220 | weight_decay=5e-4. NMAD worsened 54% (0.01382→0.02132). Both wd directions degraded. wd=5e-5 sweet spot. |
-| 11 | `exp_015` | **0.02156** | **23.37%** | 200 | dropout_rate=0.2. NMAD worsened to 0.02156 (56% worse than 0.01382 best). Monotonic degradation. |
-| 12 | `exp_008_v2` | **0.02295** | **23.31%** | 242 | num_mlp_blocks=12 + DESI autoencoder. Previous best. |
-| 13 | `exp_007` | **0.02565** | 23.61% | 257 | num_mlp_blocks 7→10, weight_decay 5e-5 |
-| 14 | `exp_008` | **0.02568** | 23.25% | 219 | num_mlp_blocks 10→12. Capacity saturating. |
-| 15 | `exp_009` | **0.02611** | 23.07% | 154 | lr 2e-4, DESI autoencoder. Higher LR worsened NMAD. |
-| 16 | `exp_005` | **0.0279** | 23.18% | 249 | num_mlp_blocks 5→7, lr 1e-4 |
-| 17 | `exp_000_baseline` | 0.0303 | 23.24% | 244 | Default config |
-| 18 | `exp_006` | 0.0332 | 23.98%† | 193 | weight_decay 1e-4 — regularization backfired |
-| 19 | `exp_004` | 0.0335 | 23.42% | — | lr 5e-5 — worse than baseline |
+| 2 | `exp_021` | **0.01506** | **24.07%** | 400 | patience 50→100. Full 400 epochs. Peaked at ep373 (0.01506), degraded final 27 epochs. |
+| 3 | `exp_014` | **0.01640** | **23.78%** | 295 | dropout_rate=0.1. NMAD worsened 0.01382→0.01640. |
+| 4 | `exp_019` | **0.01670** | **24.70%** | 355 | batch_size 128→256. 500-ep warmup starved model. |
+| 5 | `exp_023` | **0.016995** | **23.60%** | 502 | lr 1e-4→5e-5: hold_direction. NMAD oscillated 0.017-0.023. |
+| 6 | `exp_022` | **0.01712** | **23.99%** | 342 | epochs 400→600 backfired. Best at ep341. |
+| 7 | `exp_020` | **0.01909** | **23.55%** | 318 | warmup_epochs 500→50. Warmup fix backfired. |
+| 8 | `exp_024` | **0.01950** | **23.30%** | 462 | weight_decay 5e-5→1e-4 at lr=5e-5. 9th consecutive degradation. |
+| 9 | `exp_018` | **0.02062** | **23.74%** | 238 | mlp_dim 1024→768. 5th consecutive degradation. |
+| 10 | `exp_016` | **0.02100** | **24.04%** | 210 | weight_decay=1e-5 worsened NMAD 52%. |
+| 11 | `exp_017` | **0.02132** | **23.84%** | 220 | weight_decay=5e-4. Both wd directions degraded. |
+| 12 | `exp_015` | **0.02156** | **23.37%** | 200 | dropout_rate=0.2. Monotonic degradation. |
+| 13 | `exp_008_v2` | **0.02295** | **23.31%** | 242 | Previous best before exp_013. |
+| 14 | `exp_007` | **0.02565** | 23.61% | 257 | num_mlp_blocks 7→10. |
+| 15 | `exp_008` | **0.02568** | 23.25% | 219 | Capacity saturating. |
+| 16 | `exp_009` | **0.02611** | 23.07% | 154 | Higher LR worsened NMAD. |
+| 17 | `exp_005` | **0.0279** | 23.18% | 249 | num_mlp_blocks 5→7. |
+| 18 | `exp_000_baseline` | 0.0303 | 23.24% | 244 | Default config. |
+| 19 | `exp_006` | 0.0332 | 23.98% | 193 | Regularization backfired. |
+| 20 | `exp_004` | 0.0335 | 23.42% | — | lr 5e-5 — worse than baseline. |
 
 *\*exp_008_v2 best catastrophic outliers was 22.86% at epoch 240 (final: 23.31%)*
 *†exp_006 final catastrophic outliers from W&B: 24.50% (best: 23.98%)*
