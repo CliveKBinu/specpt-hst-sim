@@ -24,9 +24,12 @@
 
 ## 🔬 Active Experiments
 
-No experiments currently running. See [Experiment Log](EXPERIMENTS.md) for full history.
+| # | Name | Change | Status | NMAD | Outliers | Last Update |
+|---|------|--------|--------|------|----------|-------------|
+| exp_026 rerun | HuberNMADLoss | Quadratic for small errors, linear for large. Delta=0.15. 3rd attempt. | 📤 **Submitted.** Job 21363016 | — | — | 2026-06-22 |
+| exp_029 rerun | MDN Head | K=5 Gaussian mixture. Fixed checkpoint loading + optimizer skip. 3rd attempt. | 📤 **Submitted.** Job 21363017 | — | — | 2026-06-22 |
 
-> ℹ️ **Outlier Reduction Campaign Complete.** 6 approaches tested across 9 experiments (including reruns). 4 completed successfully, 5 failed/crashed. Curriculum learning (exp_030) achieved 2nd-best NMAD (0.01816). <strong>None reduced outliers below 23%.</strong> See [`reports/report_2026-06-22.html`](reports/report_2026-06-22.html) for full analysis.
+> ℹ️ **Outlier Reduction Campaign — Final Reruns.** exp_026 (disk full) and exp_029 (optimizer mismatch) are being rerun with all fixes in place. See [`reports/report_2026-06-22.html`](reports/report_2026-06-22.html) for full analysis.
 
 > ⚠️ **Autoencoder frozen.** Experiments exp_001 and exp_002 failed because they modified the autoencoder architecture (d_model / num_layers). The autoencoder is a pretrained, frozen model. Only the redshift estimator head (num_mlp_blocks, mlp_dim, dropout_rate, training params) can be changed. See diagnostics in [`EXPERIMENTS.md`](EXPERIMENTS.md) for details.
 

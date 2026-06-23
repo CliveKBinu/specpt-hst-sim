@@ -56,7 +56,8 @@
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-No experiments currently running.
+| exp_026_rerun2 | configs/exp_026.yaml | 21363016 | — | — | — | — | — | — | — | HuberNMADLoss. 3rd attempt. Corrupted checkpoint handling + checkpoint cleanup. |
+| exp_029_rerun2 | configs/exp_029.yaml | 21363017 | — | — | — | — | — | — | — | MDN Head. 3rd attempt. strict=False checkpoint loading + optimizer skip fix (28dd126). |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
