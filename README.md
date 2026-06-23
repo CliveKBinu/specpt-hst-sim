@@ -27,8 +27,6 @@
 | # | Name | Change | Status | NMAD | Outliers | Last Update |
 |---|------|--------|--------|------|----------|-------------|
 | exp_013 rerun | Best model (12 blocks, 1024 dim) | Rerun for checkpoint recovery with experiment-specific naming | 📤 **Submitted.** Job 21363855 | — | — | 2026-06-22 |
-| exp_026 rerun | HuberNMADLoss | Quadratic for small errors, linear for large. Delta=0.15. 3rd attempt. | 📤 **Submitted.** Job 21363016 | — | — | 2026-06-22 |
-| exp_029 rerun | MDN Head | K=5 Gaussian mixture. Fixed checkpoint loading + optimizer skip. 3rd attempt. | 📤 **Submitted.** Job 21363017 | — | — | 2026-06-22 |
 
 > ℹ️ **Outlier Analysis.** See [`notebooks/02_outlier_analysis.ipynb`](notebooks/02_outlier_analysis.ipynb) for deep-dive analysis of what makes outlier spectra different. All checkpoints now saved with experiment-specific names (`exp_NNN_best_model.pth`) to prevent cross-experiment contamination.
 

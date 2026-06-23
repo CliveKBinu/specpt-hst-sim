@@ -49,7 +49,9 @@
 | exp_029 | configs/exp_029.yaml | pl0vpj93 | valiant-forest-42 | 0.02411 | 0.02411 | 23.48% | 0.00063 | 0.4514 | 1.6738 | MDN Head (K=5). CRASHED ep94 — state_dict mismatch (pretrained_redshift empty). Train loss went negative (-1.66). Val loss diverged 0.91→1.67. NMAD 74% worse. |
 | exp_030 | configs/exp_030.yaml | 4vb1jarm | vibrant-waterfall-46 | 0.01816 | 0.01816 | 23.84% | 0.00156 | 0.3721 | 0.3721 | Curriculum (50%→100% over 100 ep). NMAD 0.01816 — 2nd best among all experiments! Test NMAD 0.02072. Outliers unchanged at 23.84%. |
 | exp_026_rerun | configs/exp_026.yaml | blft8duo | azure-microwave-44 | 0.17836 | 0.17836 | 43.14% | — | 0.1328 | 0.1342 | HuberNMADLoss retry. CRASHED ep8 — disk full on cluster (PytorchStreamWriter failed). |
+| exp_026_rerun2 | configs/exp_026.yaml | yfd4j21r | polished-galaxy-47 | 0.07718 | 0.07718 | 30.36% | — | 0.1225 | 0.1225 | HuberNMADLoss 3rd attempt. Completed 73 ep. NMAD 5.6x worse than baseline. Loss scale still mismatched (0.12 vs 0.37 standard). Test NMAD 0.828 (catastrophic). |
 | exp_029_rerun | configs/exp_029.yaml | fcu8wxkj | solar-spaceship-44 | 0.02543 | 0.02543 | 24.15% | -1.5285 | 1.6628 | 1.6628 | MDN Head retry. CRASHED ep91 — optimizer state_dict mismatch on post-training checkpoint load (fixed in 28dd126). |
+| exp_029_rerun2 | configs/exp_029.yaml | 6xer6tfq | rich-night-48 | 0.02539 | 0.02539 | 24.26% | -1.5037 | 1.7954 | MDN Head 3rd attempt. Completed 86 ep. Train loss negative (NLL). Val loss 1.795 (diverged). NMAD 0.02539 — 83% worse than best. Test NMAD 0.03926. |
 | exp_030_rerun | configs/exp_030.yaml | 4vb1jarm | vibrant-waterfall-46 | 0.01816 | 0.01816 | 23.84% | 0.00156 | 0.3721 | 0.3721 | Curriculum retry. SUCCESS! NMAD 0.01816 (2nd best). 267 epochs. |
 
 
