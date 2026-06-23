@@ -26,9 +26,11 @@
 
 | # | Name | Change | Status | NMAD | Outliers | Last Update |
 |---|------|--------|--------|------|----------|-------------|
-| exp_013 rerun | Best model (12 blocks, 1024 dim) | Rerun for checkpoint recovery with experiment-specific naming | 📤 **Submitted.** Job 21363855 | — | — | 2026-06-22 |
+| exp_013 rerun | Best model (12 blocks, 1024 dim) | Rerun for checkpoint recovery with experiment-specific naming | 📤 **Pending.** Job 21363855 | — | — | 2026-06-22 |
 
 > ℹ️ **Outlier Analysis.** See [`notebooks/02_outlier_analysis.ipynb`](notebooks/02_outlier_analysis.ipynb) for deep-dive analysis of what makes outlier spectra different. All checkpoints now saved with experiment-specific names (`exp_NNN_best_model.pth`) to prevent cross-experiment contamination.
+
+> 📊 **Latest Report.** See [`reports/report_2026-06-23.html`](reports/report_2026-06-23.html) for comprehensive analysis of all 35 experiments, outlier reduction campaign results, and recommendations.
 
 > ⚠️ **Autoencoder frozen.** Experiments exp_001 and exp_002 failed because they modified the autoencoder architecture (d_model / num_layers). The autoencoder is a pretrained, frozen model. Only the redshift estimator head (num_mlp_blocks, mlp_dim, dropout_rate, training params) can be changed. See diagnostics in [`EXPERIMENTS.md`](EXPERIMENTS.md) for details.
 
@@ -55,17 +57,19 @@
 | 15 | `exp_017` | **0.02132** | **23.84%** | 220 | weight_decay=5e-4. |
 | 16 | `exp_015` | **0.02156** | **23.37%** | 200 | dropout_rate=0.2. |
 | 17 | `exp_008_v2` | **0.02295** | **23.31%** | 242 | Previous best before exp_013. |
-| 18 | `exp_007` | **0.02565** | 23.61% | 257 | num_mlp_blocks 7→10. |
-| 19 | `exp_008` | **0.02568** | 23.25% | 219 | Capacity saturating. |
-| 20 | `exp_009` | **0.02611** | 23.07% | 154 | Higher LR worsened NMAD. |
-| 21 | `exp_005` | **0.0279** | 23.18% | 249 | num_mlp_blocks 5→7. |
-| 22 | `exp_000_baseline` | 0.0303 | 23.24% | 244 | Default config. |
-| 23 | `exp_006` | 0.0332 | 23.98% | 193 | Regularization backfired. |
-| 24 | `exp_004` | 0.0335 | 23.42% | — | lr 5e-5 — worse than baseline. |
+| 18 | `exp_029` | **0.02539** | **24.26%** | 86 | MDN Head (K=5). Val loss diverged. |
+| 19 | `exp_007` | **0.02565** | 23.61% | 257 | num_mlp_blocks 7→10. |
+| 20 | `exp_008` | **0.02568** | 23.25% | 219 | Capacity saturating. |
+| 21 | `exp_009` | **0.02611** | 23.07% | 154 | Higher LR worsened NMAD. |
+| 22 | `exp_005` | **0.0279** | 23.18% | 249 | num_mlp_blocks 5→7. |
+| 23 | `exp_000_baseline` | 0.0303 | 23.24% | 244 | Default config. |
+| 24 | `exp_026` | **0.07718** | **30.36%** | 73 | HuberNMADLoss. 5.6x worse. Loss scale mismatch. |
+| 25 | `exp_006` | 0.0332 | 23.98% | 193 | Regularization backfired. |
+| 26 | `exp_004` | 0.0335 | 23.42% | — | lr 5e-5 — worse than baseline. |
 
 *\*exp_008_v2 best catastrophic outliers was 22.86% at epoch 240 (final: 23.31%)*
 
-*Last updated by orchestrator (hermes) at 2026-06-22 18:30 UTC*
+*Last updated by orchestrator (hermes) at 2026-06-23 10:00 UTC*
 
 ---
 
