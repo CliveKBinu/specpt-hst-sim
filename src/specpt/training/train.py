@@ -201,17 +201,16 @@ def main():
     data_cfg = cfg["data"]
     wandb_cfg = cfg.get("wandb", {})
 
-    # Clean checkpoints directory to prevent cross-experiment contamination
+    # Derive experiment name from config filename (e.g., configs/exp_013.yaml → exp_013)
+    exp_name = os.path.splitext(os.path.basename(args.config))[0]
     ckpt_dir = "checkpoints"
-    if os.path.exists(ckpt_dir):
-        import shutil
-        shutil.rmtree(ckpt_dir)
-        print(f"Cleaned {ckpt_dir}/ to prevent stale checkpoints")
+    os.makedirs(ckpt_dir, exist_ok=True)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     wandb_entity = args.wandb_entity or wandb_cfg.get("entity")
     wandb_project = args.wandb_project or wandb_cfg.get("project")
+    cfg["experiment_name"] = exp_name
     run = wandb.init(
         project=wandb_project,
         entity=wandb_entity,
@@ -454,7 +453,7 @@ def main():
             save_checkpoint(
                 redshift_model, optimizer, scheduler, epoch,
                 train_losses, val_losses, best_val_loss,
-                "checkpoints/best_model.pth",
+                f"checkpoints/{exp_name}_best_model.pth",
             )
         else:
             patience_counter += 1
@@ -490,7 +489,7 @@ def main():
         print("="*60)
 
         # Load best Stage 1 checkpoint
-        best_ckpt_path = "checkpoints/best_model.pth"
+        best_ckpt_path = f"checkpoints/{exp_name}_best_model.pth"
         if os.path.exists(best_ckpt_path):
             load_checkpoint(best_ckpt_path, redshift_model, optimizer, scheduler, device)
             print(f"Loaded best Stage 1 checkpoint from {best_ckpt_path}")
@@ -614,7 +613,7 @@ def main():
                 save_checkpoint(
                     redshift_model, optimizer, scheduler, epoch,
                     train_losses, val_losses, stage2_best_val_loss,
-                    "checkpoints/stage2_best_model.pth",
+                    f"checkpoints/{exp_name}_stage2_best_model.pth",
                 )
             else:
                 stage2_patience_counter += 1
@@ -631,7 +630,7 @@ def main():
                 break
 
         # Load Stage 2 best checkpoint for final evaluation
-        stage2_ckpt_path = "checkpoints/stage2_best_model.pth"
+        stage2_ckpt_path = f"checkpoints/{exp_name}_stage2_best_model.pth"
         if os.path.exists(stage2_ckpt_path):
             load_checkpoint(stage2_ckpt_path, redshift_model, optimizer, scheduler, device)
             print(f"Loaded best Stage 2 checkpoint from {stage2_ckpt_path}")
@@ -641,7 +640,7 @@ def main():
     print("POST-TRAINING EVALUATION ON TEST SET")
     print("="*60)
 
-    best_ckpt_path = "checkpoints/best_model.pth"
+    best_ckpt_path = f"checkpoints/{exp_name}_best_model.pth"
     if os.path.exists(best_ckpt_path):
         result = load_checkpoint(best_ckpt_path, redshift_model, optimizer, scheduler, device)
         if result[0] is not None:
