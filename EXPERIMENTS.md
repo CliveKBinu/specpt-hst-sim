@@ -53,13 +53,15 @@
 | exp_029_rerun | configs/exp_029.yaml | fcu8wxkj | solar-spaceship-44 | 0.02543 | 0.02543 | 24.15% | -1.5285 | 1.6628 | 1.6628 | MDN Head retry. CRASHED ep91 — optimizer state_dict mismatch on post-training checkpoint load (fixed in 28dd126). |
 | exp_029_rerun2 | configs/exp_029.yaml | 6xer6tfq | rich-night-48 | 0.02539 | 0.02539 | 24.26% | -1.5037 | 1.7954 | MDN Head 3rd attempt. Completed 86 ep. Train loss negative (NLL). Val loss 1.795 (diverged). NMAD 0.02539 — 83% worse than best. Test NMAD 0.03926. |
 | exp_030_rerun | configs/exp_030.yaml | 4vb1jarm | vibrant-waterfall-46 | 0.01816 | 0.01816 | 23.84% | 0.00156 | 0.3721 | 0.3721 | Curriculum retry. SUCCESS! NMAD 0.01816 (2nd best). 267 epochs. |
+| exp_013_rerun | configs/exp_013.yaml | 4jrl2hig | laced-feather-49 | 0.02024 | 0.02158 | 23.62% | 0.000818 | 0.3924 | 0.3768 | exp_013 rerun for checkpoint recovery. NMAD 0.02024 (46.5% worse than original 0.01382). Early stopped ep216/400 — val_loss plateaued at ep166. Identical config to original, difference is random seed variance. |
+| exp_026_rerun2 | configs/exp_026.yaml | yfd4j21r | polished-galaxy-47 | 0.07718 | 0.07718 | 30.36% | — | 0.1225 | 0.1225 | HuberNMADLoss 3rd attempt. Completed 73 ep. NMAD 5.6x worse than baseline. Loss scale still mismatched (0.12 vs 0.37 standard). Test NMAD 0.828 (catastrophic). |
+| exp_029_rerun2 | configs/exp_029.yaml | 6xer6tfq | rich-night-48 | 0.02539 | 0.02539 | 24.26% | -1.5037 | 1.7954 | MDN Head 3rd attempt. Completed 86 ep. Train loss negative (NLL). Val loss 1.795 (diverged). NMAD 0.02539 — 83% worse than best. Test NMAD 0.03926. |
 
 
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| exp_026_rerun2 | configs/exp_026.yaml | 21363016 | — | — | — | — | — | — | — | HuberNMADLoss. 3rd attempt. Corrupted checkpoint handling + checkpoint cleanup. |
-| exp_029_rerun2 | configs/exp_029.yaml | 21363017 | — | — | — | — | — | — | — | MDN Head. 3rd attempt. strict=False checkpoint loading + optimizer skip fix (28dd126). |
+| exp_031 | configs/exp_031.yaml | — | — | — | — | — | — | — | — | exp_013 config + patience 50→150, epochs 400→600. Tests whether longer training improves NMAD. |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |

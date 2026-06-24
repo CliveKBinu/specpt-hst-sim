@@ -26,7 +26,7 @@
 
 | # | Name | Change | Status | NMAD | Outliers | Last Update |
 |---|------|--------|--------|------|----------|-------------|
-| exp_013 rerun | Best model (12 blocks, 1024 dim) | Rerun for checkpoint recovery with experiment-specific naming | 📤 **Pending.** Job 21363855 | — | — | 2026-06-22 |
+| exp_031 | exp_013 + patience=150, epochs=600 | Tests whether longer training improves NMAD | 📤 **Submitted.** Job 21365864 | — | — | 2026-06-23 |
 
 > ℹ️ **Outlier Analysis.** See [`notebooks/02_outlier_analysis.ipynb`](notebooks/02_outlier_analysis.ipynb) for deep-dive analysis of what makes outlier spectra different. All checkpoints now saved with experiment-specific names (`exp_NNN_best_model.pth`) to prevent cross-experiment contamination.
 
