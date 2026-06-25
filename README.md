@@ -26,7 +26,7 @@
 
 | # | Name | Change | Status | NMAD | Outliers | Last Update |
 |---|------|--------|--------|------|----------|-------------|
-| exp_031 | exp_013 + patience=150, epochs=600 | Tests whether longer training improves NMAD | 📤 **Submitted.** Job 21365864 | — | — | 2026-06-23 |
+| — | — | — | All experiments completed | — | — | 2026-06-25 |
 
 > ℹ️ **Outlier Analysis.** See [`notebooks/02_outlier_analysis.ipynb`](notebooks/02_outlier_analysis.ipynb) for deep-dive analysis of what makes outlier spectra different. All checkpoints now saved with experiment-specific names (`exp_NNN_best_model.pth`) to prevent cross-experiment contamination.
 
@@ -41,35 +41,36 @@
 | Rank | Experiment | NMAD | Outliers | Epochs | Notes |
 |------|-----------|------|----------|--------|-------|
 | 1 | `exp_013` | **0.01382** | **24.85%** | 354 | mlp_dim=1024, 12 blocks, DESI AE, residual fix. **BEST NMAD.** |
-| 2 | `exp_021` | **0.01506** | **24.07%** | 400 | patience 50→100. |
-| 3 | `exp_014` | **0.01640** | **23.78%** | 295 | dropout_rate=0.1. |
-| 4 | `exp_019` | **0.01670** | **24.70%** | 355 | batch_size 128→256. |
-| 5 | `exp_023` | **0.016995** | **23.60%** | 502 | lr 1e-4→5e-5. |
-| 6 | `exp_022` | **0.01712** | **23.99%** | 342 | epochs 400→600. |
-| 7 | `exp_030` | **0.01816** | **23.84%** | 267 | Curriculum (50%→100%). **2nd best NMAD.** |
-| 8 | `exp_025` | **0.01848** | **23.85%** | 254 | TTA (N=10). Best among outlier reduction experiments. |
-| 9 | `exp_020` | **0.01909** | **23.55%** | 318 | warmup_epochs 500→50. |
-| 10 | `exp_027` | **0.01934** | **24.25%** | 241 | Two-Stage (200+200, 4x outlier weight). |
-| 11 | `exp_024` | **0.01950** | **23.30%** | 462 | weight_decay 5e-5→1e-4. |
-| 12 | `exp_028` | **0.01987** | **23.79%** | 229 | Per-Sample Weights (inverse error by z-bin). |
-| 13 | `exp_018` | **0.02062** | **23.74%** | 238 | mlp_dim 1024→768. |
-| 14 | `exp_016` | **0.02100** | **24.04%** | 210 | weight_decay=1e-5. |
-| 15 | `exp_017` | **0.02132** | **23.84%** | 220 | weight_decay=5e-4. |
-| 16 | `exp_015` | **0.02156** | **23.37%** | 200 | dropout_rate=0.2. |
-| 17 | `exp_008_v2` | **0.02295** | **23.31%** | 242 | Previous best before exp_013. |
-| 18 | `exp_029` | **0.02539** | **24.26%** | 86 | MDN Head (K=5). Val loss diverged. |
-| 19 | `exp_007` | **0.02565** | 23.61% | 257 | num_mlp_blocks 7→10. |
-| 20 | `exp_008` | **0.02568** | 23.25% | 219 | Capacity saturating. |
-| 21 | `exp_009` | **0.02611** | 23.07% | 154 | Higher LR worsened NMAD. |
-| 22 | `exp_005` | **0.0279** | 23.18% | 249 | num_mlp_blocks 5→7. |
-| 23 | `exp_000_baseline` | 0.0303 | 23.24% | 244 | Default config. |
-| 24 | `exp_026` | **0.07718** | **30.36%** | 73 | HuberNMADLoss. 5.6x worse. Loss scale mismatch. |
-| 25 | `exp_006` | 0.0332 | 23.98% | 193 | Regularization backfired. |
-| 26 | `exp_004` | 0.0335 | 23.42% | — | lr 5e-5 — worse than baseline. |
+| 2 | `exp_031` | **0.01489** | **24.39%** | 344 | exp_013 + patience=150, epochs=600. 4th best overall. |
+| 3 | `exp_021` | **0.01506** | **24.07%** | 400 | patience 50→100. |
+| 4 | `exp_014` | **0.01640** | **23.78%** | 295 | dropout_rate=0.1. |
+| 5 | `exp_019` | **0.01670** | **24.70%** | 355 | batch_size 128→256. |
+| 6 | `exp_023` | **0.016995** | **23.60%** | 502 | lr 1e-4→5e-5. |
+| 7 | `exp_022` | **0.01712** | **23.99%** | 342 | epochs 400→600. |
+| 8 | `exp_030` | **0.01816** | **23.84%** | 267 | Curriculum (50%→100%). **2nd best NMAD.** |
+| 9 | `exp_025` | **0.01848** | **23.85%** | 254 | TTA (N=10). Best among outlier reduction experiments. |
+| 10 | `exp_020` | **0.01909** | **23.55%** | 318 | warmup_epochs 500→50. |
+| 11 | `exp_027` | **0.01934** | **24.25%** | 241 | Two-Stage (200+200, 4x outlier weight). |
+| 12 | `exp_024` | **0.01950** | **23.30%** | 462 | weight_decay 5e-5→1e-4. |
+| 13 | `exp_028` | **0.01987** | **23.79%** | 229 | Per-Sample Weights (inverse error by z-bin). |
+| 14 | `exp_018` | **0.02062** | **23.74%** | 238 | mlp_dim 1024→768. |
+| 15 | `exp_016` | **0.02100** | **24.04%** | 210 | weight_decay=1e-5. |
+| 16 | `exp_017` | **0.02132** | **23.84%** | 220 | weight_decay=5e-4. |
+| 17 | `exp_015` | **0.02156** | **23.37%** | 200 | dropout_rate=0.2. |
+| 18 | `exp_008_v2` | **0.02295** | **23.31%** | 242 | Previous best before exp_013. |
+| 19 | `exp_029` | **0.02539** | **24.26%** | 86 | MDN Head (K=5). Val loss diverged. |
+| 20 | `exp_007` | **0.02565** | 23.61% | 257 | num_mlp_blocks 7→10. |
+| 21 | `exp_008` | **0.02568** | 23.25% | 219 | Capacity saturating. |
+| 22 | `exp_009` | **0.02611** | 23.07% | 154 | Higher LR worsened NMAD. |
+| 23 | `exp_005` | **0.0279** | 23.18% | 249 | num_mlp_blocks 5→7. |
+| 24 | `exp_000_baseline` | 0.0303 | 23.24% | 244 | Default config. |
+| 25 | `exp_026` | **0.07718** | **30.36%** | 73 | HuberNMADLoss. 5.6x worse. Loss scale mismatch. |
+| 26 | `exp_006` | 0.0332 | 23.98% | 193 | Regularization backfired. |
+| 27 | `exp_004` | 0.0335 | 23.42% | — | lr 5e-5 — worse than baseline. |
 
 *\*exp_008_v2 best catastrophic outliers was 22.86% at epoch 240 (final: 23.31%)*
 
-*Last updated by orchestrator (hermes) at 2026-06-23 10:00 UTC*
+*Last updated by orchestrator (hermes) at 2026-06-25 00:00 UTC*
 
 ---
 

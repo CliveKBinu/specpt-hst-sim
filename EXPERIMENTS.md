@@ -54,14 +54,12 @@
 | exp_029_rerun2 | configs/exp_029.yaml | 6xer6tfq | rich-night-48 | 0.02539 | 0.02539 | 24.26% | -1.5037 | 1.7954 | MDN Head 3rd attempt. Completed 86 ep. Train loss negative (NLL). Val loss 1.795 (diverged). NMAD 0.02539 — 83% worse than best. Test NMAD 0.03926. |
 | exp_030_rerun | configs/exp_030.yaml | 4vb1jarm | vibrant-waterfall-46 | 0.01816 | 0.01816 | 23.84% | 0.00156 | 0.3721 | 0.3721 | Curriculum retry. SUCCESS! NMAD 0.01816 (2nd best). 267 epochs. |
 | exp_013_rerun | configs/exp_013.yaml | 4jrl2hig | laced-feather-49 | 0.02024 | 0.02158 | 23.62% | 0.000818 | 0.3924 | 0.3768 | exp_013 rerun for checkpoint recovery. NMAD 0.02024 (46.5% worse than original 0.01382). Early stopped ep216/400 — val_loss plateaued at ep166. Identical config to original, difference is random seed variance. |
-| exp_026_rerun2 | configs/exp_026.yaml | yfd4j21r | polished-galaxy-47 | 0.07718 | 0.07718 | 30.36% | — | 0.1225 | 0.1225 | HuberNMADLoss 3rd attempt. Completed 73 ep. NMAD 5.6x worse than baseline. Loss scale still mismatched (0.12 vs 0.37 standard). Test NMAD 0.828 (catastrophic). |
-| exp_029_rerun2 | configs/exp_029.yaml | 6xer6tfq | rich-night-48 | 0.02539 | 0.02539 | 24.26% | -1.5037 | 1.7954 | MDN Head 3rd attempt. Completed 86 ep. Train loss negative (NLL). Val loss 1.795 (diverged). NMAD 0.02539 — 83% worse than best. Test NMAD 0.03926. |
+| exp_031 | configs/exp_031.yaml | f9uaj0ae | revived-voice-50 | 0.01489 | 0.01489 | 24.39% | -0.00189 | 0.4390 | 0.3815 | exp_013 config + patience 150, epochs 600. NMAD 0.01489 — 4th best overall! Early stopped ep344/600. LR decayed 1e-4→6.9e-5. Overfitting gap 10x persists. Longer patience helped but didn't recover to original exp_013 (0.01382). |
 
 
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| exp_031 | configs/exp_031.yaml | — | — | — | — | — | — | — | — | exp_013 config + patience 50→150, epochs 400→600. Tests whether longer training improves NMAD. |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
@@ -72,6 +70,7 @@
 | exp_010 | noble-frog-23 | nsomfkte | mlp_dim 512→1024 (head-width pivot) | Identical to exp_003 failure but with mlp_dim 512→1024 and 12 MLP blocks. All 12 mlp_blocks.* tensors size-mismatched (60 total). strict=False does NOT allow size mismatches — only missing/extra keys. RuntimeError at model init. Died in 21s, zero metrics logged. |
 | exp_011 | peach-pine-24 | ee7l4hgl | pretrained_redshift="" → torch.load("") crash | pretrained_redshift="" bypassed the guard, passed empty string path to torch.load(), raising FileNotFoundError. Not a shape-mismatch like exp_010 — different root cause. Code fixed with guard before torch.load(). Died during model init, zero metrics logged. |
 | exp_012 | sparkling-wood-25 | 2e9b7ic2 | mlp_dim 1024 → residual dim mismatch | mlp_dim=1024, num_mlp_blocks=12, ImprovedResidualMLPBlock residual connection size mismatch — residual target dim (512) ≠ MLP output dim (1024). Added residual projection layer to fix. Died during model init, zero metrics logged. |
+| deep-energy-43 | deep-energy-43 | t18mboez | curriculum=True (string weight_decay) | Old experiment submitted before curriculum fix. Config has `curriculum: True` and `weight_decay: '5e-5'` (string, not float). Failed with zero metrics. Pre-dates systematic experiment tracking. |
 
 ## Early Untracked Runs
 These are early test baseline runs on the HST augmented autoencoder before the tracking system was operational. All failed during model init or data loading and are kept for historical reference.

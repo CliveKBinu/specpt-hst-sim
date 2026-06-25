@@ -11,14 +11,15 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Last updated: 2026-06-22 20:00 UTC
-- Active experiments: exp_013 rerun (Job 21363855) — pending
+- Last updated: 2026-06-25 00:00 UTC
+- Active experiments: none (all completed)
 - Best NMAD: 0.01382 (exp_013)
-- Second best NMAD: 0.01816 (exp_030 Curriculum)
+- Second best NMAD: 0.01489 (exp_031, patience=150)
+- Third best NMAD: 0.01816 (exp_030 Curriculum)
 - Best Catastrophic Outliers: 22.86% (exp_008_v2)
-- Total experiments completed: 30
-- Total experiments failed: 5
-- Direction: outlier analysis notebook created. exp_026 (HuberNMAD) and exp_029 (MDN) completed but results are poor. Outliers confirmed data-invariant. Next: run outlier analysis notebook after exp_013 completes.
+- Total experiments completed: 36
+- Total experiments failed: 6
+- Direction: exp_031 (patience=150, epochs=600) completed with NMAD 0.01489 — 4th best overall but still 7.7% worse than original exp_013 (0.01382). Longer patience helped recovery from rerun's 0.02024 but didn't match original. Overfitting gap remains ~10x. Next: consider data-level approaches (augmentation, curriculum, ensemble) or architecture changes (attention mechanisms, spectral embeddings).
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.
