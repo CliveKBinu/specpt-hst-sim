@@ -26,7 +26,7 @@
 
 | # | Name | Change | Status | NMAD | Outliers | Last Update |
 |---|------|--------|--------|------|----------|-------------|
-| — | — | — | All experiments completed | — | — | 2026-06-25 |
+| exp_032 | exp_013 + Q1 quality data | Tests whether higher-quality data improves NMAD | 📤 **Submitted.** Job 21367052 | — | — | 2026-06-25 |
 
 > ℹ️ **Outlier Analysis.** See [`notebooks/02_outlier_analysis.ipynb`](notebooks/02_outlier_analysis.ipynb) for deep-dive analysis of what makes outlier spectra different. All checkpoints now saved with experiment-specific names (`exp_NNN_best_model.pth`) to prevent cross-experiment contamination.
 
