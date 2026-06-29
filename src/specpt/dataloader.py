@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 
@@ -54,21 +55,14 @@ def _patch_pickle_compat():
             _orig_init(self)
     StringDtype.__init__ = _patched_init
 
-    from pandas.core.arrays import NDArrayBacked
-    _orig_setstate = NDArrayBacked.__setstate__
-    def _patched_setstate(self, state):
-        try:
-            _orig_setstate(self, state)
-        except NotImplementedError:
-            dtype, data = state
-            object.__setattr__(self, '_data', np.asarray(data, dtype=object))
-            object.__setattr__(self, '_dtype', np.dtype('object'))
-    NDArrayBacked.__setstate__ = _patched_setstate
-
 
 def load_grism_data(data_path, min_snr=2.5):
     _patch_pickle_compat()
-    data = pd.read_pickle(data_path)
+    ext = os.path.splitext(data_path)[1]
+    if ext == ".parquet":
+        data = pd.read_parquet(data_path)
+    else:
+        data = pd.read_pickle(data_path)
     data = data[data["SNR"] >= min_snr].copy()
     data.drop(columns=["spec"], inplace=True, errors="ignore")
     data.rename(
