@@ -54,6 +54,17 @@ def _patch_pickle_compat():
             _orig_init(self)
     StringDtype.__init__ = _patched_init
 
+    from pandas.core.arrays import NDArrayBacked
+    _orig_setstate = NDArrayBacked.__setstate__
+    def _patched_setstate(self, state):
+        try:
+            _orig_setstate(self, state)
+        except NotImplementedError:
+            dtype, data = state
+            object.__setattr__(self, '_data', np.asarray(data, dtype=object))
+            object.__setattr__(self, '_dtype', np.dtype('object'))
+    NDArrayBacked.__setstate__ = _patched_setstate
+
 
 def load_grism_data(data_path, min_snr=2.5):
     _patch_pickle_compat()
