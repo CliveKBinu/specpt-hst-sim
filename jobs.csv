@@ -25,4 +25,5 @@ job_id,experiment,run_id,run_name,state,start_time,end_time,val_nmad,val_loss,ca
 21357893,exp_022,h15nlcte,elated-bird-35,finished,,,,0.01712,0.368,23.99,,0.419,epochs 400→600. Best NMAD 0.01712 at ep341/600. LR barely moved (6.8e-5). 7th consecutive post-exp_013 degradation.
 21358171,exp_023,l070d2wj,balmy-snow-36,finished,,,,0.016995,0.371,23.60,,0.400,lr 1e-4→5e-5 (hold_direction, lower LR for generalization)
 21359571,exp_024,,,,submitted,,,,,,,weight_decay 5e-5→1e-4 at lr=5e-5 (restore effective regularization balance in high-capacity head)
-21376109,exp_032,,,,submitted,,,,,,,exp_013 config + Q1 quality data. Resubmitted after pickle compat fix (pandas 3->2 string[python] dtype).
+21376109,exp_032,,,,cancelled,,,,,,,Replaced by job 21376724 (dataloader patch + pickle re-save).
+21376724,exp_032,,,,running,,,,,,,exp_013 config + Q1 quality data. Resubmitted with pickle compat fix + dataloader patch.
