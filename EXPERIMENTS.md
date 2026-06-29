@@ -60,7 +60,7 @@
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| exp_032 | configs/exp_032.yaml | — | — | — | — | — | — | — | — | exp_013 config + Q1 quality data (grism_training_sim_v2_Q1.pkl). Tests whether higher-quality data improves NMAD. |
+| exp_032 | configs/exp_032.yaml | — | — | — | — | — | — | — | — | exp_013 config + Q1 quality data (grism_training_sim_v2_Q1.pkl). Resubmitted as job 21376109 after pickle compat fix. |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |

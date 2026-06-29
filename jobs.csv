@@ -23,5 +23,6 @@ job_id,experiment,run_id,run_name,state,start_time,end_time,val_nmad,val_loss,ca
 21357043,exp_020,mjt4144y,deep-dew-33,finished,2026-06-19T14:00,2026-06-19T20:00,0.01909,0.3739,23.55,,0.402,COMPLETED. warmup_epochs 500→50. Best NMAD 0.01909 (worse than best 0.01382 and worse than exp_019 0.0167). LR reached 6.36e-5. Early stopped ep318/400. Severe overfitting: train_loss 0.038 vs val_loss 0.374.
 21357770,exp_021,x5j6t95u,amber-gorge-34,finished,2026-06-19T14:00,2026-06-19T20:00,0.01506,0.3719,24.07,,0.4448,patience 50→100. Best NMAD 0.01506 (better than exp_020 0.01909). All-time best 0.01382 (exp_013).
 21357893,exp_022,h15nlcte,elated-bird-35,finished,,,,0.01712,0.368,23.99,,0.419,epochs 400→600. Best NMAD 0.01712 at ep341/600. LR barely moved (6.8e-5). 7th consecutive post-exp_013 degradation.
-21358171,exp_023,,,,submitted,,,,,,,lr 1e-4→5e-5 (hold_direction, lower LR for generalization)
+21358171,exp_023,l070d2wj,balmy-snow-36,finished,,,,0.016995,0.371,23.60,,0.400,lr 1e-4→5e-5 (hold_direction, lower LR for generalization)
 21359571,exp_024,,,,submitted,,,,,,,weight_decay 5e-5→1e-4 at lr=5e-5 (restore effective regularization balance in high-capacity head)
+21376109,exp_032,,,,submitted,,,,,,,exp_013 config + Q1 quality data. Resubmitted after pickle compat fix (pandas 3->2 string[python] dtype).
