@@ -11,15 +11,15 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Last updated: 2026-06-25 00:00 UTC
+- Last updated: 2026-06-29 23:30 UTC
 - Active experiments: none (all completed)
-- Best NMAD: 0.01382 (exp_013)
-- Second best NMAD: 0.01489 (exp_031, patience=150)
-- Third best NMAD: 0.01816 (exp_030 Curriculum)
-- Best Catastrophic Outliers: 22.86% (exp_008_v2)
-- Total experiments completed: 36
+- Best NMAD: **0.00785 (exp_032)** — NEW ALL-TIME BEST
+- Second best NMAD: 0.01382 (exp_013)
+- Third best NMAD: 0.01489 (exp_031, patience=150)
+- Best Catastrophic Outliers: **15.17% (exp_032)** — NEW BEST
+- Total experiments completed: 37
 - Total experiments failed: 6
-- Direction: exp_031 (patience=150, epochs=600) completed with NMAD 0.01489 — 4th best overall but still 7.7% worse than original exp_013 (0.01382). Longer patience helped recovery from rerun's 0.02024 but didn't match original. Overfitting gap remains ~10x. Next: consider data-level approaches (augmentation, curriculum, ensemble) or architecture changes (attention mechanisms, spectral embeddings).
+- Direction: First data-level intervention (Q1 quality data) achieved 43% NMAD improvement (0.01382→0.00785) — the single largest gain in the project. Q1 data is a more effective lever than any hyperparameter tuning so far. Overfitting gap improved from 9.43x to 6.85x. Next: explore more data quality levels or combine Q1 with longer training / re-tuned LR schedule.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.

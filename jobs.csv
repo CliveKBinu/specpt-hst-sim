@@ -27,4 +27,4 @@ job_id,experiment,run_id,run_name,state,start_time,end_time,val_nmad,val_loss,ca
 21359571,exp_024,,,,submitted,,,,,,,weight_decay 5e-5→1e-4 at lr=5e-5 (restore effective regularization balance in high-capacity head)
 21376109,exp_032,,,,cancelled,,,,,,,Replaced by job 21376724 (dataloader patch + pickle re-save).
 21376724,exp_032,,,,cancelled,,,,,,,Replaced by job 21376888 (Parquet format switch).
-21376888,exp_032,,,,running,,,,,,,exp_013 config + Q1 quality data. Switched to Parquet format for pandas version compat.
+21376888,exp_032,ejfhtjlk,confused-bee-54,completed,2026-06-30T01:39,2026-06-30T03:08,0.00785,0.241,15.17,-0.00189,0.354,NEW BEST! Q1 quality data. NMAD 0.00785 (43% improvement). Ep325/400. Best at ep314. Overfit 6.85x.

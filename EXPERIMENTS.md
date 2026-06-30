@@ -3,21 +3,22 @@
 ## Current Best
 | Metric | Value | Experiment |
 |--------|-------|------------|
-| NMAD | **0.01382** | **exp_013** |
-| Catastrophic Outliers | 22.86% | exp_008_v2 (ep240) |
+| NMAD | **0.00785** | **exp_032** |
+| Catastrophic Outliers | 15.17% | exp_032 |
 | ECE | — | — |
-| RMSE | 0.399 | exp_013 |
-| Val Loss | 0.377 | exp_013 |
-| Train Loss | 0.040 | exp_013 |
+| RMSE | 0.354 | exp_032 |
+| Val Loss | 0.241 | exp_032 |
+| Train Loss | 0.037 | exp_032 |
 
 ## Targets
 | Metric | Target | Current Best | Gap |
 |--------|--------|-------------|-----|
-| NMAD | < 0.020 | **0.01382** | **— TARGET ACHIEVED —** |
-| Catastrophic Outliers | < 1% | 22.86% | 21.86% |
+| NMAD | < 0.020 | **0.00785** | **— TARGET ACHIEVED —** |
+| NMAD Stretch | < 0.010 | **0.00785** | **— STRETCH ACHIEVED —** |
+| Catastrophic Outliers | < 1% | 15.17% | 14.17% |
 | ECE | < 0.1 | — | — |
 
-*Last updated: 2026-06-19 23:52 UTC*
+*Last updated: 2026-06-29 23:30 UTC*
 
 ## Completed Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
@@ -55,12 +56,13 @@
 | exp_030_rerun | configs/exp_030.yaml | 4vb1jarm | vibrant-waterfall-46 | 0.01816 | 0.01816 | 23.84% | 0.00156 | 0.3721 | 0.3721 | Curriculum retry. SUCCESS! NMAD 0.01816 (2nd best). 267 epochs. |
 | exp_013_rerun | configs/exp_013.yaml | 4jrl2hig | laced-feather-49 | 0.02024 | 0.02158 | 23.62% | 0.000818 | 0.3924 | 0.3768 | exp_013 rerun for checkpoint recovery. NMAD 0.02024 (46.5% worse than original 0.01382). Early stopped ep216/400 — val_loss plateaued at ep166. Identical config to original, difference is random seed variance. |
 | exp_031 | configs/exp_031.yaml | f9uaj0ae | revived-voice-50 | 0.01489 | 0.01489 | 24.39% | -0.00189 | 0.4390 | 0.3815 | exp_013 config + patience 150, epochs 600. NMAD 0.01489 — 4th best overall! Early stopped ep344/600. LR decayed 1e-4→6.9e-5. Overfitting gap 10x persists. Longer patience helped but didn't recover to original exp_013 (0.01382). |
+| exp_032 | configs/exp_032.yaml | ejfhtjlk | confused-bee-54 | **0.00785** | 0.00921 | 15.17% | -0.00189 | 0.354 | 0.241 | NEW ALL-TIME BEST! Q1 quality data + exp_013 config (mlp_dim=1024, blocks=12, lr=1e-4). NMAD improved 43% (0.01382→0.00785). Overfit gap 6.85x (vs 9.43x). Best at ep314, final ep325. Catastrophic outliers 15.17% (down from 24.85%). LR 6.52e-5 (never reached 1e-4). |
 
 
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| exp_032 | configs/exp_032.yaml | — | — | — | — | — | — | — | — | exp_013 config + Q1 quality data (grism_training_sim_v2_Q1.pkl). Resubmitted as job 21376109 after pickle compat fix. |
+(none)
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
