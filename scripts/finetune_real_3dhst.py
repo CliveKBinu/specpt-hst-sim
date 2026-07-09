@@ -437,6 +437,11 @@ def main():
                          CONFIG["model_config"], device)
     model = _apply_freeze_policy(model, stage)
 
+    # Freeze BN running stats (prevents distribution drift in frozen layers)
+    for m in model.modules():
+        if isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)):
+            m.eval()
+
     # Only trainable parameters
     trainable_params = [p for p in model.parameters() if p.requires_grad]
     optimizer = torch.optim.AdamW(trainable_params, lr=stage_cfg["lr"],
@@ -499,6 +504,9 @@ def main():
     print(f"\n{'='*50}")
     print(f"TESTING")
     print(f"{'='*50}")
+    if not Path(best_ckpt_path).exists():
+        print(f"   No checkpoint saved (best_val_nmad was NaN). Skipping test.")
+        return
     test_ckpt = torch.load(best_ckpt_path, map_location=device, weights_only=False)
     model.load_state_dict(test_ckpt["model_state_dict"], strict=False)
     print(f"   Loaded best checkpoint from epoch {test_ckpt['epoch']}")
