@@ -163,17 +163,15 @@ def _apply_freeze_policy(model, stage):
     return model
 
 def _train_epoch(model, loader, optimizer, criterion, device, noise_std):
-    model.train()
-    # Keep frozen submodules in eval mode to disable dropout + BN updates
-    for m in model.modules():
-        if isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)):
-            m.eval()
-    model.encoder.eval()  # encoder dropout corrupts features for attention-over-batch
-    model.attention.eval()  # attention dropout (if any) also safe to disable
+    model.eval()
+    model.mlp_blocks.train()
+    model.prediction.train()
+    model.encoder.eval()
+    model.attention.eval()
     total_loss = 0
     for batch_idx, (X, Y, _, _) in enumerate(loader):
-        X, Y = X.cuda(), Y.cuda()  # sync transfer — no non_blocking
-        if noise_std > 0 and model.training:
+        X, Y = X.cuda(), Y.cuda()
+        if noise_std > 0:
             X = X + torch.randn_like(X) * noise_std
         optimizer.zero_grad()
         y_pred = model(X).flatten()
@@ -184,18 +182,8 @@ def _train_epoch(model, loader, optimizer, criterion, device, noise_std):
             if y_nonnan.numel() > 0:
                 extra = f"  nonnan_min={y_nonnan.min().item():.4f}, nonnan_max={y_nonnan.max().item():.4f}"
             print(f"   [dbg] NaN after pred: {nan_count}/{y_pred.numel()}{extra}")
-            # Try step-by-step through prediction head
-            h = model.prediction[0](x)   # Linear(1024,512)
-            h = model.prediction[1](h)   # Swish
-            h = model.prediction[2](h)   # Dropout
-            h = model.prediction[3](h)   # Linear(512,1)
-            print(f"   [dbg]  step pred: L0={torch.isnan(h).sum().item()}/{h.numel()}, "
-                  f"range=[{h.min().item():.2f},{h.max().item():.2f}]")
-            h = model.prediction[4](h)   # Softplus
-            print(f"   [dbg]  step softplus: NaN={torch.isnan(h).sum().item()}/{h.numel()}")
             return float("nan")
         y_pred = y_pred.flatten()
-        loss = criterion(y_pred, Y)
         loss = criterion(y_pred, Y)
         loss.backward()
         optimizer.step()
