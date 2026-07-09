@@ -82,15 +82,21 @@ check_nan('after model.train()')
 for m in model.modules():
     if isinstance(m, (torch.nn.BatchNorm1d, torch.nn.BatchNorm2d, torch.nn.BatchNorm3d)):
         m.eval()
-check_nan('after BN freeze')
+    check_nan('after BN freeze')
 
-# Phase 4: train forward
-for X_train, Y_train, _, _ in dl:
-    X_train = X_train.cuda()
-    Y_train = Y_train.cuda()
-    check_nan('before forward')
-    with torch.no_grad():
-        # Exact same manual forward as train epoch
+    # Phase 4: apply freeze and create optimizer (exact match with finetune script)
+    for p in model.parameters(): p.requires_grad = False
+    for p in model.prediction.parameters(): p.requires_grad = True
+    optimizer = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=3e-4, weight_decay=1e-3)
+    check_nan('after freeze + optimizer')
+
+    # Phase 5: train forward with gradients (exact match with _train_epoch)
+    for X_train, Y_train, _, _ in dl:
+        X_train = X_train.cuda()
+        Y_train = Y_train.cuda()
+        optimizer.zero_grad()
+        check_nan('after zero_grad')
+        # Manual forward pass WITHOUT torch.no_grad() (grads enabled)
         x = X_train.unsqueeze(1)
         x = model.pretrained_model.forward_conv(x)
         check_nan('after conv')
@@ -109,7 +115,14 @@ for X_train, Y_train, _, _ in dl:
         y_pred = model.prediction(x).flatten()
         check_nan('after pred')
         print(f'  pred range=[{y_pred.min().item():.4f},{y_pred.max().item():.4f}]')
-    break
+        if not torch.isnan(y_pred).any():
+            loss = criterion(y_pred, Y_train)
+            print(f'  loss={loss.item():.4f}')
+            loss.backward()
+            check_nan('after backward')
+            optimizer.step()
+            check_nan('after step')
+        break
 
 # Phase 5: also test how _apply_freeze_policy changes things
 model2 = build_model().cuda()
