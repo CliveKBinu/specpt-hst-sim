@@ -83,7 +83,15 @@ for ep in range(1, 31):
         if torch.isnan(y).any():
             print(f"  NaN! ep={ep} batch={b}")
             raise SystemExit(1)
+        if torch.isnan(Y).any():
+            print(f"  Y has NaN! ep={ep} batch={b}")
+            raise SystemExit(1)
         loss = criterion(y, Y)
+        if torch.isnan(loss) or torch.isinf(loss):
+            print(f"  loss={loss.item()} ep={ep} batch={b}  y=[{y.min().item():.4f},{y.max().item():.4f}]  "
+                  f"Y=[{Y.min().item():.4f},{Y.max().item():.4f}]  "
+                  f"std_y={torch.std(Y).item():.6f}")
+            raise SystemExit(1)
         loss.backward()
         opt.step()
         tl += loss.item() * X.size(0)
