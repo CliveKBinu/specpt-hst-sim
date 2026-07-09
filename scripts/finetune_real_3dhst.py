@@ -437,11 +437,6 @@ def main():
                          CONFIG["model_config"], device)
     model = _apply_freeze_policy(model, stage)
 
-    # Freeze BN running stats (prevents distribution drift in frozen layers)
-    for m in model.modules():
-        if isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)):
-            m.eval()
-
     # Only trainable parameters
     trainable_params = [p for p in model.parameters() if p.requires_grad]
     optimizer = torch.optim.AdamW(trainable_params, lr=stage_cfg["lr"],
@@ -468,6 +463,46 @@ def main():
     print(f"\n{'='*50}")
     print(f"TRAINING (Stage {stage})")
     print(f"{'='*50}")
+
+    # Diagnostic forward pass on one val batch
+    model.eval()
+    for X_diag, Y_diag, _, _ in val_loader:
+        X_diag = X_diag.to(device)
+        with torch.no_grad():
+            x = X_diag.unsqueeze(1)
+            print(f"[diag] input shape: {x.shape}, NaN: {torch.isnan(x).sum().item()}")
+            x = model.pretrained_model.forward_conv(x)
+            print(f"[diag] after conv: shape={x.shape}, NaN={torch.isnan(x).sum().item()}, "
+                  f"min={x.min().item():.4f}, max={x.max().item():.4f}")
+            x = x.flatten(start_dim=1)
+            x = model.proj_to_d_model(x)
+            print(f"[diag] after proj: shape={x.shape}, NaN={torch.isnan(x).sum().item()}, "
+                  f"min={x.min().item():.4f}, max={x.max().item():.4f}")
+            x = x.unsqueeze(0)
+            encoded = model.encoder(x)
+            print(f"[diag] after encoder: shape={encoded.shape}, NaN={torch.isnan(encoded).sum().item()}, "
+                  f"min={encoded.min().item():.4f}, max={encoded.max().item():.4f}")
+            encoded = encoded.squeeze(0)
+            attn_out, _ = model.attention(encoded, encoded, encoded)
+            print(f"[diag] after attention: shape={attn_out.shape}, NaN={torch.isnan(attn_out).sum().item()}, "
+                  f"min={attn_out.min().item():.4f}, max={attn_out.max().item():.4f}")
+            x = attn_out + encoded
+            x = model.mlp_blocks(x)
+            print(f"[diag] after mlp_blocks: shape={x.shape}, NaN={torch.isnan(x).sum().item()}, "
+                  f"min={x.min().item():.4f}, max={x.max().item():.4f}")
+            z_pred = model.prediction(x)
+            print(f"[diag] z_pred: shape={z_pred.shape}, NaN={torch.isnan(z_pred).sum().item()}, "
+                  f"min={z_pred.min().item():.4f}, max={z_pred.max().item():.4f}")
+            print(f"[diag] z_true: shape={Y_diag.shape}, NaN={torch.isnan(Y_diag).sum().item()}, "
+                  f"range=[{Y_diag.min().item():.4f},{Y_diag.max().item():.4f}]")
+        loss_diag = criterion(z_pred.flatten(), Y_diag.to(device))
+        print(f"[diag] loss = {loss_diag.item():.4f}")
+        break
+    model.train()
+    # Freeze BN running stats (prevents distribution drift from frozen layers)
+    for m in model.modules():
+        if isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)):
+            m.eval()
 
     for epoch in range(1, stage_cfg["epochs"] + 1):
         t0 = time.time()
