@@ -163,17 +163,21 @@ def _apply_freeze_policy(model, stage):
     return model
 
 def _train_epoch(model, loader, optimizer, criterion, device, noise_std):
-    model.eval()
-    model.mlp_blocks.train()
-    model.prediction.train()
-    model.encoder.eval()
-    model.attention.eval()
     total_loss = 0
     for batch_idx, (X, Y, _, _) in enumerate(loader):
         X, Y = X.cuda(), Y.cuda()
         if noise_std > 0:
             X = X + torch.randn_like(X) * noise_std
         optimizer.zero_grad()
+        # Eval-mode diagnostic on first training batch
+        if batch_idx == 0:
+            model.eval()
+            with torch.no_grad():
+                y_eval = model(X).flatten()
+            print(f"   [ck] eval-mode pred: NaN={torch.isnan(y_eval).sum().item()}/{y_eval.numel()}, "
+                  f"range=[{y_eval.min().item():.4f},{y_eval.max().item():.4f}]")
+            model.mlp_blocks.train()
+            model.prediction.train()
         y_pred = model(X).flatten()
         nan_count = torch.isnan(y_pred).sum().item()
         if nan_count > 0:
@@ -181,7 +185,7 @@ def _train_epoch(model, loader, optimizer, criterion, device, noise_std):
             extra = f"  all_nan={nan_count==y_pred.numel()}"
             if y_nonnan.numel() > 0:
                 extra = f"  nonnan_min={y_nonnan.min().item():.4f}, nonnan_max={y_nonnan.max().item():.4f}"
-            print(f"   [dbg] NaN after pred: {nan_count}/{y_pred.numel()}{extra}")
+            print(f"   [dbg] train-mode pred: {nan_count}/{y_pred.numel()}{extra}")
             return float("nan")
         y_pred = y_pred.flatten()
         loss = criterion(y_pred, Y)
