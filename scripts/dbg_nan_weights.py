@@ -13,7 +13,7 @@ PADDING_MASK = (TRAIN_WAVES < 11000) | (TRAIN_WAVES > 16500)
 def load_data():
     df = pd.read_pickle('/home/ckb2084/research/SpecPT/data/grism_specPT_v5.pkl')
     df = df[df['SNR'] >= 2.5].reset_index(drop=True)
-    df = df.iloc[:256].copy()
+    # Removed: df = df.iloc[:256].copy()
     safe_sens = df['sensitivity_resampled'].apply(lambda a: np.where(a==0,1e-8,a))
     df['flux_sensitivity'] = df['clean_flux_resampled'] / safe_sens
     specs = []
