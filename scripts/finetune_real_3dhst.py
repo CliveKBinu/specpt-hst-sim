@@ -163,31 +163,31 @@ def _apply_freeze_policy(model, stage):
     return model
 
 def _train_epoch(model, loader, optimizer, criterion, device, noise_std):
+    model.train()
+    for m in model.modules():
+        if isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)):
+            m.eval()
     total_loss = 0
     for batch_idx, (X, Y, _, _) in enumerate(loader):
         X, Y = X.cuda(), Y.cuda()
         if noise_std > 0:
             X = X + torch.randn_like(X) * noise_std
         optimizer.zero_grad()
-        # Eval-mode diagnostic on first training batch
-        if batch_idx == 0:
-            model.eval()
-            with torch.no_grad():
-                y_eval = model(X).flatten()
-            print(f"   [ck] eval-mode pred: NaN={torch.isnan(y_eval).sum().item()}/{y_eval.numel()}, "
-                  f"range=[{y_eval.min().item():.4f},{y_eval.max().item():.4f}]")
-            model.mlp_blocks.train()
-            model.prediction.train()
-        y_pred = model(X).flatten()
-        nan_count = torch.isnan(y_pred).sum().item()
-        if nan_count > 0:
-            y_nonnan = y_pred[~torch.isnan(y_pred)]
-            extra = f"  all_nan={nan_count==y_pred.numel()}"
-            if y_nonnan.numel() > 0:
-                extra = f"  nonnan_min={y_nonnan.min().item():.4f}, nonnan_max={y_nonnan.max().item():.4f}"
-            print(f"   [dbg] train-mode pred: {nan_count}/{y_pred.numel()}{extra}")
+        # Manual forward (exact copy of reproduction script)
+        x = X.unsqueeze(1)
+        x = model.pretrained_model.forward_conv(x)
+        x = x.flatten(start_dim=1)
+        x = model.proj_to_d_model(x)
+        x = x.unsqueeze(0)
+        x = model.encoder(x)
+        x = x.squeeze(0)
+        attn, _ = model.attention(x, x, x)
+        x = attn + x
+        x = model.mlp_blocks(x)
+        y_pred = model.prediction(x).flatten()
+        if torch.isnan(y_pred).any():
+            print(f"   [dbg] NaN pred: {torch.isnan(y_pred).sum().item()}/{y_pred.numel()}  all")
             return float("nan")
-        y_pred = y_pred.flatten()
         loss = criterion(y_pred, Y)
         loss.backward()
         optimizer.step()
