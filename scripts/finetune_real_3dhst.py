@@ -163,6 +163,7 @@ def main():
     os.makedirs(C["ckpt_dir"], exist_ok=True)
     patience = 0
 
+    best_nmad = 1e9
     for ep in range(1, C["ep"]+1):
         model.train()
         for m in model.modules():
@@ -190,8 +191,8 @@ def main():
               f"val_nmad={met['nmad']:.5f}  val_eta={met['eta']:.2f}%  "
               f"{time.time()-t0:.0f}s")
 
-        if met["nmad"] < BEST_VAL_NMAD:
-            BEST_VAL_NMAD = met["nmad"]
+        if met["nmad"] < best_nmad:
+            best_nmad = met["nmad"]
             torch.save({"epoch":ep,"model_state_dict":model.state_dict(),"best_val_nmad":met["nmad"]}, best_ckpt)
             patience = 0
         else:
@@ -200,7 +201,7 @@ def main():
                 print(f"  Early stop at {ep}")
                 break
 
-    print(f"Best val NMAD: {BEST_VAL_NMAD:.5f}")
+    print(f"Best val NMAD: {best_nmad:.5f}")
 
     # Test
     ckpt = torch.load(best_ckpt, map_location=device, weights_only=False)
