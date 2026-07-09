@@ -175,6 +175,18 @@ def _train_epoch(model, loader, optimizer, criterion, device, noise_std):
             X = X + torch.randn_like(X) * noise_std
         optimizer.zero_grad()
 
+        # Full param check on first batch
+        if batch_idx == 0:
+            nan_params = []
+            for name, p in model.named_parameters():
+                if torch.isnan(p).any():
+                    nan_params.append(name)
+            if nan_params:
+                print(f"   [ck] NaN params before any forward: {nan_params[:5]}")
+                return float("nan")
+            else:
+                print(f"   [ck] All params clean before forward")
+
         # Manual forward pass to trace NaN at each layer
         x = X.unsqueeze(1)
         x = model.pretrained_model.forward_conv(x)
@@ -206,11 +218,6 @@ def _train_epoch(model, loader, optimizer, criterion, device, noise_std):
             print(f"   [dbg] NaN after mlp, batch {batch_idx}, "
                   f"min={x.min().item():.2f}, max={x.max().item():.2f}")
             return float("nan")
-        # Check prediction head weights for NaN
-        for name, p in model.prediction.named_parameters():
-            if torch.isnan(p).any():
-                print(f"   [dbg] prediction.{name} has NaN weights!")
-                return float("nan")
         y_pred = model.prediction(x)
         nan_count = torch.isnan(y_pred).sum().item()
         if nan_count > 0:
