@@ -169,12 +169,24 @@ def _train_epoch(model, loader, optimizer, criterion, device, noise_std):
         if isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)):
             m.eval()
     total_loss = 0
-    for X, Y, _, _ in loader:
+    for batch_idx, (X, Y, _, _) in enumerate(loader):
         X, Y = X.to(device, non_blocking=True), Y.to(device, non_blocking=True)
         if noise_std > 0 and model.training:
             X = X + torch.randn_like(X) * noise_std
         optimizer.zero_grad()
         y_pred = model(X).flatten()
+        if torch.isnan(y_pred).any():
+            nan_idx = torch.where(torch.isnan(y_pred))[0].cpu().numpy()[:5]
+            print(f"   [dbg] batch {batch_idx}: {nan_idx.shape[0]} NaN in y_pred, "
+                  f"samples {nan_idx.tolist()}")
+            # Check input for that sample
+            for ni in nan_idx:
+                x_samp = X[ni].cpu().numpy()
+                valid = ~np.isnan(x_samp)
+                print(f"         sample {ni}: valid={valid.sum()}/{len(x_samp)}, "
+                      f"nan_only_frac={np.isnan(x_samp[PADDING_MASK.numpy()]).mean():.3f} / "
+                      f"{np.isnan(x_samp[~PADDING_MASK.numpy()]).mean():.3f}")
+            return float("nan")
         loss = criterion(y_pred, Y)
         loss.backward()
         optimizer.step()
