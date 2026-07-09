@@ -34,7 +34,7 @@ idx = rng.permutation(len(df))
 tr, va, te = df.iloc[idx[:int(len(df)*0.70)]].copy(), df.iloc[idx[int(len(df)*0.70):int(len(df)*0.85)]].copy(), df.iloc[idx[int(len(df)*0.85):]].copy()
 print(f"Train {len(tr)} Val {len(va)} Test {len(te)}")
 ds = lambda d: HSTGrismDataset(d, normalize_fn=SpectrumNormalizer.zscore_normalize)
-tr_ld = DataLoader(ds(tr), 128, shuffle=True, num_workers=0)
+tr_ld = DataLoader(ds(tr), 128, shuffle=True, num_workers=0, drop_last=True)
 va_ld = DataLoader(ds(va), 128, shuffle=False, num_workers=0)
 te_ld = DataLoader(ds(te), 128, shuffle=False, num_workers=0)
 

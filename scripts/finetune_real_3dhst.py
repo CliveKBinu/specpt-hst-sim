@@ -125,7 +125,9 @@ def main():
     tr, va, te = split_data(df)
     ds = lambda d: HSTGrismDataset(d, normalize_fn=SpectrumNormalizer.zscore_normalize)
     dl = lambda d,s=False: DataLoader(ds(d), batch_size=C["bs"], shuffle=s, num_workers=0)
-    tr_ld = dl(tr, True); va_ld = dl(va); te_ld = dl(te)
+    tr_ld = DataLoader(ds(tr), batch_size=C["bs"], shuffle=True, num_workers=0, drop_last=True)
+va_ld = DataLoader(ds(va), batch_size=C["bs"], shuffle=False, num_workers=0)
+te_ld = DataLoader(ds(te), batch_size=C["bs"], shuffle=False, num_workers=0)
 
     model = build_model(C["init_ckpt"], C["ae_path"], C["model_cfg"], device)
 
@@ -166,6 +168,7 @@ def main():
         for m in model.modules():
             if isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)):
                 m.eval()
+        model.encoder.eval()
 
         total_loss = 0
         t0 = time.time()
