@@ -206,14 +206,30 @@ def _train_epoch(model, loader, optimizer, criterion, device, noise_std):
             print(f"   [dbg] NaN after mlp, batch {batch_idx}, "
                   f"min={x.min().item():.2f}, max={x.max().item():.2f}")
             return float("nan")
-        y_pred = model.prediction(x).flatten()
-        if torch.isnan(y_pred).any():
-            nan_idx = torch.where(torch.isnan(y_pred))[0].cpu().numpy()[:3]
-            print(f"   [dbg] NaN after pred, batch {batch_idx}, "
-                  f"samples {nan_idx.tolist()}, "
-                  f"pred_min={y_pred[~torch.isnan(y_pred)].min().item():.4f}, "
-                  f"pred_max={y_pred[~torch.isnan(y_pred)].max().item():.4f}")
+        # Check prediction head weights for NaN
+        for name, p in model.prediction.named_parameters():
+            if torch.isnan(p).any():
+                print(f"   [dbg] prediction.{name} has NaN weights!")
+                return float("nan")
+        y_pred = model.prediction(x)
+        nan_count = torch.isnan(y_pred).sum().item()
+        if nan_count > 0:
+            y_nonnan = y_pred[~torch.isnan(y_pred)]
+            extra = f"  all_nan={nan_count==y_pred.numel()}"
+            if y_nonnan.numel() > 0:
+                extra = f"  nonnan_min={y_nonnan.min().item():.4f}, nonnan_max={y_nonnan.max().item():.4f}"
+            print(f"   [dbg] NaN after pred: {nan_count}/{y_pred.numel()}{extra}")
+            # Try step-by-step through prediction head
+            h = model.prediction[0](x)   # Linear(1024,512)
+            h = model.prediction[1](h)   # Swish
+            h = model.prediction[2](h)   # Dropout
+            h = model.prediction[3](h)   # Linear(512,1)
+            print(f"   [dbg]  step pred: L0={torch.isnan(h).sum().item()}/{h.numel()}, "
+                  f"range=[{h.min().item():.2f},{h.max().item():.2f}]")
+            h = model.prediction[4](h)   # Softplus
+            print(f"   [dbg]  step softplus: NaN={torch.isnan(h).sum().item()}/{h.numel()}")
             return float("nan")
+        y_pred = y_pred.flatten()
         loss = criterion(y_pred, Y)
         loss = criterion(y_pred, Y)
         loss.backward()
