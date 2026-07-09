@@ -28,7 +28,7 @@
 | Experiment | Stage | Status | Notes |
 |------------|-------|--------|-------|
 | Real 3D-HST Stage 1 | Linear probe | ✅ Complete (NMAD 0.2105) | exp_032 head trained on 7.8k real spectra |
-| Real 3D-HST Stage 2 | Partial freeze | ⏳ Running (job 21392122) | Init from Stage 1 best, 40 epochs |
+| Real 3D-HST Stage 2 | Partial freeze | ✅ Complete (NMAD 0.2073) | init from Stage 1 best, 40 epochs, early stopped at 10 |
 
 > ℹ️ **Outlier Analysis.** See [`notebooks/02_outlier_analysis.ipynb`](notebooks/02_outlier_analysis.ipynb) for deep-dive analysis of what makes outlier spectra different. All checkpoints now saved with experiment-specific names (`exp_NNN_best_model.pth`) to prevent cross-experiment contamination.
 
@@ -46,7 +46,7 @@ Fine-tuning exp_032 on real 3D-HST grism data. Two-stage approach: linear probe 
 |-------|----------|-----------|-----|--------|
 | Pre-fix | Frozen exp_032 (no input fix) | ~0.50 | — | Comparison baseline |
 | **1** | **Linear probe (head only)** | **0.2105** | **47.6%** | ✅ Complete |
-| 2 | Partial freeze (encoder + MLP + head) | _pending_ | _pending_ | ⏳ Submitted |
+| 2 | Partial freeze (encoder + MLP + head) | 0.2073 | 47.3% | ✅ Complete |
 
 ---
 

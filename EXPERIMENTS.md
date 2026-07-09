@@ -102,6 +102,6 @@ Two-stage fine-tuning of exp_032 on real 3D-HST grism data (grism_specPT_v5.pkl,
 |-------|----------|-----------------|----|--------|-----------|-----|-------|
 | Pre-fix | Frozen exp_032 (raw eval) | — | — | — | ~0.50 | — | No interpolation applied — model sees shifted features |
 | 1 | Linear probe (prediction head only) | 525,313 | 3e-4 | 30 | **0.2105** | 47.6% | Frozen encoder features contain real-data redshift info. NMAD improved 2.4× over pre-fix baseline. Severe outlier fraction (47.6%) suggests encoder features are discriminative but noisy. Init from exp_032 best. |
-| 2 | Partial freeze (last encoder + attention + 12 MLP + head) | ~4.7M | 1e-5 | 40 | _pending_ | _pending_ | Init from Stage 1 best checkpoint. Aims to adapt deeper layers to real-data distribution. Submitted SLURM 21392122. |
+| 2 | Partial freeze (last encoder + attention + 12 MLP + head) | ~4.7M | 1e-5 | 40 | **0.2073** | 47.3% | Minimal improvement over Stage 1 (0.2105 → 0.2073, 1.5%). Training loss continued decreasing (0.667→0.502) but val NMAD plateaued — overfitting on 7.8k train samples. Early stopped at epoch 10. Best val NMAD 0.20994 at epoch 3. |
 
 *Last updated: 2026-07-09 11:30 UTC*
