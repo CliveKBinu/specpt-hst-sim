@@ -55,7 +55,7 @@ criterion = NMADLoss(normalization_factor='std')
 
 # Phase 1: eval diagnostic (exact same as fine-tune script)
 model.eval()
-X_diag, Y_diag = next(iter(dl))
+X_diag, Y_diag, _, _ = next(iter(dl))
 X_diag = X_diag.cuda()
 Y_diag = Y_diag.cuda()
 with torch.no_grad():
@@ -85,7 +85,7 @@ for m in model.modules():
 check_nan('after BN freeze')
 
 # Phase 4: train forward
-for X_train, Y_train in dl:
+for X_train, Y_train, _, _ in dl:
     X_train = X_train.cuda()
     Y_train = Y_train.cuda()
     check_nan('before forward')
@@ -122,7 +122,7 @@ for m in model2.modules():
     if isinstance(m, (torch.nn.BatchNorm1d, torch.nn.BatchNorm2d, torch.nn.BatchNorm3d)):
         m.eval()
 # Forward
-X_test, Y_test = next(iter(dl))
+X_test, Y_test, _, _ = next(iter(dl))
 X_test = X_test.cuda()
 with torch.no_grad():
     p = model2(X_test).flatten()
