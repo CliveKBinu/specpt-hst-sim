@@ -175,49 +175,29 @@ def _train_epoch(model, loader, optimizer, criterion, device, noise_std):
             X = X + torch.randn_like(X) * noise_std
         optimizer.zero_grad()
 
-        # Full param check on first batch
-        if batch_idx == 0:
-            nan_params = []
-            for name, p in model.named_parameters():
+        def _check_nan(step_name):
+            for n, p in model.named_parameters():
                 if torch.isnan(p).any():
-                    nan_params.append(name)
-            if nan_params:
-                print(f"   [ck] NaN params before any forward: {nan_params[:5]}")
-                return float("nan")
-            else:
-                print(f"   [ck] All params clean before forward")
+                    print(f"   [ck] {step_name}: {n} is NaN")
+                    return True
+            return False
 
-        # Manual forward pass to trace NaN at each layer
+        # Check after each layer in the manual forward
         x = X.unsqueeze(1)
         x = model.pretrained_model.forward_conv(x)
-        if torch.isnan(x).any():
-            print(f"   [dbg] NaN after conv, batch {batch_idx}, "
-                  f"min={x.min().item():.2f}, max={x.max().item():.2f}")
-            return float("nan")
+        if _check_nan("after conv"): return float("nan")
         x = x.flatten(start_dim=1)
         x = model.proj_to_d_model(x)
-        if torch.isnan(x).any():
-            print(f"   [dbg] NaN after proj, batch {batch_idx}, "
-                  f"min={x.min().item():.2f}, max={x.max().item():.2f}")
-            return float("nan")
+        if _check_nan("after proj"): return float("nan")
         x = x.unsqueeze(0)
         x = model.encoder(x)
-        if torch.isnan(x).any():
-            print(f"   [dbg] NaN after encoder, batch {batch_idx}, "
-                  f"min={x.min().item():.2f}, max={x.max().item():.2f}")
-            return float("nan")
+        if _check_nan("after encoder"): return float("nan")
         x = x.squeeze(0)
         attn_out, _ = model.attention(x, x, x)
-        if torch.isnan(attn_out).any():
-            print(f"   [dbg] NaN after attention, batch {batch_idx}, "
-                  f"min={attn_out.min().item():.2f}, max={attn_out.max().item():.2f}")
-            return float("nan")
+        if _check_nan("after attention"): return float("nan")
         x = attn_out + x
         x = model.mlp_blocks(x)
-        if torch.isnan(x).any():
-            print(f"   [dbg] NaN after mlp, batch {batch_idx}, "
-                  f"min={x.min().item():.2f}, max={x.max().item():.2f}")
-            return float("nan")
+        if _check_nan("after mlp"): return float("nan")
         y_pred = model.prediction(x)
         nan_count = torch.isnan(y_pred).sum().item()
         if nan_count > 0:
