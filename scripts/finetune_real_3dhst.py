@@ -495,6 +495,11 @@ def main():
 
     model = _build_model(CONFIG["checkpoint"], CONFIG["autoencoder"],
                          CONFIG["model_config"], device)
+    # Sanity check: are weights NaN right after loading?
+    for name, p in model.named_parameters():
+        if torch.isnan(p).any():
+            print(f"   [WARN] {name} has NaN right after loading! "
+                  f"shape={p.shape}, nan_fraction={(torch.isnan(p).float().mean()*100):.1f}%")
     model = _apply_freeze_policy(model, stage)
 
     # Only trainable parameters
