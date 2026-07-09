@@ -93,3 +93,15 @@ These are early test baseline runs on the HST augmented autoencoder before the t
 | amber-spaceship-11 | r832efo5 | failed | Early test baseline (pre-tracking) |
 
 Also, SLURM job 21346405 (failed) and 21346407 (completed) correspond to early test runs before systematic experiment tracking began.
+
+## Real 3D-HST Fine-tuning
+
+Two-stage fine-tuning of exp_032 on real 3D-HST grism data (grism_specPT_v5.pkl, 11,156 spectra after SNR≥2.5). Data interpolated to training wavelength grid (10311–17465 Å) with NaN-masking at [11000, 16500] Å detection limits and z-score normalized. All metrics on held-out test set (1,674 spectra).
+
+| Stage | Approach | Trainable Params | LR | Epochs | Test NMAD | Eta | Notes |
+|-------|----------|-----------------|----|--------|-----------|-----|-------|
+| Pre-fix | Frozen exp_032 (raw eval) | — | — | — | ~0.50 | — | No interpolation applied — model sees shifted features |
+| 1 | Linear probe (prediction head only) | 525,313 | 3e-4 | 30 | **0.2105** | 47.6% | Frozen encoder features contain real-data redshift info. NMAD improved 2.4× over pre-fix baseline. Severe outlier fraction (47.6%) suggests encoder features are discriminative but noisy. Init from exp_032 best. |
+| 2 | Partial freeze (last encoder + attention + 12 MLP + head) | ~4.7M | 1e-5 | 40 | _pending_ | _pending_ | Init from Stage 1 best checkpoint. Aims to adapt deeper layers to real-data distribution. Submitted SLURM 21392122. |
+
+*Last updated: 2026-07-09 11:30 UTC*
