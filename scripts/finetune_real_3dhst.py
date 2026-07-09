@@ -170,35 +170,11 @@ def _train_epoch(model, loader, optimizer, criterion, device, noise_std):
             m.eval()
     total_loss = 0
     for batch_idx, (X, Y, _, _) in enumerate(loader):
-        X, Y = X.to(device, non_blocking=True), Y.to(device, non_blocking=True)
+        X, Y = X.cuda(), Y.cuda()  # sync transfer — no non_blocking
         if noise_std > 0 and model.training:
             X = X + torch.randn_like(X) * noise_std
         optimizer.zero_grad()
-
-        def _check_nan(step_name):
-            for n, p in model.named_parameters():
-                if torch.isnan(p).any():
-                    print(f"   [ck] {step_name}: {n} is NaN")
-                    return True
-            return False
-
-        # Check after each layer in the manual forward
-        x = X.unsqueeze(1)
-        x = model.pretrained_model.forward_conv(x)
-        if _check_nan("after conv"): return float("nan")
-        x = x.flatten(start_dim=1)
-        x = model.proj_to_d_model(x)
-        if _check_nan("after proj"): return float("nan")
-        x = x.unsqueeze(0)
-        x = model.encoder(x)
-        if _check_nan("after encoder"): return float("nan")
-        x = x.squeeze(0)
-        attn_out, _ = model.attention(x, x, x)
-        if _check_nan("after attention"): return float("nan")
-        x = attn_out + x
-        x = model.mlp_blocks(x)
-        if _check_nan("after mlp"): return float("nan")
-        y_pred = model.prediction(x)
+        y_pred = model(X).flatten()
         nan_count = torch.isnan(y_pred).sum().item()
         if nan_count > 0:
             y_nonnan = y_pred[~torch.isnan(y_pred)]
@@ -474,11 +450,11 @@ def main():
     test_dataset = HSTGrismDataset(test_df, normalize_fn=SpectrumNormalizer.zscore_normalize)
 
     train_loader = DataLoader(train_dataset, batch_size=CONFIG["batch_size"],
-                              shuffle=True, num_workers=CONFIG["num_workers"], pin_memory=True)
+                              shuffle=True, num_workers=CONFIG["num_workers"])
     val_loader = DataLoader(val_dataset, batch_size=CONFIG["batch_size"],
-                             shuffle=False, num_workers=CONFIG["num_workers"], pin_memory=True)
+                             shuffle=False, num_workers=CONFIG["num_workers"])
     test_loader = DataLoader(test_dataset, batch_size=CONFIG["batch_size"],
-                              shuffle=False, num_workers=CONFIG["num_workers"], pin_memory=True)
+                              shuffle=False, num_workers=CONFIG["num_workers"])
 
     model = _build_model(CONFIG["checkpoint"], CONFIG["autoencoder"],
                          CONFIG["model_config"], device)
@@ -516,39 +492,14 @@ def main():
     print(f"TRAINING (Stage {stage})")
     print(f"{'='*50}")
 
-    # Diagnostic forward pass on one val batch
+    # Quick diagnostic forward pass on one val batch
     model.eval()
     for X_diag, Y_diag, _, _ in val_loader:
         X_diag = X_diag.to(device)
         with torch.no_grad():
-            x = X_diag.unsqueeze(1)
-            print(f"[diag] input shape: {x.shape}, NaN: {torch.isnan(x).sum().item()}")
-            x = model.pretrained_model.forward_conv(x)
-            print(f"[diag] after conv: shape={x.shape}, NaN={torch.isnan(x).sum().item()}, "
-                  f"min={x.min().item():.4f}, max={x.max().item():.4f}")
-            x = x.flatten(start_dim=1)
-            x = model.proj_to_d_model(x)
-            print(f"[diag] after proj: shape={x.shape}, NaN={torch.isnan(x).sum().item()}, "
-                  f"min={x.min().item():.4f}, max={x.max().item():.4f}")
-            x = x.unsqueeze(0)
-            encoded = model.encoder(x)
-            print(f"[diag] after encoder: shape={encoded.shape}, NaN={torch.isnan(encoded).sum().item()}, "
-                  f"min={encoded.min().item():.4f}, max={encoded.max().item():.4f}")
-            encoded = encoded.squeeze(0)
-            attn_out, _ = model.attention(encoded, encoded, encoded)
-            print(f"[diag] after attention: shape={attn_out.shape}, NaN={torch.isnan(attn_out).sum().item()}, "
-                  f"min={attn_out.min().item():.4f}, max={attn_out.max().item():.4f}")
-            x = attn_out + encoded
-            x = model.mlp_blocks(x)
-            print(f"[diag] after mlp_blocks: shape={x.shape}, NaN={torch.isnan(x).sum().item()}, "
-                  f"min={x.min().item():.4f}, max={x.max().item():.4f}")
-            z_pred = model.prediction(x)
-            print(f"[diag] z_pred: shape={z_pred.shape}, NaN={torch.isnan(z_pred).sum().item()}, "
-                  f"min={z_pred.min().item():.4f}, max={z_pred.max().item():.4f}")
-            print(f"[diag] z_true: shape={Y_diag.shape}, NaN={torch.isnan(Y_diag).sum().item()}, "
-                  f"range=[{Y_diag.min().item():.4f},{Y_diag.max().item():.4f}]")
-        loss_diag = criterion(z_pred.flatten(), Y_diag.to(device))
-        print(f"[diag] loss = {loss_diag.item():.4f}")
+            z_pred = model(X_diag).flatten()
+        loss_diag = criterion(z_pred, Y_diag.to(device))
+        print(f"[diag] loss={loss_diag.item():.4f}, z_range=[{z_pred.min().item():.4f},{z_pred.max().item():.4f}]")
         break
     model.train()
 
