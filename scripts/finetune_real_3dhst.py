@@ -164,10 +164,12 @@ def _apply_freeze_policy(model, stage):
 
 def _train_epoch(model, loader, optimizer, criterion, device, noise_std):
     model.train()
-    # Keep frozen BN layers in eval mode to prevent running stats drift
+    # Keep frozen submodules in eval mode to disable dropout + BN updates
     for m in model.modules():
         if isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)):
             m.eval()
+    model.encoder.eval()  # encoder dropout corrupts features for attention-over-batch
+    model.attention.eval()  # attention dropout (if any) also safe to disable
     total_loss = 0
     for batch_idx, (X, Y, _, _) in enumerate(loader):
         X, Y = X.cuda(), Y.cuda()  # sync transfer — no non_blocking
