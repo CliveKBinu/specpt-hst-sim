@@ -164,6 +164,10 @@ def _apply_freeze_policy(model, stage):
 
 def _train_epoch(model, loader, optimizer, criterion, device, noise_std):
     model.train()
+    # Keep frozen BN layers in eval mode to prevent running stats drift
+    for m in model.modules():
+        if isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)):
+            m.eval()
     total_loss = 0
     for X, Y, _, _ in loader:
         X, Y = X.to(device, non_blocking=True), Y.to(device, non_blocking=True)
@@ -499,10 +503,6 @@ def main():
         print(f"[diag] loss = {loss_diag.item():.4f}")
         break
     model.train()
-    # Freeze BN running stats (prevents distribution drift from frozen layers)
-    for m in model.modules():
-        if isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)):
-            m.eval()
 
     for epoch in range(1, stage_cfg["epochs"] + 1):
         t0 = time.time()
