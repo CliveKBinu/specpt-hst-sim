@@ -126,8 +126,8 @@ def main():
     ds = lambda d: HSTGrismDataset(d, normalize_fn=SpectrumNormalizer.zscore_normalize)
     dl = lambda d,s=False: DataLoader(ds(d), batch_size=C["bs"], shuffle=s, num_workers=0)
     tr_ld = DataLoader(ds(tr), batch_size=C["bs"], shuffle=True, num_workers=0, drop_last=True)
-va_ld = DataLoader(ds(va), batch_size=C["bs"], shuffle=False, num_workers=0)
-te_ld = DataLoader(ds(te), batch_size=C["bs"], shuffle=False, num_workers=0)
+    va_ld = DataLoader(ds(va), batch_size=C["bs"], shuffle=False, num_workers=0)
+    te_ld = DataLoader(ds(te), batch_size=C["bs"], shuffle=False, num_workers=0)
 
     model = build_model(C["init_ckpt"], C["ae_path"], C["model_cfg"], device)
 
