@@ -174,21 +174,47 @@ def _train_epoch(model, loader, optimizer, criterion, device, noise_std):
         if noise_std > 0 and model.training:
             X = X + torch.randn_like(X) * noise_std
         optimizer.zero_grad()
-        y_pred = model(X).flatten()
+
+        # Manual forward pass to trace NaN at each layer
+        x = X.unsqueeze(1)
+        x = model.pretrained_model.forward_conv(x)
+        if torch.isnan(x).any():
+            print(f"   [dbg] NaN after conv, batch {batch_idx}, "
+                  f"min={x.min().item():.2f}, max={x.max().item():.2f}")
+            return float("nan")
+        x = x.flatten(start_dim=1)
+        x = model.proj_to_d_model(x)
+        if torch.isnan(x).any():
+            print(f"   [dbg] NaN after proj, batch {batch_idx}, "
+                  f"min={x.min().item():.2f}, max={x.max().item():.2f}")
+            return float("nan")
+        x = x.unsqueeze(0)
+        x = model.encoder(x)
+        if torch.isnan(x).any():
+            print(f"   [dbg] NaN after encoder, batch {batch_idx}, "
+                  f"min={x.min().item():.2f}, max={x.max().item():.2f}")
+            return float("nan")
+        x = x.squeeze(0)
+        attn_out, _ = model.attention(x, x, x)
+        if torch.isnan(attn_out).any():
+            print(f"   [dbg] NaN after attention, batch {batch_idx}, "
+                  f"min={attn_out.min().item():.2f}, max={attn_out.max().item():.2f}")
+            return float("nan")
+        x = attn_out + x
+        x = model.mlp_blocks(x)
+        if torch.isnan(x).any():
+            print(f"   [dbg] NaN after mlp, batch {batch_idx}, "
+                  f"min={x.min().item():.2f}, max={x.max().item():.2f}")
+            return float("nan")
+        y_pred = model.prediction(x).flatten()
         if torch.isnan(y_pred).any():
             nan_idx = torch.where(torch.isnan(y_pred))[0].cpu().numpy()[:3]
-            print(f"   [dbg] batch {batch_idx}: {nan_idx.shape[0]} NaN in y_pred, "
-                  f"samples {nan_idx.tolist()}")
-            # Check input for that sample
-            for ni in nan_idx:
-                x_samp = X[ni].cpu().numpy()
-                valid = ~np.isnan(x_samp)
-                pm = PADDING_MASK
-                in_valid = np.isnan(x_samp[~pm]).mean()
-                nan_only = np.isnan(x_samp[pm]).mean()
-                print(f"         sample {ni}: valid={valid.sum()}/{len(x_samp)}, "
-                      f"nan_in_valid={in_valid:.3f}, nan_in_pad={nan_only:.3f}")
+            print(f"   [dbg] NaN after pred, batch {batch_idx}, "
+                  f"samples {nan_idx.tolist()}, "
+                  f"pred_min={y_pred[~torch.isnan(y_pred)].min().item():.4f}, "
+                  f"pred_max={y_pred[~torch.isnan(y_pred)].max().item():.4f}")
             return float("nan")
+        loss = criterion(y_pred, Y)
         loss = criterion(y_pred, Y)
         loss.backward()
         optimizer.step()
