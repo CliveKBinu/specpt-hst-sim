@@ -30,6 +30,25 @@ class HSTGrismDataset(Dataset):
         return self.X[idx].float(), self.Y[idx].float(), idx, self.t_id[idx]
 
 
+class AutoencoderDataset(Dataset):
+    def __init__(self, df, normalize_fn=SpectrumNormalizer.zscore_normalize):
+        x = []
+        target_id = []
+        for _, row in df.iterrows():
+            fl = row["spec"]
+            fl = normalize_fn(fl)
+            x.append(fl)
+            target_id.append(row["TARGETID"])
+        self.X = torch.from_numpy(np.stack(x, axis=0))
+        self.t_id = target_id
+
+    def __len__(self):
+        return len(self.X)
+
+    def __getitem__(self, idx):
+        return self.X[idx].float(), self.X[idx].float(), idx, self.t_id[idx]
+
+
 def _patch_pickle_compat():
     import sys
     import numpy
@@ -81,6 +100,44 @@ def split_data(data, val_split=0.1, test_split=0.1, seed=42):
         temp_test_df, test_size=0.5, random_state=seed
     )
     return train_df, val_df, test_df
+
+
+def create_autoenc_dataloaders(
+    train_df,
+    val_df,
+    test_df,
+    batch_size=16,
+    num_workers=0,
+    normalize_fn=SpectrumNormalizer.zscore_normalize,
+):
+    from torch.utils.data import DataLoader
+
+    train_data = AutoencoderDataset(train_df, normalize_fn=normalize_fn)
+    val_data = AutoencoderDataset(val_df, normalize_fn=normalize_fn)
+    test_data = AutoencoderDataset(test_df, normalize_fn=normalize_fn)
+
+    train_loader = DataLoader(
+        train_data,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=num_workers,
+        pin_memory=True,
+    )
+    val_loader = DataLoader(
+        val_data,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=True,
+    )
+    test_loader = DataLoader(
+        test_data,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=True,
+    )
+    return train_loader, val_loader, test_loader
 
 
 def create_dataloaders(
