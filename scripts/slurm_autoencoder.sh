@@ -17,5 +17,7 @@ spack load cuda@12.4.0 /obxqih4
 cd /home/ckb2084/research/specpt-hst-sim
 git pull origin main
 
+export PYTHONPATH="/home/ckb2084/research/specpt-hst-sim:${PYTHONPATH}"
+
 python scripts/train_autoencoder.py \
     --config configs/autoencoder_regrid.yaml
