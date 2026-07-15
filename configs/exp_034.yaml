@@ -6,23 +6,30 @@ model:
   num_decoder_layers: 3
   dim_feedforward: 2048
   dropout: 0.1
+  num_mlp_blocks: 12
+  mlp_dim: 1024
 
 training:
   lr: 1.0e-5
   batch_size: 64
-  epochs: 200
-  patience: 30
-  weight_decay: 5.0e-3
+  epochs: 400
+  patience: 50
+  weight_decay: 5e-5
   lr_scheduler: ReduceLROnPlateau
   lr_scheduler_factor: 0.1
-  lr_scheduler_patience: 10
+  lr_scheduler_patience: 20
+  freeze_backbone: false
 
 data:
   path: /home/ckb2084/research/specpt-hst-sim/data/training_format/grism_training_sim_v3_regrid.parquet
   pretrained_autoencoder: /home/ckb2084/research/galax_spec/pretrained_weights/SpecPT_DESI_combined_autoencoder_150_new.pth
-  val_split: 0.15
-  test_split: 0.15
+  pretrained_redshift: ""
+  normalization: zscore
+  val_split: 0.1
+  test_split: 0.1
 
 wandb:
   entity: ckb2084-rochester-institute-of-technology
-  project: specpt-autoencoder
+  project: specpt-hst-sim
+
+expected_duration_hours: 12

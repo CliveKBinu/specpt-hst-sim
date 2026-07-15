@@ -218,20 +218,38 @@ def main():
         loss_epoch = 0.0
         batch_count = 0
 
+        nan_batch_count = 0
+        total_batch_count = 0
+        grad_norm_epoch = 0.0
+        grad_norm_count = 0
         for X, Y, idx, t_id in train_loader:
             X, Y = X.to(device), Y.to(device)
             optimizer.zero_grad()
             preds = model(X)
             loss = criterion(preds, Y)
+            total_batch_count += 1
 
             if torch.isnan(loss) or torch.isinf(loss):
+                nan_batch_count += 1
+                if nan_batch_count == 1:
+                    print(f"WARNING: NaN/Inf loss at epoch {epoch+1}. "
+                          f"Pred range: [{preds.min().item():.4f}, {preds.max().item():.4f}]")
                 continue
 
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            gn = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             optimizer.step()
             loss_epoch += loss.item()
             batch_count += 1
+            if torch.isfinite(gn):
+                grad_norm_epoch += gn.item()
+                grad_norm_count += 1
+
+        if nan_batch_count > 0:
+            print(f"Epoch {epoch+1}: {nan_batch_count}/{total_batch_count} batches NaN/Inf")
+        if total_batch_count > 0 and nan_batch_count / total_batch_count > 0.5:
+            print(f"ERROR: >50% batches NaN at epoch {epoch+1}. Stopping.")
+            break
 
         train_loss = loss_epoch / max(batch_count, 1)
         train_losses.append(train_loss)
@@ -246,25 +264,37 @@ def main():
         val_loss_epoch = 0.0
         val_count = 0
 
+        val_nan_count = 0
+        val_total = 0
         with torch.no_grad():
             for X, Y, idx, t_id in val_loader:
                 X, Y = X.to(device), Y.to(device)
                 preds = model(X)
                 val_loss_batch = criterion(preds, Y)
+                val_total += 1
                 if torch.isnan(val_loss_batch) or torch.isinf(val_loss_batch):
+                    val_nan_count += 1
                     continue
                 val_loss_epoch += val_loss_batch.item()
                 val_count += 1
+
+        if val_nan_count > 0:
+            print(f"Epoch {epoch+1}: {val_nan_count}/{val_total} val batches NaN/Inf")
 
         val_loss = val_loss_epoch / max(val_count, 1)
         val_losses.append(val_loss)
 
         lr = optimizer.param_groups[0]["lr"]
 
+        avg_grad_norm = grad_norm_epoch / max(grad_norm_count, 1)
+
         wandb.log({
             "train_loss": train_loss,
             "val_loss": val_loss,
             "lr": lr,
+            "grad_norm": avg_grad_norm,
+            "nan_train_batches": nan_batch_count,
+            "nan_val_batches": val_nan_count,
             "epoch": epoch,
         })
 

@@ -264,8 +264,17 @@ def main():
     else:
         print("No pretrained redshift head weights — initializing head from scratch.")
 
-    for param in redshift_model.pretrained_model.parameters():
-        param.requires_grad = False
+    freeze_backbone = train_cfg.get("freeze_backbone", True)
+    if freeze_backbone:
+        for param in redshift_model.pretrained_model.parameters():
+            param.requires_grad = False
+        print("Backbone FROZEN — training head only")
+    else:
+        for param in redshift_model.parameters():
+            param.requires_grad = True
+        print("Backbone UNFROZEN — end-to-end training")
+        total_trainable = sum(p.numel() for p in redshift_model.parameters() if p.requires_grad)
+        print(f"Trainable parameters: {total_trainable:,}")
 
     redshift_model.to(device)
 
