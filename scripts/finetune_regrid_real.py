@@ -14,7 +14,13 @@ from src.specpt.losses import NMADLoss
 from torch.utils.data import DataLoader
 
 sys.path.insert(0, '/home/ckb2084/research/SpecPT')
-from specpt.augment import augment_spectra, split_by_grism_id
+import importlib.util
+_spec = importlib.util.spec_from_file_location('augment',
+    '/home/ckb2084/research/SpecPT/specpt/augment.py')
+_aug = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_aug)
+augment_spectra = _aug.augment_spectra
+split_by_grism_id = _aug.split_by_grism_id
 
 TRAIN_WAVES = np.linspace(10800.0, 17100.0, 7781)
 PAD = (TRAIN_WAVES < 11000) | (TRAIN_WAVES > 16500)
