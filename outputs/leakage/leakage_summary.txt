@@ -1,0 +1,25 @@
+============================================================
+DATA LEAKAGE ANALYSIS SUMMARY
+============================================================
+File: data/training_format/_test_leakage_sample.pkl
+Rows: 300 | Unique IDs: 300
+Augmentation factor: 1.0x (median 1.0x)
+
+--- RANDOM SPLIT (train/val/test = 80/10/10, seed=42) ---
+  val_vs_train: 0/0.0% rows (0 IDs) leaked across split
+  test_vs_train: 0/0.0% rows (0 IDs) leaked across split
+
+--- Near-Duplicate Detection ---
+  val_vs_train:
+    cos>=0.99: 0 samples (0.0%)
+    cos>=0.999: 0 samples (0.0%)
+    cos>=0.9999: 0 samples (0.0%)
+    cos>=0.99999: 0 samples (0.0%)
+  test_vs_train:
+    cos>=0.99: 0 samples (0.0%)
+    cos>=0.999: 0 samples (0.0%)
+    cos>=0.9999: 0 samples (0.0%)
+    cos>=0.99999: 0 samples (0.0%)
+
+Grouped split baseline ID overlap: val_vs_train=0
+============================================================

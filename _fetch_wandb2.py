@@ -9,7 +9,7 @@ if not api_key:
 
 import wandb
 api = wandb.Api(timeout=60, api_key=api_key)
-run = api.run("ckb2084-rochester-institute-of-technology/specpt-hst-sim/nsomfkte")
+run = api.run("ckb2084-rochester-institute-of-technology/specpt-hst-sim-z/nsomfkte")
 
 # Get system events/errors
 print("=== RUN METADATA ===")

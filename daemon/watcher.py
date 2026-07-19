@@ -35,7 +35,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 DEFAULT_ENTITY = "ckb2084-rochester-institute-of-technology"
-DEFAULT_PROJECT = "specpt-hst-sim"
+DEFAULT_PROJECT = "specpt-hst-sim-z"
 WANDB_ENTITY = DEFAULT_ENTITY
 WANDB_PROJECT = DEFAULT_PROJECT
 CHECK_INTERVAL = 60

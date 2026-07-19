@@ -39,7 +39,7 @@ def fetch_run_name(run_id):
     try:
         import wandb
         api = wandb.Api()
-        run = api.run(f"ckb2084-rochester-institute-of-technology/specpt-hst-sim/{run_id}")
+        run = api.run(f"ckb2084-rochester-institute-of-technology/specpt-hst-sim-z/{run_id}")
         return run.name
     except Exception as e:
         print(f"[WARN] Could not fetch run name from W&B: {e}")

@@ -112,7 +112,7 @@ def main():
         "ckpt_dir": "/home/ckb2084/research/specpt-hst-sim/checkpoints/finetune_real",
         "wandb_id": "ejfhtjlk",
         "wandb_entity": "ckb2084-rochester-institute-of-technology",
-        "wandb_project": "specpt-hst-sim",
+        "wandb_project": "specpt-hst-sim-z",
         "bs": 128, "nw": 0, "min_snr": 2.5,
         "ep": args.epochs or hc["ep"], "lr": args.lr or hc["lr"],
         "wd": args.wd or hc["wd"], "patience": args.patience or hc["pat"],

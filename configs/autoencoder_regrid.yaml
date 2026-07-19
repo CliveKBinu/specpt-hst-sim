@@ -25,4 +25,4 @@ data:
 
 wandb:
   entity: ckb2084-rochester-institute-of-technology
-  project: specpt-autoencoder
+  project: specpt-autoencoder-sim

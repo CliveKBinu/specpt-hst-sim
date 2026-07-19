@@ -13,7 +13,6 @@
 
 source /home/ckb2084/conda/etc/profile.d/conda.sh
 conda activate pytorch
-spack load cuda@12.4.0 /obxqih4
 
 cd /home/ckb2084/research/specpt-hst-sim
 git pull origin main

@@ -1,0 +1,8 @@
+{
+  "exp_name": "exp_021",
+  "config_path": "configs/exp_021.yaml",
+  "change_description": "patience 50\u2192100: exp_020 early-stopped at ep318 while NMAD was still decreasing (0.01909). Longer patience gives ReduceLROnPlateau more time to trigger LR reductions and find a deeper minimum now that warmup=50 lets the model train at full LR. Preserves all other exp_020 params (batch=256, mlp_dim=1024, 12 blocks, lr=1e-4, wd=5e-5).",
+  "parameter_changed": "training.patience",
+  "old_value": "50",
+  "new_value": "100"
+}

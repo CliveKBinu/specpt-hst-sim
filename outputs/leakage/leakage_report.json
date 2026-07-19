@@ -1,0 +1,161 @@
+{
+  "config": {
+    "data": "data/training_format/_test_leakage_sample.pkl",
+    "rows_limit": "all",
+    "seed": 42,
+    "dup_thresholds": [
+      0.99,
+      0.999,
+      0.9999,
+      0.99999
+    ],
+    "self_dup_sample": 50
+  },
+  "augmentation": {
+    "total_rows": 300,
+    "unique_ids": 300,
+    "copies_per_id": {
+      "min": 1,
+      "max": 1,
+      "median": 1.0,
+      "mean": 1.0,
+      "p25": 1.0,
+      "p75": 1.0,
+      "p95": 1.0
+    },
+    "multiplicity_bins": {
+      "singletons (1x)": 300,
+      "2-3 copies": 0,
+      "4-9 copies": 0,
+      "10+ copies": 0
+    }
+  },
+  "split_overlap": {
+    "val_vs_train": {
+      "n_ids_in_train": 0,
+      "n_rows_leaked": 0,
+      "pct_rows_leaked": 0.0
+    },
+    "test_vs_train": {
+      "n_ids_in_train": 0,
+      "n_rows_leaked": 0,
+      "pct_rows_leaked": 0.0
+    }
+  },
+  "distributions": {
+    "redshift": {
+      "train": {
+        "count": 240,
+        "min": 0.2206333726644516,
+        "max": 3.9802134037017822,
+        "mean": 2.129749059677124,
+        "std": 1.1063348054885864
+      },
+      "val": {
+        "count": 30,
+        "min": 0.5915735363960266,
+        "max": 3.9965980052948,
+        "mean": 2.3281776905059814,
+        "std": 0.9206350445747375
+      },
+      "test": {
+        "count": 30,
+        "min": 0.28036245703697205,
+        "max": 3.9162065982818604,
+        "mean": 2.0225210189819336,
+        "std": 1.1690025329589844
+      },
+      "ks_train_vs_val": {
+        "statistic": 0.25,
+        "pvalue": 0.061770842660315836
+      },
+      "ks_train_vs_test": {
+        "statistic": 0.11667,
+        "pvalue": 0.8309403135370552
+      }
+    },
+    "SNR": {
+      "train": {
+        "count": 240,
+        "min": 2.502288579940796,
+        "max": 14.888320922851562,
+        "mean": 4.015974044799805,
+        "std": 2.084521770477295
+      },
+      "val": {
+        "count": 30,
+        "min": 2.6099014282226562,
+        "max": 10.869034767150879,
+        "mean": 4.306595802307129,
+        "std": 2.2726635932922363
+      },
+      "test": {
+        "count": 30,
+        "min": 2.586040735244751,
+        "max": 11.998809814453125,
+        "mean": 3.939903736114502,
+        "std": 2.0260655879974365
+      },
+      "ks_train_vs_val": {
+        "statistic": 0.10417,
+        "pvalue": 0.913414667620232
+      },
+      "ks_train_vs_test": {
+        "statistic": 0.12083,
+        "pvalue": 0.7986198316081335
+      }
+    }
+  },
+  "grouped_split_baseline": {
+    "split_sizes": {
+      "train": 240,
+      "val": 30,
+      "test": 30
+    },
+    "unique_ids": {
+      "train": 240,
+      "val": 30,
+      "test": 30
+    },
+    "id_overlap_val_train": 0,
+    "id_overlap_test_train": 0
+  },
+  "near_duplicate": {
+    "val_vs_train": {
+      "cos>=0.99": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "cos>=0.999": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "cos>=0.9999": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "cos>=0.99999": {
+        "count": 0,
+        "pct": 0.0
+      }
+    },
+    "test_vs_train": {
+      "cos>=0.99": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "cos>=0.999": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "cos>=0.9999": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "cos>=0.99999": {
+        "count": 0,
+        "pct": 0.0
+      }
+    }
+  }
+}

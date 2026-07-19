@@ -1,7 +1,7 @@
 import wandb, json
 
 api = wandb.Api(timeout=60)
-run = api.run("ckb2084-rochester-institute-of-technology/specpt-hst-sim/ld28scut")
+run = api.run("ckb2084-rochester-institute-of-technology/specpt-hst-sim-z/ld28scut")
 config = {k: v for k, v in dict(run.config).items() if k != "_wandb"}
 
 try:

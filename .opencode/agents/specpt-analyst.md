@@ -21,7 +21,7 @@ Use the wandb skill to fetch the run metrics:
 ```python
 import wandb
 api = wandb.Api()
-run = api.run(f"ckb2084-rochester-institute-of-technology/specpt-hst-sim/{run_id}")
+run = api.run(f"ckb2084-rochester-institute-of-technology/specpt-hst-sim-z/{run_id}")
 ```
 
 Extract these metrics from the run history:

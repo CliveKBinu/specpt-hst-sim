@@ -30,6 +30,6 @@ data:
 
 wandb:
   entity: ckb2084-rochester-institute-of-technology
-  project: specpt-hst-sim
+  project: specpt-hst-sim-z
 
 expected_duration_hours: 6

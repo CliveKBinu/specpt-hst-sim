@@ -43,7 +43,7 @@ CONFIG = {
     "exp_name": "exp_032",
     "wandb_run_id": "ejfhtjlk",
     "wandb_entity": "ckb2084-rochester-institute-of-technology",
-    "wandb_project": "specpt-hst-sim",
+    "wandb_project": "specpt-hst-sim-z",
     "output_dir": "/home/ckb2084/research/specpt-hst-sim/outputs/real_3dhst",
     "batch_size": 128,
     "min_snr": 2.5,

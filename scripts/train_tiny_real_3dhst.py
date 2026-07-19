@@ -519,7 +519,7 @@ def main():
     ap.add_argument("--batch-size", type=int, default=128)
     ap.add_argument("--wandb-id", default="ejfhtjlk")
     ap.add_argument("--wandb-entity", default="ckb2084-rochester-institute-of-technology")
-    ap.add_argument("--wandb-project", default="specpt-hst-sim")
+    ap.add_argument("--wandb-project", default="specpt-hst-sim-z")
     args = ap.parse_args()
 
     os.makedirs(args.ckpt_dir, exist_ok=True)

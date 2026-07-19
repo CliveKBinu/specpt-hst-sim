@@ -9,8 +9,8 @@ import wandb
 api = wandb.Api(timeout=60, api_key=api_key)
 
 # List all runs in the project
-project = api.project("specpt-hst-sim", entity="ckb2084-rochester-institute-of-technology")
-runs = api.runs("ckb2084-rochester-institute-of-technology/specpt-hst-sim")
+project = api.project("specpt-hst-sim-z", entity="ckb2084-rochester-institute-of-technology")
+runs = api.runs("ckb2084-rochester-institute-of-technology/specpt-hst-sim-z")
 print("=== ALL RUNS IN PROJECT ===")
 for r in runs:
     cfg = dict(r.config)
