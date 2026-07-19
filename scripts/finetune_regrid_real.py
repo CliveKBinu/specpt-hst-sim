@@ -2,13 +2,13 @@
 """Fine-tune on regridded autoencoder backbone + real 3D-HST.
 
 Modes:    --mode no_augment / augment
-Heads:    --head_type simple / linear / enhanced
+Heads:    --head_type simple / linear / mlp / resnet / enhanced
 Backbone: --freeze_backbone (default: frozen)
 """
 import sys, os, numpy as np, pandas as pd, torch, torch.nn as nn, time, argparse, wandb
 
 sys.path.insert(0, '.')
-from src.specpt.model import SpecPT, EnhancedSpecPTForRedshift, SpectrumNormalizer, Swish
+from src.specpt.model import SpecPT, EnhancedSpecPTForRedshift, SpectrumNormalizer, Swish, ImprovedResidualMLPBlock
 from src.specpt.dataloader import HSTGrismDataset
 from src.specpt.losses import NMADLoss
 from torch.utils.data import DataLoader
@@ -87,6 +87,12 @@ class SimpleRedshiftHead(nn.Module):
         self.encoder = pretrained_model.transformer_encoder
         if head_type == 'linear':
             self.head = nn.Sequential(nn.Linear(512, 1), nn.Softplus())
+        elif head_type == 'mlp':
+            self.head = nn.Sequential(
+                nn.Linear(512, 256), Swish(), nn.Dropout(0.1),
+                nn.Linear(256, 128), Swish(), nn.Dropout(0.1),
+                nn.Linear(128, 1), nn.Softplus(),
+            )
         else:
             self.head = nn.Sequential(
                 nn.Linear(512, 256), Swish(), nn.Dropout(0.1),
@@ -104,6 +110,33 @@ class SimpleRedshiftHead(nn.Module):
         return self.head(x)
 
 
+class ResNetRedshiftHead(nn.Module):
+    """Residual MLP redshift head (no attention, just residual blocks)."""
+    def __init__(self, pretrained_model, num_blocks=3):
+        super().__init__()
+        self.pretrained_model = pretrained_model
+        self.proj_to_d_model = pretrained_model.proj_to_d_model
+        self.encoder = pretrained_model.transformer_encoder
+        self.blocks = nn.Sequential(*[
+            ImprovedResidualMLPBlock(512, 512, 0.1) for _ in range(num_blocks)
+        ])
+        self.prediction = nn.Sequential(
+            nn.Linear(512, 256), Swish(), nn.Dropout(0.1),
+            nn.Linear(256, 1), nn.Softplus(),
+        )
+
+    def forward(self, x):
+        x = x.unsqueeze(1)
+        x = self.pretrained_model.forward_conv(x)
+        x = x.flatten(start_dim=1)
+        x = self.proj_to_d_model(x)
+        x = x.unsqueeze(0)
+        x = self.encoder(x)
+        x = x.squeeze(0)
+        x = self.blocks(x)
+        return self.prediction(x)
+
+
 def train_linear_probe(args, train, val, test):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
@@ -116,9 +149,12 @@ def train_linear_probe(args, train, val, test):
     sp = SpecPT(input_size=7781, d_model=512, nhead=8, num_encoder_layers=3, num_decoder_layers=3,
                 dim_feedforward=2048, dropout=0.1)
     sp.load_state_dict(ckpt['model_state_dict'], strict=True)
-    if args.head_type in ('simple', 'linear'):
+    if args.head_type in ('simple', 'linear', 'mlp'):
         model = SimpleRedshiftHead(sp, head_type=args.head_type).to(device)
         print(f"Head: {args.head_type} ({sum(p.numel() for p in model.head.parameters()):,} params)")
+    elif args.head_type == 'resnet':
+        model = ResNetRedshiftHead(sp, num_blocks=3).to(device)
+        print(f"Head: resnet ({sum(p.numel() for p in model.parameters()):,} params)")
     else:
         model = EnhancedSpecPTForRedshift(sp, num_mlp_blocks=5, mlp_dim=512, dropout_rate=0.1).to(device)
         print(f"Head: enhanced ({sum(p.numel() for p in model.mlp_blocks.parameters()) + sum(p.numel() for p in model.prediction.parameters()):,} params)")
@@ -126,12 +162,13 @@ def train_linear_probe(args, train, val, test):
         backbone = model.pretrained_model
         for p in backbone.parameters():
             p.requires_grad = False
-        if hasattr(model, 'head'):
-            for p in model.head.parameters():
+        # enable all head-specific parameters
+        for p in model.parameters():
+            if p.requires_grad is False:
                 p.requires_grad = True
-        else:
-            for p in model.prediction.parameters():
-                p.requires_grad = True
+        # re-freeze backbone
+        for p in backbone.parameters():
+            p.requires_grad = False
         print("Backbone FROZEN — head only")
     else:
         for p in model.parameters():
@@ -233,7 +270,7 @@ def main():
     parser.add_argument('--val_split', type=float, default=0.1)
     parser.add_argument('--test_split', type=float, default=0.1)
     parser.add_argument('--freeze_backbone', action='store_true', default=False)
-    parser.add_argument('--head_type', choices=['simple', 'linear', 'enhanced'], default='simple')
+    parser.add_argument('--head_type', choices=['simple', 'linear', 'mlp', 'resnet', 'enhanced'], default='simple')
     args = parser.parse_args()
     print(f"=== {args.exp_name}: mode={args.mode} head={args.head_type} ===")
     df = pd.read_pickle(REAL_DATA_PATH)
