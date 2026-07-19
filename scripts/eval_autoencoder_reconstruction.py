@@ -114,7 +114,7 @@ def run_inference(model, dataset, batch_size, device):
                       f"{time.time()-t0:.1f}s")
 
     preds = np.concatenate(all_preds, axis=0)
-    true = np.concatenate(all_true, axis=0).squeeze(-1)
+    true = np.concatenate(all_true, axis=0)
     latents = np.concatenate(all_latents, axis=0)
 
     print(f"   Done in {time.time()-t0:.1f}s")
