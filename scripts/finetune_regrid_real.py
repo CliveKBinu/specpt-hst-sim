@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
-"""Fine-tune on regridded autoencoder backbone + real 3D-HST (end-to-end).
+"""Fine-tune on regridded autoencoder backbone + real 3D-HST.
 
-Two modes:
-  --mode no_augment   train on real 3D-HST spectra directly
-  --mode augment      train on augmented real 3D-HST spectra
-
-Default: end-to-end (freeze_backbone=False). Use --freeze_backbone for linear probe.
+Modes:    --mode no_augment / augment
+Heads:    --head_type simple / linear / enhanced
+Backbone: --freeze_backbone (default: frozen)
 """
 import sys, os, numpy as np, pandas as pd, torch, torch.nn as nn, time, argparse
 
@@ -80,6 +78,32 @@ def prepare_aug(df, val_split, test_split, seed):
     return train, val, test
 
 
+class SimpleRedshiftHead(nn.Module):
+    """Simple redshift prediction head (no attention, no residual blocks)."""
+    def __init__(self, pretrained_model, head_type='simple'):
+        super().__init__()
+        self.pretrained_model = pretrained_model
+        self.proj_to_d_model = pretrained_model.proj_to_d_model
+        self.encoder = pretrained_model.transformer_encoder
+        if head_type == 'linear':
+            self.head = nn.Sequential(nn.Linear(512, 1), nn.Softplus())
+        else:
+            self.head = nn.Sequential(
+                nn.Linear(512, 256), nn.Swish(), nn.Dropout(0.1),
+                nn.Linear(256, 1), nn.Softplus(),
+            )
+
+    def forward(self, x):
+        x = x.unsqueeze(1)
+        x = self.pretrained_model.forward_conv(x)
+        x = x.flatten(start_dim=1)
+        x = self.proj_to_d_model(x)
+        x = x.unsqueeze(0)
+        x = self.encoder(x)
+        x = x.squeeze(0)
+        return self.head(x)
+
+
 def train_linear_probe(args, train, val, test):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
@@ -92,14 +116,23 @@ def train_linear_probe(args, train, val, test):
     sp = SpecPT(input_size=7781, d_model=512, nhead=8, num_encoder_layers=3, num_decoder_layers=3,
                 dim_feedforward=2048, dropout=0.1)
     sp.load_state_dict(ckpt['model_state_dict'], strict=True)
-    model = EnhancedSpecPTForRedshift(sp, num_mlp_blocks=5, mlp_dim=512, dropout_rate=0.1)
-    model = model.to(device)
+    if args.head_type in ('simple', 'linear'):
+        model = SimpleRedshiftHead(sp, head_type=args.head_type).to(device)
+        print(f"Head: {args.head_type} ({sum(p.numel() for p in model.head.parameters()):,} params)")
+    else:
+        model = EnhancedSpecPTForRedshift(sp, num_mlp_blocks=5, mlp_dim=512, dropout_rate=0.1).to(device)
+        print(f"Head: enhanced ({sum(p.numel() for p in model.mlp_blocks.parameters()) + sum(p.numel() for p in model.prediction.parameters()):,} params)")
     if args.freeze_backbone:
-        for p in model.parameters():
+        backbone = model.pretrained_model
+        for p in backbone.parameters():
             p.requires_grad = False
-        for p in model.prediction.parameters():
-            p.requires_grad = True
-        print("Backbone FROZEN — linear probe")
+        if hasattr(model, 'head'):
+            for p in model.head.parameters():
+                p.requires_grad = True
+        else:
+            for p in model.prediction.parameters():
+                p.requires_grad = True
+        print("Backbone FROZEN — head only")
     else:
         for p in model.parameters():
             p.requires_grad = True
@@ -199,8 +232,9 @@ def main():
     parser.add_argument('--val_split', type=float, default=0.1)
     parser.add_argument('--test_split', type=float, default=0.1)
     parser.add_argument('--freeze_backbone', action='store_true', default=False)
+    parser.add_argument('--head_type', choices=['simple', 'linear', 'enhanced'], default='simple')
     args = parser.parse_args()
-    print(f"=== {args.exp_name}: mode={args.mode} ===")
+    print(f"=== {args.exp_name}: mode={args.mode} head={args.head_type} ===")
     df = pd.read_pickle(REAL_DATA_PATH)
     df = df[df['SNR'] >= 2.5].reset_index(drop=True)
     print(f"Loaded {len(df)} real 3D-HST spectra (SNR >= 2.5)")
