@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Linear probe on regridded autoencoder backbone + real 3D-HST.
+"""Fine-tune on regridded autoencoder backbone + real 3D-HST (end-to-end).
 
 Two modes:
   --mode no_augment   train on real 3D-HST spectra directly
   --mode augment      train on augmented real 3D-HST spectra
+
+Default: end-to-end (freeze_backbone=False). Use --freeze_backbone for linear probe.
 """
 import sys, os, numpy as np, pandas as pd, torch, torch.nn as nn, time, argparse
 
@@ -92,10 +94,16 @@ def train_linear_probe(args, train, val, test):
     sp.load_state_dict(ckpt['model_state_dict'], strict=True)
     model = EnhancedSpecPTForRedshift(sp, num_mlp_blocks=5, mlp_dim=512, dropout_rate=0.1)
     model = model.to(device)
-    for p in model.parameters():
-        p.requires_grad = False
-    for p in model.prediction.parameters():
-        p.requires_grad = True
+    if args.freeze_backbone:
+        for p in model.parameters():
+            p.requires_grad = False
+        for p in model.prediction.parameters():
+            p.requires_grad = True
+        print("Backbone FROZEN — linear probe")
+    else:
+        for p in model.parameters():
+            p.requires_grad = True
+        print("Backbone UNFROZEN — end-to-end training")
     nt = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"Trainable: {nt:,}/{sum(p.numel() for p in model.parameters()):,}")
     opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad],
@@ -107,15 +115,19 @@ def train_linear_probe(args, train, val, test):
             zd = model(Xd.to(device)).flatten()
         print(f"Diag: loss={criterion(zd, Yd.to(device)).item():.4f}")
         break
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        opt, mode='min', factor=0.1, patience=20, min_lr=1e-7
+    )
     best_nmad = 1e9
     best_ep = 0
     patience = 0
     for ep in range(1, args.epochs + 1):
         model.train()
-        for m in model.modules():
-            if isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)):
-                m.eval()
-        model.encoder.eval()
+        if args.freeze_backbone:
+            for m in model.modules():
+                if isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)):
+                    m.eval()
+            model.encoder.eval()
         t0 = time.time()
         tl = 0.0
         for X, Y, _, _ in tr_ld:
@@ -139,7 +151,9 @@ def train_linear_probe(args, train, val, test):
         delz = (pv - tv) / (1 + tv)
         nmad = 1.4826 * np.median(np.abs(delz - np.median(delz)))
         eta = 100 * np.mean(np.abs(delz) > 0.15)
-        print(f"Ep {ep:2d}/{args.epochs}  loss={tl:.4f}  val_nmad={nmad:.5f}  eta={eta:.2f}%  {time.time()-t0:.0f}s")
+        cur_lr = opt.param_groups[0]['lr']
+        print(f"Ep {ep:2d}/{args.epochs}  loss={tl:.4f}  val_nmad={nmad:.5f}  eta={eta:.2f}%  lr={cur_lr:.2e}  {time.time()-t0:.0f}s")
+        scheduler.step(nmad)
         if nmad < best_nmad:
             best_nmad = nmad
             best_ep = ep
@@ -173,17 +187,18 @@ def train_linear_probe(args, train, val, test):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Linear probe on regridded autoencoder + real 3D-HST')
+    parser = argparse.ArgumentParser(description='Fine-tune on regridded autoencoder + real 3D-HST')
     parser.add_argument('--mode', choices=['no_augment', 'augment'], default='no_augment')
-    parser.add_argument('--exp_name', default='exp_035')
+    parser.add_argument('--exp_name', default='exp_037')
     parser.add_argument('--epochs', type=int, default=300)
-    parser.add_argument('--lr', type=float, default=3e-4)
-    parser.add_argument('--weight_decay', type=float, default=1e-3)
-    parser.add_argument('--batch_size', type=int, default=128)
+    parser.add_argument('--lr', type=float, default=1e-5)
+    parser.add_argument('--weight_decay', type=float, default=5e-5)
+    parser.add_argument('--batch_size', type=int, default=64)
     parser.add_argument('--patience', type=int, default=30)
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--val_split', type=float, default=0.1)
     parser.add_argument('--test_split', type=float, default=0.1)
+    parser.add_argument('--freeze_backbone', action='store_true', default=False)
     args = parser.parse_args()
     print(f"=== {args.exp_name}: mode={args.mode} ===")
     df = pd.read_pickle(REAL_DATA_PATH)

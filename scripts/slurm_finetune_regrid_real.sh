@@ -4,7 +4,7 @@
 #SBATCH --error=outputs/err/%x_%j.err
 #SBATCH --mail-user=slack:@ckb2084
 #SBATCH --mail-type=ALL
-#SBATCH --time=0-08:0:00
+#SBATCH --time=0-12:0:00
 #SBATCH --account=redshift
 #SBATCH --nodes=1
 #SBATCH --partition=sporc
