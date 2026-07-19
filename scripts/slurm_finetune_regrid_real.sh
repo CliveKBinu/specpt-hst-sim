@@ -19,6 +19,11 @@ cd /home/ckb2084/research/specpt-hst-sim
 git pull origin main
 
 MODE=${MODE:-no_augment}
-EXP_NAME=${EXP_NAME:-exp_035}
+EXP_NAME=${EXP_NAME:-exp_037}
+HEAD_TYPE=${HEAD_TYPE:-simple}
+FREEZE_FLAG=""
+if [ "${FREEZE_BACKBONE:-false}" = "true" ]; then
+    FREEZE_FLAG="--freeze_backbone"
+fi
 
-python scripts/finetune_regrid_real.py --mode ${MODE} --exp_name ${EXP_NAME}
+python scripts/finetune_regrid_real.py --mode ${MODE} --exp_name ${EXP_NAME} --head_type ${HEAD_TYPE} ${FREEZE_FLAG}
