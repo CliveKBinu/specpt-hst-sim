@@ -5,10 +5,10 @@ Modes:    --mode no_augment / augment
 Heads:    --head_type simple / linear / enhanced
 Backbone: --freeze_backbone (default: frozen)
 """
-import sys, os, numpy as np, pandas as pd, torch, torch.nn as nn, time, argparse
+import sys, os, numpy as np, pandas as pd, torch, torch.nn as nn, time, argparse, wandb
 
 sys.path.insert(0, '.')
-from src.specpt.model import SpecPT, EnhancedSpecPTForRedshift, SpectrumNormalizer
+from src.specpt.model import SpecPT, EnhancedSpecPTForRedshift, SpectrumNormalizer, Swish
 from src.specpt.dataloader import HSTGrismDataset
 from src.specpt.losses import NMADLoss
 from torch.utils.data import DataLoader
@@ -89,7 +89,7 @@ class SimpleRedshiftHead(nn.Module):
             self.head = nn.Sequential(nn.Linear(512, 1), nn.Softplus())
         else:
             self.head = nn.Sequential(
-                nn.Linear(512, 256), nn.Swish(), nn.Dropout(0.1),
+                nn.Linear(512, 256), Swish(), nn.Dropout(0.1),
                 nn.Linear(256, 1), nn.Softplus(),
             )
 
@@ -186,6 +186,7 @@ def train_linear_probe(args, train, val, test):
         eta = 100 * np.mean(np.abs(delz) > 0.15)
         cur_lr = opt.param_groups[0]['lr']
         print(f"Ep {ep:2d}/{args.epochs}  loss={tl:.4f}  val_nmad={nmad:.5f}  eta={eta:.2f}%  lr={cur_lr:.2e}  {time.time()-t0:.0f}s")
+        wandb.log({'train_loss': tl, 'val_nmad': nmad, 'val_eta': eta, 'lr': cur_lr, 'epoch': ep})
         scheduler.step(nmad)
         if nmad < best_nmad:
             best_nmad = nmad
@@ -243,10 +244,9 @@ def main():
     else:
         train, val, test = prepare_aug(df, args.val_split, args.test_split, args.seed)
     print(f"  Final: train={len(train)}  val={len(val)}  test={len(test)}")
-    best_val_nmad, best_ep, test_nmad, test_eta, test_rmse = train_linear_probe(args, train, val, test)
-    import wandb
     wandb.init(project='specpt-hst-sim-z', entity='ckb2084-rochester-institute-of-technology',
                name=args.exp_name, config=vars(args))
+    best_val_nmad, best_ep, test_nmad, test_eta, test_rmse = train_linear_probe(args, train, val, test)
     wandb.log({
         'best_val_nmad': best_val_nmad, 'best_epoch': best_ep,
         'test_nmad': test_nmad, 'test_eta': test_eta, 'test_rmse': test_rmse,
