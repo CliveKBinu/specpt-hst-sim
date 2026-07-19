@@ -25,15 +25,19 @@
 
 ## 🔬 Active Experiments
 
-| Experiment | Stage | Status | Notes |
-|------------|-------|--------|-------|
-| exp_034 | Unfrozen redshift, regridded | ✅ Complete (NMAD 0.00909, η 12.73%) | **New outlier record!** 400 epochs, full 1.1B params trained |
-| exp_033 | Frozen redshift, regridded | ✅ Complete (NMAD 0.01111) | Grid aligned to 10800–17100 Å, z-score norm |
-| Autoencoder retrain | Regridded AE | ❌ OOM (batch=64, mem=128g) | NaN collapse on first run. OOM on second. Needs batch reduction or more memory. |
-| Real 3D-HST Stage 1 | Linear probe | ✅ Complete (NMAD 0.2105) | exp_032 head trained on 7.8k real spectra |
-| Real 3D-HST Stage 2 | Partial freeze | ✅ Complete (NMAD 0.2073) | init from Stage 1 best, 40 epochs |
+| Experiment | Approach | Test NMAD | Test η | Status |
+|------------|----------|-----------|--------|--------|
+| exp_041 | Simple MLP (3-layer, frozen backbone) | — | — | 🚧 Running |
+| exp_042 | Simple ResNet (3 blocks, frozen backbone) | — | — | 🚧 Running |
+| exp_043 | Metric Learning (NTXent + k-NN, frozen) | — | — | 🚧 Running |
+| exp_035 | Linear probe (frozen backbone, no augment) | 0.24883 | 54.64% | ✅ Complete |
+| exp_036 | Linear probe (frozen backbone, augment) | 0.33644 | 67.27% | ✅ Complete |
+| exp_037 | End-to-end (enhanced head, no augment) | 0.28494 | 59.85% | ✅ Complete |
+| exp_038 | End-to-end (enhanced head, augment) | 0.32759 | 64.27% | ✅ Complete |
+| exp_039 | End-to-end (simple head, no augment) | 0.27547 | 58.80% | ✅ Complete |
+| exp_040 | End-to-end (linear head, no augment) | 0.27395 | 58.55% | ✅ Complete |
 
-> ℹ️ **Grid alignment.** The simulation data has been regridded from 10311–17465 Å to the real 3D-HST grid (10800–17100 Å, 0.81 Å/pix). This eliminates the 187-pixel feature shift that caused catastrophic real-data eval failure (NMAD ~0.50 → 0.2105 after grid-aware resampling + NaN masking). See [`scripts/prep_sim_regridded.py`](scripts/prep_sim_regridded.py) and track [`EXPERIMENTS.md`](EXPERIMENTS.md) for details.
+> ℹ️ **Grid alignment.** The simulation data has been regridded from 10311–17465 Å to the real 3D-HST grid (10800–17100 Å, 0.81 Å/pix). This eliminates the 187-pixel feature shift that caused catastrophic real-data eval failure. See [`scripts/prep_sim_regridded.py`](scripts/prep_sim_regridded.py) and track [`EXPERIMENTS.md`](EXPERIMENTS.md) for details.
 
 > ℹ️ **Outlier Analysis.** See [`notebooks/02_outlier_analysis.ipynb`](notebooks/02_outlier_analysis.ipynb) for deep-dive analysis of what makes outlier spectra different. All checkpoints now saved with experiment-specific names (`exp_NNN_best_model.pth`) to prevent cross-experiment contamination.
 
@@ -43,15 +47,35 @@
 
 ## 🧪 Real 3D-HST Evaluation
 
-Fine-tuning exp_032 on real 3D-HST grism data. Two-stage approach: linear probe → partial freeze. The new exp_033/exp_034 regridded checkpoints should improve transfer since the sim training grid now matches the real-data grid.
+Transfer learning from regridded sim autoencoder backbone to real 3D-HST grism data. The regridded autoencoder reconstructs real spectra well (97% cosine similarity), but redshift prediction remains challenging due to the domain gap.
 
-| Stage | Approach | Test NMAD | Eta | Status |
-|-------|----------|-----------|-----|--------|
-| Pre-fix | Frozen exp_032 (no input fix) | ~0.50 | — | Comparison baseline |
-| **1** | **Linear probe (head only)** | **0.2105** | **47.6%** | ✅ Complete |
-| 2 | Partial freeze (encoder + MLP + head) | 0.2073 | 47.3% | ✅ Complete |
-| 3 | Retrain on regridded sim (exp_033) | 0.01111 (sim) | — | ✅ Complete — real eval pending |
-| 4 | End-to-end unfrozen (exp_034) | 0.00909 (sim), η 12.73% | — | ✅ Complete — primary checkpoint for real eval |
+### Summary
+
+Key finding: **Frozen backbone + simple head** (linear probe) outperforms end-to-end training on real data. Augmentation consistently degrades performance. The domain gap between sim and real spectra is the primary bottleneck.
+
+| Exp | Head | Backbone | Augment | Test NMAD | Test η | Best Ep | Early Stop |
+|-----|------|----------|---------|-----------|--------|---------|------------|
+| **exp_035** | Linear (simple) | **Frozen** | No | **0.24883** | 54.64% | 19 | 49 |
+| exp_036 | Linear (simple) | Frozen | Yes | 0.33644 | 67.27% | 1 | 31 |
+| exp_037 | Enhanced | Unfrozen | No | 0.28494 | 59.85% | 1 | 31 |
+| exp_038 | Enhanced | Unfrozen | Yes | 0.32759 | 64.27% | 58 | 88 |
+| exp_039 | Simple (2-layer) | Unfrozen | No | 0.27547 | 58.80% | 1 | 31 |
+| exp_040 | Linear (single) | Unfrozen | No | 0.27395 | 58.55% | 1 | 31 |
+
+### Key Learnings
+
+1. **Frozen backbone (linear probe) works best.** Test NMAD 0.249 vs 0.274+ for unfrozen approaches.
+2. **Augmentation hurts.** Both frozen+augment (0.336) and unfrozen+augment (0.328) are worse than baseline.
+3. **End-to-end training overfits.** Training loss drops to 0.52 while val NMAD degrades from 0.24 → 0.28.
+4. **Simple and complex heads perform similarly** when backbone is unfrozen (NMAD 0.27-0.28 across all head types).
+
+### Current Work (Running)
+
+| Exp | Approach | Head Architecture | Goal |
+|-----|----------|-------------------|------|
+| exp_041 | Simple MLP (3-layer) | 512→256→128→1 | Deeper MLP on frozen features |
+| exp_042 | Simple ResNet | 3× ResidualMLPBlock(512) | Residual connections on frozen features |
+| exp_043 | Metric Learning | 512→256→128 + k-NN | Contrastive paradigm, different inductive bias |
 
 ---
 
@@ -90,7 +114,7 @@ Fine-tuning exp_032 on real 3D-HST grism data. Two-stage approach: linear probe 
 | 29 | `exp_004` | 0.0335 | 23.42% | — | lr 5e-5 — worse than baseline. |
 | 30 | `exp_026` | **0.07718** | **30.36%** | 73 | HuberNMADLoss. 5.6x worse. Loss scale mismatch. |
 
-> 📝 `exp_034` uses the regridded sim data (10800–17100 Å) with an **unfrozen** DESI autoencoder (end-to-end training). It set the all-time outlier record (12.73%) at the cost of a moderate NMAD increase (0.00785 → 0.00909). `exp_034` is the primary checkpoint for real-data evaluation — the grid now matches, and outliers are minimized.
+> 📝 `exp_034` uses the regridded sim data (10800–17100 Å) with an **unfrozen** DESI autoencoder (end-to-end training). It set the all-time outlier record (12.73%) at the cost of a moderate NMAD increase (0.00785 → 0.00909). Despite grid alignment, real-data transfer remains challenging — see [Real 3D-HST Evaluation](#-real-3d-hst-evaluation) for transfer learning results.
 
 ---
 
