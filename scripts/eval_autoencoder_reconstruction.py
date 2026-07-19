@@ -253,7 +253,7 @@ def make_plots(metrics_df, true, preds, latents, run_name, output_dir):
     # --- 3. Latent variance vs SNR colored by cosine similarity ---
     fig, ax = plt.subplots(figsize=(10, 6))
     sc = ax.scatter(snr, latent_var, s=10, c=cos_sim, cmap="RdYlGn",
-                    alpha=0.6, norm=LogNorm(), vmin=0.5, vmax=1.0)
+                    alpha=0.6, norm=LogNorm(vmin=0.5, vmax=1.0))
     cbar = plt.colorbar(sc, ax=ax)
     cbar.set_label("Cosine Similarity")
     ax.set_xscale("log")
