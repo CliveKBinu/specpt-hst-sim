@@ -28,3 +28,13 @@ job_id,experiment,run_id,run_name,state,start_time,end_time,val_nmad,val_loss,ca
 21376109,exp_032,,,,cancelled,,,,,,,Replaced by job 21376724 (dataloader patch + pickle re-save).
 21376724,exp_032,,,,cancelled,,,,,,,Replaced by job 21376888 (Parquet format switch).
 21376888,exp_032,ejfhtjlk,confused-bee-54,completed,2026-06-30T01:39,2026-06-30T03:08,0.00785,0.241,15.17,-0.00189,0.354,NEW BEST! Q1 quality data. NMAD 0.00785 (43% improvement). Ep325/400. Best at ep314. Overfit 6.85x.
+N/A,exp_035,jwrmz004,exp_035,completed,,,0.24007,,,,-0.00189,,Frozen linear probe (regridded AE). Test NMAD 0.24883 best on real data. 300 epochs, best ep 19.
+N/A,exp_036,ffztx2hk,exp_036,completed,,,0.33551,,,,-,,Frozen + augment. Test NMAD 0.33644. Augmentation degrades.
+N/A,exp_037,4za4hxi7,exp_035,completed,,,0.24389,,,,-,,Unfrozen EnhancedSpecPTForRedshift (5 blocks). NOTE: W&B run named exp_035 but is README's exp_037 (test NMAD 0.28494). Best ep 1 — immediate overfit.
+N/A,exp_038,pre196tp,exp_038,completed,,,0.33569,,,,-,,Unfrozen + augment. Test NMAD 0.32759.
+N/A,exp_039,pxg2oyyj,exp_037,completed,,,0.25158,,,,-,,Unfrozen simple head (2-layer MLP). NOTE: W&B run named exp_037 but is README's exp_039 (test NMAD 0.27547).
+N/A,exp_040,scqtgcus,exp_040,completed,,,0.24585,,,,-,,Unfrozen simple head. Test NMAD 0.27395.
+N/A,exp_041,4xqrr56o,exp_041,completed,,,0.26219,,,,-,,Frozen MLP (3-layer, 512→256→128→1). Test NMAD 0.26045. Ran full 300 epochs.
+N/A,exp_042,p82m5074,exp_042,completed,,,0.25957,,,,-,,Frozen ResNet (3 blocks). Test NMAD 0.26646. Early stopped ep 62.
+N/A,exp_043,ckurr32l,exp_043,completed,,,0.26963,,,,-,,Frozen metric learning (NTXent+kNN). Test NMAD 0.27399. Never trained (best ep 1). Train loss 1.67.
+N/A,exp_044,,exp_044,submitted,,,,,,,,RF on frozen encoder 512-d latents. Sklearn defaults (n_est=100). SLURM job pending.

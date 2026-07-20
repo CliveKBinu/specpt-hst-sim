@@ -104,4 +104,21 @@ Two-stage fine-tuning of exp_032 on real 3D-HST grism data (grism_specPT_v5.pkl,
 | 1 | Linear probe (prediction head only) | 525,313 | 3e-4 | 30 | **0.2105** | 47.6% | Frozen encoder features contain real-data redshift info. NMAD improved 2.4× over pre-fix baseline. Severe outlier fraction (47.6%) suggests encoder features are discriminative but noisy. Init from exp_032 best. |
 | 2 | Partial freeze (last encoder + attention + 12 MLP + head) | ~4.7M | 1e-5 | 40 | **0.2073** | 47.3% | Minimal improvement over Stage 1 (0.2105 → 0.2073, 1.5%). Training loss continued decreasing (0.667→0.502) but val NMAD plateaued — overfitting on 7.8k train samples. Early stopped at epoch 10. Best val NMAD 0.20994 at epoch 3. |
 
-*Last updated: 2026-07-09 11:30 UTC*
+## Regridded Backbone Real-Data Fine-tuning
+
+Real 3D-HST grism data (grism_specPT_v5.pkl, 11,156 spectra after SNR≥2.5) fine-tuned on the regridded autoencoder backbone (10800–17100 Å, 0.81 Å/pix). Data split by `split_by_grism_id` (seed=42, val/test=0.1/0.1 → 8,924 train / 1,116 val / 1,116 test; augmented runs: 104,651 train). NaN-masking at [11000, 16500] Å (PAD mask).
+
+| Exp | Head | Backbone | Augment | Run ID | Test NMAD | Test η% | Test RMSE | Best Ep | Notes |
+|-----|------|----------|---------|--------|-----------|---------|-----------|---------|-------|
+| **exp_035** | Linear (simple) | **Frozen** | No | jwrmz004 | **0.24883** | 54.64 | 0.5807 | 19 | Best NMAD on real data. Frozen linear probe (seq 512→256→1+Softplus, 525k params). |
+| exp_036 | Linear (simple) | Frozen | Yes | ffztx2hk | 0.33644 | 67.27 | 0.7263 | 1 | Augmentation (×11.7) degrades NMAD 35%. |
+| exp_037 | Enhanced (5 blocks) | Unfrozen | No | 4za4hxi7 | 0.28494 | 59.85 | 0.6579 | 1 | End-to-end overfits: train_loss 0.003 → val_loss 0.30+. Best ep=1 means immediate divergence. |
+| exp_038 | Enhanced (5 blocks) | Unfrozen | Yes | pre196tp | 0.32759 | 64.27 | 0.7178 | 58 | End-to-end + augment — worst non-metric learning result. |
+| exp_039 | Simple (2-layer) | Unfrozen | No | pxg2oyyj | 0.27547 | 58.80 | 0.6411 | 1 | Unfrozen simple head diverges immediately. |
+| exp_040 | Simple (2-layer) | Unfrozen | No | scqtgcus | 0.27395 | 58.55 | 0.6368 | 1 | Unfrozen — statistically tied with exp_039. |
+| exp_041 | MLP (3-layer, 512→256→128→1) | Frozen | No | 4xqrr56o | 0.26045 | 56.61 | 0.6112 | 292 | Deeper MLP on frozen features — 5% worse than linear probe (exp_035). Ran full 300 epochs, minimal overfit. Head capacity doesn't unlock frozen features. |
+| exp_042 | ResNet (3×ImprovedResidualMLPBlock) | Frozen | No | p82m5074 | 0.26646 | 57.69 | 0.6299 | 32 | Residual blocks on frozen features — plateaued at ep 32, early-stopped ep 62. |
+| exp_043 | Metric Learning (NTXent + k-NN=10) | Frozen | No | ckurr32l | 0.27399 | 58.35 | 0.6216 | 1 | Contrastive loss never converged (train_loss 1.67). Best ep=1. |
+| exp_044 | Random Forest | Frozen | No | — | — | — | — | — | RF on frozen encoder 512-d latents (sklearn defaults, n_est=100). 🚧 Submitted |
+
+*Last updated: 2026-07-20 19:30 UTC*

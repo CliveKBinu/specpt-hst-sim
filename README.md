@@ -27,15 +27,16 @@
 
 | Experiment | Approach | Test NMAD | Test η | Status |
 |------------|----------|-----------|--------|--------|
-| exp_041 | Simple MLP (3-layer, frozen backbone) | — | — | 🚧 Running |
-| exp_042 | Simple ResNet (3 blocks, frozen backbone) | — | — | 🚧 Running |
-| exp_043 | Metric Learning (NTXent + k-NN, frozen) | — | — | 🚧 Running |
-| exp_035 | Linear probe (frozen backbone, no augment) | 0.24883 | 54.64% | ✅ Complete |
+| exp_044 | Random Forest (sklearn, frozen latent) | — | — | 🚧 Submitted |
+| exp_035 | Linear probe (frozen backbone, no augment) | **0.24883** | 54.64% | ✅ Complete |
 | exp_036 | Linear probe (frozen backbone, augment) | 0.33644 | 67.27% | ✅ Complete |
 | exp_037 | End-to-end (enhanced head, no augment) | 0.28494 | 59.85% | ✅ Complete |
 | exp_038 | End-to-end (enhanced head, augment) | 0.32759 | 64.27% | ✅ Complete |
 | exp_039 | End-to-end (simple head, no augment) | 0.27547 | 58.80% | ✅ Complete |
 | exp_040 | End-to-end (linear head, no augment) | 0.27395 | 58.55% | ✅ Complete |
+| exp_041 | Simple MLP (3-layer, frozen backbone) | 0.26045 | 56.61% | ✅ Complete |
+| exp_042 | Simple ResNet (3 blocks, frozen backbone) | 0.26646 | 57.69% | ✅ Complete |
+| exp_043 | Metric Learning (NTXent + k-NN, frozen) | 0.27399 | 58.35% | ✅ Complete |
 
 > ℹ️ **Grid alignment.** The simulation data has been regridded from 10311–17465 Å to the real 3D-HST grid (10800–17100 Å, 0.81 Å/pix). This eliminates the 187-pixel feature shift that caused catastrophic real-data eval failure. See [`scripts/prep_sim_regridded.py`](scripts/prep_sim_regridded.py) and track [`EXPERIMENTS.md`](EXPERIMENTS.md) for details.
 
@@ -57,10 +58,13 @@ Key finding: **Frozen backbone + simple head** (linear probe) outperforms end-to
 |-----|------|----------|---------|-----------|--------|---------|------------|
 | **exp_035** | Linear (simple) | **Frozen** | No | **0.24883** | 54.64% | 19 | 49 |
 | exp_036 | Linear (simple) | Frozen | Yes | 0.33644 | 67.27% | 1 | 31 |
-| exp_037 | Enhanced | Unfrozen | No | 0.28494 | 59.85% | 1 | 31 |
-| exp_038 | Enhanced | Unfrozen | Yes | 0.32759 | 64.27% | 58 | 88 |
+| exp_037 | Enhanced (5 blocks) | Unfrozen | No | 0.28494 | 59.85% | 1 | 31 |
+| exp_038 | Enhanced (5 blocks) | Unfrozen | Yes | 0.32759 | 64.27% | 58 | 88 |
 | exp_039 | Simple (2-layer) | Unfrozen | No | 0.27547 | 58.80% | 1 | 31 |
-| exp_040 | Linear (single) | Unfrozen | No | 0.27395 | 58.55% | 1 | 31 |
+| exp_040 | Simple (2-layer) | Unfrozen | No | 0.27395 | 58.55% | 1 | 31 |
+| exp_041 | MLP (3-layer 512→256→128) | Frozen | No | 0.26045 | 56.61% | 292 | 300 (none) |
+| exp_042 | ResNet (3 residual blocks) | Frozen | No | 0.26646 | 57.69% | 32 | 62 |
+| exp_043 | Metric Learning (NTXent + k-NN) | Frozen | No | 0.27399 | 58.35% | 1 | 31 |
 
 ### Key Learnings
 
@@ -68,14 +72,14 @@ Key finding: **Frozen backbone + simple head** (linear probe) outperforms end-to
 2. **Augmentation hurts.** Both frozen+augment (0.336) and unfrozen+augment (0.328) are worse than baseline.
 3. **End-to-end training overfits.** Training loss drops to 0.52 while val NMAD degrades from 0.24 → 0.28.
 4. **Simple and complex heads perform similarly** when backbone is unfrozen (NMAD 0.27-0.28 across all head types).
+5. **Head architecture on frozen features is exhausted.** MLP (exp_041 NMAD 0.260), ResNet (exp_042 NMAD 0.266), and metric learning (exp_043 NMAD 0.274) all lose to the simple linear probe (exp_035 NMAD 0.249). The encoder is the bottleneck.
+6. **Metric learning (NTXent + k-NN) never converged.** Train loss 1.67, best epoch 1 — the contrastive embedding objective does not extract redshift-discriminative structure from the frozen encoder's 512-d latent space.
 
-### Current Work (Running)
+### Current Work (Submitted)
 
-| Exp | Approach | Head Architecture | Goal |
-|-----|----------|-------------------|------|
-| exp_041 | Simple MLP (3-layer) | 512→256→128→1 | Deeper MLP on frozen features |
-| exp_042 | Simple ResNet | 3× ResidualMLPBlock(512) | Residual connections on frozen features |
-| exp_043 | Metric Learning | 512→256→128 + k-NN | Contrastive paradigm, different inductive bias |
+| Exp | Approach | Goal |
+|-----|----------|------|
+| exp_044 | Random Forest (sklearn defaults) | Non-parametric regressor on frozen 512-d encoder latents. Falsification test: if RF ≈ 0.249, head architecture exhausted; if RF > linear probe, non-linear structure exists in latents. |
 
 ---
 
