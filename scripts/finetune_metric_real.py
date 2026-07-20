@@ -77,6 +77,7 @@ def ntxent_loss(z, y, tau=0.07, delta=0.05):
 
     Positive pairs: |z_i - z_j| / (1 + z_i) < delta
     """
+    y = y.flatten()
     B = z.size(0)
     sim = z @ z.T / tau
     rel_dist = torch.abs(y.unsqueeze(0) - y.unsqueeze(-1)) / (1 + y.unsqueeze(-1))
@@ -103,6 +104,7 @@ def encode_dataset(model, loader, device):
 
 def knn_predict(z_query, z_ref, y_ref, k=10, tau=0.07):
     """Softmax-weighted k-NN from L2-normalized embeddings."""
+    y_ref = y_ref.flatten()
     sim = z_query @ z_ref.T
     topk_sim, topk_idx = sim.topk(k, dim=-1)
     weights = F.softmax(topk_sim / tau, dim=-1)
@@ -149,7 +151,7 @@ def train_metric(args, train, val, test):
     z_val, y_val = encode_dataset(model, va_ld, device)
     ref_t = torch.from_numpy(z_ref).to(device)
     val_t = torch.from_numpy(z_val).to(device)
-    yt = torch.from_numpy(y_val).to(device)
+    yt = torch.from_numpy(y_ref).to(device)
     preds = knn_predict(val_t, ref_t, yt, k=args.k).cpu().numpy()
     diag_nmad, diag_eta, _ = compute_metrics(preds, y_val)
     print(f"Diag: val_nmad={diag_nmad:.4f}  eta={diag_eta:.2f}%")
@@ -184,7 +186,7 @@ def train_metric(args, train, val, test):
         z_val, y_val = encode_dataset(model, va_ld, device)
         ref_t = torch.from_numpy(z_ref).to(device)
         val_t = torch.from_numpy(z_val).to(device)
-        yt = torch.from_numpy(y_val).to(device)
+        yt = torch.from_numpy(y_ref).to(device)
         preds = knn_predict(val_t, ref_t, yt, k=args.k).cpu().numpy()
         nmad, eta, _ = compute_metrics(preds, y_val)
         cur_lr = opt.param_groups[0]['lr']
@@ -210,7 +212,7 @@ def train_metric(args, train, val, test):
     z_te, y_te = encode_dataset(model, te_ld, device)
     ref_t = torch.from_numpy(z_ref).to(device)
     te_t = torch.from_numpy(z_te).to(device)
-    yt = torch.from_numpy(y_te).to(device)
+    yt = torch.from_numpy(y_ref).to(device)
     preds = knn_predict(te_t, ref_t, yt, k=args.k).cpu().numpy()
     test_nmad, test_eta, test_rmse = compute_metrics(preds, y_te)
     print(f"\nTest:  NMAD={test_nmad:.5f}  eta={test_eta:.2f}%  RMSE={test_rmse:.4f}")

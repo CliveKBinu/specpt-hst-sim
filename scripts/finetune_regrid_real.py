@@ -188,6 +188,7 @@ def train_linear_probe(args, train, val, test):
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         opt, mode='min', factor=0.1, patience=20, min_lr=1e-7
     )
+    best_val_loss = float("inf")
     best_nmad = 1e9
     best_ep = 0
     patience = 0
@@ -210,29 +211,39 @@ def train_linear_probe(args, train, val, test):
             tl += loss.item() * X.size(0)
         tl /= len(tr_ld.dataset)
         model.eval()
+        val_loss_epoch = 0.0
+        val_count = 0
+        ap, at = [], []
         with torch.no_grad():
-            ap, at = [], []
             for X, Y, _, _ in va_ld:
-                y = model(X.to(device)).flatten()
+                X, Y = X.to(device), Y.to(device)
+                y = model(X).flatten()
+                val_loss_batch = criterion(y, Y)
+                if torch.isnan(val_loss_batch) or torch.isinf(val_loss_batch):
+                    continue
+                val_loss_epoch += val_loss_batch.item()
+                val_count += 1
                 ap.append(y.cpu().numpy())
-                at.append(Y.numpy())
+                at.append(Y.cpu().numpy())
+        val_loss = val_loss_epoch / max(val_count, 1)
         pv = np.clip(np.concatenate(ap), 0, None)
         tv = np.concatenate(at)
         delz = (pv - tv) / (1 + tv)
         nmad = 1.4826 * np.median(np.abs(delz - np.median(delz)))
         eta = 100 * np.mean(np.abs(delz) > 0.15)
         cur_lr = opt.param_groups[0]['lr']
-        print(f"Ep {ep:2d}/{args.epochs}  loss={tl:.4f}  val_nmad={nmad:.5f}  eta={eta:.2f}%  lr={cur_lr:.2e}  {time.time()-t0:.0f}s")
-        wandb.log({'train_loss': tl, 'val_nmad': nmad, 'val_eta': eta, 'lr': cur_lr, 'epoch': ep})
-        scheduler.step(nmad)
-        if nmad < best_nmad:
+        print(f"Ep {ep:2d}/{args.epochs}  loss={tl:.4f}  val_loss={val_loss:.4f}  val_nmad={nmad:.5f}  eta={eta:.2f}%  lr={cur_lr:.2e}  {time.time()-t0:.0f}s")
+        wandb.log({'train_loss': tl, 'val_loss': val_loss, 'val_nmad': nmad, 'val_eta': eta, 'lr': cur_lr, 'epoch': ep})
+        scheduler.step(val_loss)
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
             best_nmad = nmad
             best_ep = ep
             patience = 0
             os.makedirs('checkpoints', exist_ok=True)
             torch.save({
                 'epoch': ep, 'model_state_dict': model.state_dict(),
-                'val_nmad': nmad, 'mode': args.mode, 'exp_name': args.exp_name,
+                'val_loss': val_loss, 'val_nmad': nmad, 'mode': args.mode, 'exp_name': args.exp_name,
             }, f'checkpoints/{args.exp_name}_best_model.pth')
         else:
             patience += 1
@@ -253,8 +264,8 @@ def train_linear_probe(args, train, val, test):
     test_eta = 100 * np.mean(np.abs(delz) > 0.15)
     test_rmse = np.sqrt(np.mean((pv - tv) ** 2))
     print(f"\nTest:  NMAD={test_nmad:.5f}  eta={test_eta:.2f}%  RMSE={test_rmse:.4f}")
-    print(f"Best val NMAD: {best_nmad:.5f} at ep {best_ep}")
-    return best_nmad, best_ep, test_nmad, test_eta, test_rmse
+    print(f"Best val loss: {best_val_loss:.4f}  Best val NMAD: {best_nmad:.5f} at ep {best_ep}")
+    return best_val_loss, best_nmad, best_ep, test_nmad, test_eta, test_rmse
 
 
 def main():
@@ -283,9 +294,9 @@ def main():
     print(f"  Final: train={len(train)}  val={len(val)}  test={len(test)}")
     wandb.init(project='specpt-hst-sim-z', entity='ckb2084-rochester-institute-of-technology',
                name=args.exp_name, config=vars(args))
-    best_val_nmad, best_ep, test_nmad, test_eta, test_rmse = train_linear_probe(args, train, val, test)
+    best_val_loss, best_val_nmad, best_ep, test_nmad, test_eta, test_rmse = train_linear_probe(args, train, val, test)
     wandb.log({
-        'best_val_nmad': best_val_nmad, 'best_epoch': best_ep,
+        'best_val_loss': best_val_loss, 'best_val_nmad': best_val_nmad, 'best_epoch': best_ep,
         'test_nmad': test_nmad, 'test_eta': test_eta, 'test_rmse': test_rmse,
         'train_samples': len(train), 'val_samples': len(val), 'test_samples': len(test),
     })
