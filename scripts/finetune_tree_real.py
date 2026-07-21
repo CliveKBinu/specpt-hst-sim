@@ -62,10 +62,12 @@ def extract_latents(model, loader, device):
             x = x.squeeze(0)
             all_z.append(x.cpu().numpy())
             all_y.append(Y.numpy())
-    return np.concatenate(all_z).astype(np.float32), np.concatenate(all_y)
+    return np.concatenate(all_z).astype(np.float32), np.concatenate(all_y).ravel()
 
 
 def compute_metrics(pv, tv):
+    pv = np.asarray(pv).ravel()
+    tv = np.asarray(tv).ravel()
     delz = (pv - tv) / (1 + tv)
     nmad = float(1.4826 * np.median(np.abs(delz - np.median(delz))))
     eta = float(100 * np.mean(np.abs(delz) > 0.15))
@@ -84,7 +86,11 @@ def main():
                         help='Recompute cached latents')
     parser.add_argument('--n_jobs', type=int, default=8,
                         help='Parallel jobs for RF fitting')
+    parser.add_argument('--skip-extraction', action='store_true', default=False,
+                        help='Skip feature extraction even if cache missing')
     args = parser.parse_args()
+    if os.environ.get('SKIP_EXTRACTION', '').lower() in ('1', 'true', 'yes'):
+        args.skip_extraction = True
 
     os.makedirs(CACHE_DIR, exist_ok=True)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -100,7 +106,7 @@ def main():
 
     cache_ok = all(os.path.exists(os.path.join(CACHE_DIR, f'{split}_latent.npy'))
                    for split in ['train', 'val', 'test'])
-    if cache_ok and not args.recompute:
+    if (cache_ok and not args.recompute) or args.skip_extraction:
         print("Loading cached latents...")
         z_train = np.load(os.path.join(CACHE_DIR, 'train_latent.npy'))
         y_train = np.load(os.path.join(CACHE_DIR, 'train_z.npy'))
@@ -108,6 +114,9 @@ def main():
         y_val   = np.load(os.path.join(CACHE_DIR, 'val_z.npy'))
         z_test  = np.load(os.path.join(CACHE_DIR, 'test_latent.npy'))
         y_test  = np.load(os.path.join(CACHE_DIR, 'test_z.npy'))
+        y_train = y_train.ravel()
+        y_val   = y_val.ravel()
+        y_test  = y_test.ravel()
     else:
         print("Loading regridded autoencoder...")
         ckpt = torch.load(REGRID_AE_CKPT, map_location='cpu', weights_only=False)
@@ -126,11 +135,11 @@ def main():
             np.save(os.path.join(CACHE_DIR, f'{split_name}_z.npy'), y)
             print(f"  {split_name}: {z.shape}  ({time.time()-t0:.0f}s)")
         z_train = np.load(os.path.join(CACHE_DIR, 'train_latent.npy'))
-        y_train = np.load(os.path.join(CACHE_DIR, 'train_z.npy'))
+        y_train = np.load(os.path.join(CACHE_DIR, 'train_z.npy')).ravel()
         z_val   = np.load(os.path.join(CACHE_DIR, 'val_latent.npy'))
-        y_val   = np.load(os.path.join(CACHE_DIR, 'val_z.npy'))
+        y_val   = np.load(os.path.join(CACHE_DIR, 'val_z.npy')).ravel()
         z_test  = np.load(os.path.join(CACHE_DIR, 'test_latent.npy'))
-        y_test  = np.load(os.path.join(CACHE_DIR, 'test_z.npy'))
+        y_test  = np.load(os.path.join(CACHE_DIR, 'test_z.npy')).ravel()
 
     print(f"\nLatent dim: {z_train.shape[1]},  Train samples: {z_train.shape[0]}")
     print(f"z range: [{y_train.min():.3f}, {y_train.max():.3f}]")
@@ -190,7 +199,7 @@ def main():
         'n_features': z_train.shape[1],
     })
 
-    preds = np.stack([y_test, pv_test]).T
+    preds = np.column_stack([pv_test, y_test])
     preds_path = os.path.join(CACHE_DIR, f'{args.exp_name}_test_preds.npy')
     np.save(preds_path, preds)
     wandb.save(preds_path)

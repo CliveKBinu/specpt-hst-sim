@@ -37,4 +37,5 @@ N/A,exp_040,scqtgcus,exp_040,completed,,,0.24585,,,,-,,Unfrozen simple head. Tes
 N/A,exp_041,4xqrr56o,exp_041,completed,,,0.26219,,,,-,,Frozen MLP (3-layer, 512→256→128→1). Test NMAD 0.26045. Ran full 300 epochs.
 N/A,exp_042,p82m5074,exp_042,completed,,,0.25957,,,,-,,Frozen ResNet (3 blocks). Test NMAD 0.26646. Early stopped ep 62.
 N/A,exp_043,ckurr32l,exp_043,completed,,,0.26963,,,,-,,Frozen metric learning (NTXent+kNN). Test NMAD 0.27399. Never trained (best ep 1). Train loss 1.67.
-N/A,exp_044,,exp_044,submitted,,,,,,,,RF on frozen encoder 512-d latents. Sklearn defaults (n_est=100). SLURM job pending.
+N/A,exp_044,if2qx78l,exp_044,failed,,,,,,,,FAILED: shape bug — y arrays saved as (n,1) 2-d, compute_metrics broadcast to n×n pairwise matrix. NMAD/η/RMSE logged are corrupt. Job crashed on np.save (line 193) shape mismatch.
+N/A,exp_045_RF_fixed,,exp_045_RF_fixed,submitted,,,,,,,,RF re-run with ravel'd y arrays. Uses cached features from exp_044. Sklearn defaults (n_est=100). SLURM job pending.

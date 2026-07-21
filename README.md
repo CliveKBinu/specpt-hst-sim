@@ -27,7 +27,8 @@
 
 | Experiment | Approach | Test NMAD | Test η | Status |
 |------------|----------|-----------|--------|--------|
-| exp_044 | Random Forest (sklearn, frozen latent) | — | — | 🚧 Submitted |
+| exp_045_RF_fixed | Random Forest (re-run, shape fix) | — | — | 🚧 Submitted |
+| exp_044 | Random Forest (sklearn, frozen latent) | — | — | ❌ Failed (shape bug) |
 | exp_035 | Linear probe (frozen backbone, no augment) | **0.24883** | 54.64% | ✅ Complete |
 | exp_036 | Linear probe (frozen backbone, augment) | 0.33644 | 67.27% | ✅ Complete |
 | exp_037 | End-to-end (enhanced head, no augment) | 0.28494 | 59.85% | ✅ Complete |
@@ -74,12 +75,13 @@ Key finding: **Frozen backbone + simple head** (linear probe) outperforms end-to
 4. **Simple and complex heads perform similarly** when backbone is unfrozen (NMAD 0.27-0.28 across all head types).
 5. **Head architecture on frozen features is exhausted.** MLP (exp_041 NMAD 0.260), ResNet (exp_042 NMAD 0.266), and metric learning (exp_043 NMAD 0.274) all lose to the simple linear probe (exp_035 NMAD 0.249). The encoder is the bottleneck.
 6. **Metric learning (NTXent + k-NN) never converged.** Train loss 1.67, best epoch 1 — the contrastive embedding objective does not extract redshift-discriminative structure from the frozen encoder's 512-d latent space.
+7. **exp_044 (RF) metrics were invalidated by a shape bug.** `y` arrays saved as 2-d `(n, 1)` from HSTGrismDataset, passed to `compute_metrics` where broadcasting created `n×n` pairwise residual matrices. Train R²=0.872 / Test R²=0.094 are valid (R² flattens internally); NMAD/η/RMSE values are corrupt. Fixed re-run submitted as exp_045_RF_fixed.
 
 ### Current Work (Submitted)
 
 | Exp | Approach | Goal |
 |-----|----------|------|
-| exp_044 | Random Forest (sklearn defaults) | Non-parametric regressor on frozen 512-d encoder latents. Falsification test: if RF ≈ 0.249, head architecture exhausted; if RF > linear probe, non-linear structure exists in latents. |
+| exp_045_RF_fixed | Random Forest (re-run, fixed shape) | Re-run exp_044 with ravel'd y arrays (shape bug was broadcasting to pairwise residual matrices). Uses cached features from exp_044. Same sklearndefaults, n_est=100. |
 
 ---
 

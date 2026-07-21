@@ -119,6 +119,7 @@ Real 3D-HST grism data (grism_specPT_v5.pkl, 11,156 spectra after SNR≥2.5) fin
 | exp_041 | MLP (3-layer, 512→256→128→1) | Frozen | No | 4xqrr56o | 0.26045 | 56.61 | 0.6112 | 292 | Deeper MLP on frozen features — 5% worse than linear probe (exp_035). Ran full 300 epochs, minimal overfit. Head capacity doesn't unlock frozen features. |
 | exp_042 | ResNet (3×ImprovedResidualMLPBlock) | Frozen | No | p82m5074 | 0.26646 | 57.69 | 0.6299 | 32 | Residual blocks on frozen features — plateaued at ep 32, early-stopped ep 62. |
 | exp_043 | Metric Learning (NTXent + k-NN=10) | Frozen | No | ckurr32l | 0.27399 | 58.35 | 0.6216 | 1 | Contrastive loss never converged (train_loss 1.67). Best ep=1. |
-| exp_044 | Random Forest | Frozen | No | — | — | — | — | — | RF on frozen encoder 512-d latents (sklearn defaults, n_est=100). 🚧 Submitted |
+| exp_044 | Random Forest | Frozen | No | if2qx78l | — | — | — | — | 🚧 **Failed** — shape bug corrupts metrics (y arrays are (n,1) 2-d, compute_metrics broadcast to n×n pairwise matrix). Fixed in re-run. |
+| exp_045_RF_fixed | Random Forest (fixed) | Frozen | No | — | — | — | — | — | RF re-run with ravel'd y arrays. Uses cached features from exp_044. Sklearn defaults, n_est=100. 🚧 Submitted |
 
 *Last updated: 2026-07-20 19:30 UTC*
