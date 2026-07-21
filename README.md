@@ -28,6 +28,7 @@
 | Experiment | Approach | Test NMAD | Test η | Status |
 |------------|----------|-----------|--------|--------|
 | **exp_045_RF_fixed** | **Random Forest (re-run, shape fix)** | **0.20767** | **49.82%** | **✅ Complete (new best)** |
+| exp_046_pre_attn_RF | Random Forest (pre-attention) | — | — | 🚧 Submitted |
 | exp_044 | Random Forest (sklearn, frozen latent) | — | — | ❌ Failed (shape bug) |
 | exp_044 | Random Forest (sklearn, frozen latent) | — | — | ❌ Failed (shape bug) |
 | exp_035 | Linear probe (frozen backbone, no augment) | **0.24883** | 54.64% | ✅ Complete |
@@ -82,15 +83,15 @@ Key finding: **Frozen backbone + simple head** (linear probe) outperforms end-to
 
 ### Current Work
 
-No active experiments. Last: exp_045_RF_fixed completed — see Active Experiments table above for results.
+| Exp | Approach | Goal |
+|-----|----------|------|
+| exp_046_pre_attn_RF | RF on pre-attention latents + SNR-bucketed NMAD | Tap proj_to_d_model output (BEFORE transformer_encoder). Tests if the 3-layer MHA adds value for real data. B3: SNR-bucketed NMAD identifies outlier tail origin. 🚧 Submitted |
 
 ### Next Experiments Under Consideration
 
 | Priority | Experiment | Goal |
 |----------|-----------|------|
-| High | B1 — pre-attention RF | Tap `proj_to_d_model` output before `transformer_encoder`. Tests if the 3-layer MHA adds value for RF or is decorative on real data. Reuses cached latents. |
-| High | B3 — SNR-bucketed NMAD | Cluster test set by SNR bins (e.g., 2.5-5, 5-10, 10-20, 20+) using exp_045 predictions. Where is the 49.8% catastrophic outlier fraction coming from? |
-| Medium | ExtraTrees / GBDT | Different tree methods on same cached 512-d latents. Does RF's shrinkage benefit transfer? |
+| Medium | ExtraTrees / GBDT | Different tree methods on cached 512-d latents. Does RF's shrinkage benefit transfer? |
 | Long-term | D1 — sim+real joint training | Unfreeze encoder with joint sim reconstruction + real redshift loss. Domain gap remains the dominant lever. |
 
 ---

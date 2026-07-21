@@ -121,5 +121,6 @@ Real 3D-HST grism data (grism_specPT_v5.pkl, 11,156 spectra after SNR≥2.5) fin
 | exp_043 | Metric Learning (NTXent + k-NN=10) | Frozen | No | ckurr32l | 0.27399 | 58.35 | 0.6216 | 1 | Contrastive loss never converged (train_loss 1.67). Best ep=1. |
 | exp_044 | Random Forest | Frozen | No | if2qx78l | — | — | — | — | 🚧 **Failed** — shape bug corrupts metrics (y arrays are (n,1) 2-d, compute_metrics broadcast to n×n pairwise matrix). Fixed in re-run. |
 | **exp_045_RF_fixed** | **Random Forest (fixed)** | **Frozen** | **No** | **a5ubhtwv** | **0.20767** | **49.82** | **0.5269** | **n/a** | **New best NMAD on real data (16.5% improvement vs exp_035).** RF predicts narrow range [0.73, 1.80] vs true range [0.01, 3.47] — improvement is from implicit shrinkage, not non-linear z-structure. Test R² = 0.094 confirms no z-variance tracking. η = 49.8%—still half of test samples have >15% error. |
+| exp_046_pre_attn_RF | Random Forest (pre-attention) | Frozen | No | — | — | — | — | — | B1: RF on pre-attention 512-d (proj_to_d_model, BEFORE transformer_encoder). Tests if 3-layer MHA adds value for real data. B3: SNR-bucketed NMAD included. 🚧 Submitted |
 
 *Last updated: 2026-07-20 19:30 UTC*

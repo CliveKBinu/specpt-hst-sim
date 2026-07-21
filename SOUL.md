@@ -16,21 +16,19 @@ Autonomous optimization engine for SpecPT redshift estimation. Runs two parallel
 
 ## Current State (updated by agents)
 - Last updated: 2026-07-20
-- Active experiment: exp_045_RF_fixed (completed — see results below)
+- Active experiment: **exp_046_pre_attn_RF (B1+B3 diagnostic — submitted)**
 - Best NMAD (synthetic): 0.00785 (exp_032, Q1 quality data)
-- Best NMAD (real-data): **0.20767 (exp_045_RF_fixed, Random Forest on frozen 512-d latents)**
+- Best NMAD (real-data): **0.20767 (exp_045_RF_fixed, Random Forest on frozen post-attention 512-d latents)**
 - Total experiments completed: ~39 synthetic + 11 real-data = ~50 numeric exp_NNN launched
 - Direction:
-  - **RF beats linear probe by 16.5% NMAD (0.20767 vs 0.24883) and η drops from 54.6% to 49.8%.**
-    - But improvement is from **implicit shrinkage**: RF predicts narrow [0.73, 1.80] vs true [0.01, 3.47]. Low-z and high-z spectra all predicted near the training mean.
-    - Test R² = 0.094 → predictions don't track z-variation at all.
-    - This is better than linear probe on NMAD but NOT because RF found non-linear z-discriminative structure. RF's bagging + deep trees acts as a smoother, avoiding extreme errors.
-  - **Real-data head architecture axis: partially revived.** Non-parametric regression on the frozen 512-d latent does help — trees can still exploit residual structure linear probes miss. But the help is from variance reduction, not improved latent representation.
-  - **Next experiments under consideration:**
-    - B1 (pre-attention RF): is the MHA adding value or just decorative?
-    - B3 (SNR-bucketed NMAD): where is the catastrophic η coming from? (49.8% is still terrible.)
-    - D1 (sim+real joint training): domain gap remains the dominant lever.
-    - ExtraTrees/GBDT: do other tree methods preserve or improve the RF's shrinkage benefit?
+  - **RF beats linear probe by 16.5% NMAD (0.20767 vs 0.24883), η drops 54.6%→49.8%.**
+    - Improvement is from **implicit shrinkage**: RF predicts narrow [0.73, 1.80] vs true [0.01, 3.47]. Test R² = 0.094 → predictions don't track z-variation.
+    - The help is variance reduction (RF's bagging + deep trees acts as a smoother), not non-linear z-structure discovery.
+  - **B1 in flight:** Pre-attention RF taps `proj_to_d_model` output (BEFORE `transformer_encoder`). If pre-attn NMAD ≈ 0.2077, the 3-layer MHA is decorative on real data. If pre-attn NMAD > 0.23, MHA adds value. If pre-attn NMAD < 0.20, MHA is actively destructive.
+  - **B3 bundled:** SNR-bucketed NMAD included in same run — bins 2.5-5, 5-10, 10-20, 20+. Will identify where the 49.8% catastrophic outlier tail originates.
+  - **Next after B1/B3 result:**
+    - If MHA decorative → collapse to pre-attn encoder for real-data fine-tuning (faster, cheaper).
+    - If MHA valuable → D1 (sim+real joint training) is the main domain-gap lever.
   - **exp_044 (RF) fixed** — shape bug diagnosed and fixed in exp_045_RF_fixed. Cached features reused.
 
 ## Frozen Architecture Constraints
