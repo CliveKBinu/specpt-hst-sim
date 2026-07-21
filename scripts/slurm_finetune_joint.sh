@@ -1,12 +1,15 @@
 #!/bin/bash
 #SBATCH --job-name=SpecPT_Joint
-#SBATCH --output=slurm_%j.out
+#SBATCH --output=outputs/logs/%x_%j.out
+#SBATCH --error=outputs/err/%x_%j.err
+#SBATCH --mail-user=slack:@ckb2084
+#SBATCH --mail-type=ALL
 #SBATCH --partition=sporc
 #SBATCH --gres=gpu:a100:1
 #SBATCH --mem=64g
 #SBATCH --time=0-12:00:00
 #SBATCH --cpus-per-task=2
-#SBATCH --account=sporc
+#SBATCH --account=redshift
 
 source ~/.bashrc
 conda activate specpt
