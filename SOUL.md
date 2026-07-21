@@ -16,16 +16,22 @@ Autonomous optimization engine for SpecPT redshift estimation. Runs two parallel
 
 ## Current State (updated by agents)
 - Last updated: 2026-07-20
-- Active experiment: exp_045_RF_fixed (Random Forest on frozen encoder 512-d latents, re-run after exp_044 shape bug fix)
+- Active experiment: exp_045_RF_fixed (completed — see results below)
 - Best NMAD (synthetic): 0.00785 (exp_032, Q1 quality data)
-- Best NMAD (real-data): 0.24883 (exp_035, frozen linear probe, regridded backbone)
-- Total experiments completed: ~39 synthetic + 10 real-data = ~49 numeric exp_NNN was launched
+- Best NMAD (real-data): **0.20767 (exp_045_RF_fixed, Random Forest on frozen 512-d latents)**
+- Total experiments completed: ~39 synthetic + 11 real-data = ~50 numeric exp_NNN launched
 - Direction:
-  - **Real-data head architecture axis exhausted.** Exp_035-043 swept frozen linear/MLP/ResNet/metric and end-to-end unfrozen. All head variants land in 0.249–0.284 NMAD. Best result = frozen linear probe (exp_035, NMAD 0.249). Metric learning never converged. Augmentation degrades everything by ~35%.
-  - **exp_044 (RF) failed** due to shape bug (y arrays 2-d; compute_metrics broadcast to pairwise matrix). Train R²=0.87 / Test R²=0.09 (valid — the overfit signal is damning). Fixed re-run = exp_045_RF_fixed using cached features.
-  - **Domain gap is the bottleneck.** The encoder's 512-d latent preserves reconstruction info (97% cosine on real data) but does not organize z-discriminatively — entangled features, no pressure in pretraining.
-  - **Next pivot under consideration:** sim+real joint training (D1) — unfreezes the encoder using 100k sim+8.9k real labels together. Self-supervised pretraining on unlabeled real data (D4). Redshift-contrastive autoencoder (F1/F2).
-  - **Diagnostic experiments deferred:** B1 (pre-attention RF), B2 (per-layer transformer taps), B3 (SNR-bucketed NMAD). To run after exp_045_RF_fixed result.
+  - **RF beats linear probe by 16.5% NMAD (0.20767 vs 0.24883) and η drops from 54.6% to 49.8%.**
+    - But improvement is from **implicit shrinkage**: RF predicts narrow [0.73, 1.80] vs true [0.01, 3.47]. Low-z and high-z spectra all predicted near the training mean.
+    - Test R² = 0.094 → predictions don't track z-variation at all.
+    - This is better than linear probe on NMAD but NOT because RF found non-linear z-discriminative structure. RF's bagging + deep trees acts as a smoother, avoiding extreme errors.
+  - **Real-data head architecture axis: partially revived.** Non-parametric regression on the frozen 512-d latent does help — trees can still exploit residual structure linear probes miss. But the help is from variance reduction, not improved latent representation.
+  - **Next experiments under consideration:**
+    - B1 (pre-attention RF): is the MHA adding value or just decorative?
+    - B3 (SNR-bucketed NMAD): where is the catastrophic η coming from? (49.8% is still terrible.)
+    - D1 (sim+real joint training): domain gap remains the dominant lever.
+    - ExtraTrees/GBDT: do other tree methods preserve or improve the RF's shrinkage benefit?
+  - **exp_044 (RF) fixed** — shape bug diagnosed and fixed in exp_045_RF_fixed. Cached features reused.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen by default. The `freeze_backbone: false` option exists but has caused overfitting on real data (exp_037-040).

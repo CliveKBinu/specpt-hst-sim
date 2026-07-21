@@ -27,7 +27,8 @@
 
 | Experiment | Approach | Test NMAD | Test η | Status |
 |------------|----------|-----------|--------|--------|
-| exp_045_RF_fixed | Random Forest (re-run, shape fix) | — | — | 🚧 Submitted |
+| **exp_045_RF_fixed** | **Random Forest (re-run, shape fix)** | **0.20767** | **49.82%** | **✅ Complete (new best)** |
+| exp_044 | Random Forest (sklearn, frozen latent) | — | — | ❌ Failed (shape bug) |
 | exp_044 | Random Forest (sklearn, frozen latent) | — | — | ❌ Failed (shape bug) |
 | exp_035 | Linear probe (frozen backbone, no augment) | **0.24883** | 54.64% | ✅ Complete |
 | exp_036 | Linear probe (frozen backbone, augment) | 0.33644 | 67.27% | ✅ Complete |
@@ -57,7 +58,8 @@ Key finding: **Frozen backbone + simple head** (linear probe) outperforms end-to
 
 | Exp | Head | Backbone | Augment | Test NMAD | Test η | Best Ep | Early Stop |
 |-----|------|----------|---------|-----------|--------|---------|------------|
-| **exp_035** | Linear (simple) | **Frozen** | No | **0.24883** | 54.64% | 19 | 49 |
+| **exp_045_RF_fixed** | **Random Forest** | **Frozen** | **No** | **0.20767** | **49.82%** | **n/a** | **n/a** |
+| exp_035 | Linear (simple) | Frozen | No | 0.24883 | 54.64% | 19 | 49 |
 | exp_036 | Linear (simple) | Frozen | Yes | 0.33644 | 67.27% | 1 | 31 |
 | exp_037 | Enhanced (5 blocks) | Unfrozen | No | 0.28494 | 59.85% | 1 | 31 |
 | exp_038 | Enhanced (5 blocks) | Unfrozen | Yes | 0.32759 | 64.27% | 58 | 88 |
@@ -75,13 +77,21 @@ Key finding: **Frozen backbone + simple head** (linear probe) outperforms end-to
 4. **Simple and complex heads perform similarly** when backbone is unfrozen (NMAD 0.27-0.28 across all head types).
 5. **Head architecture on frozen features is exhausted.** MLP (exp_041 NMAD 0.260), ResNet (exp_042 NMAD 0.266), and metric learning (exp_043 NMAD 0.274) all lose to the simple linear probe (exp_035 NMAD 0.249). The encoder is the bottleneck.
 6. **Metric learning (NTXent + k-NN) never converged.** Train loss 1.67, best epoch 1 — the contrastive embedding objective does not extract redshift-discriminative structure from the frozen encoder's 512-d latent space.
-7. **exp_044 (RF) metrics were invalidated by a shape bug.** `y` arrays saved as 2-d `(n, 1)` from HSTGrismDataset, passed to `compute_metrics` where broadcasting created `n×n` pairwise residual matrices. Train R²=0.872 / Test R²=0.094 are valid (R² flattens internally); NMAD/η/RMSE values are corrupt. Fixed re-run submitted as exp_045_RF_fixed.
+7. **exp_044 (RF) metrics were invalidated by a shape bug.** `y` arrays saved as 2-d `(n, 1)` from HSTGrismDataset, passed to `compute_metrics` where broadcasting created `n×n` pairwise residual matrices. Fixed and re-run as exp_045_RF_fixed.
+8. **RF beats linear probe on frozen features — but for the wrong reason.** exp_045_RF_fixed achieves NMAD 0.2077 (16.5% improvement) but predictions are shrunken to [0.73, 1.80] vs true [0.01, 3.47]. Test R² = 0.094 — predictions don't track z-variance. The improvement is from RF's implicit Bayesian shrinkage (variance reduction), not from learning non-linear z-discriminative structure. This partially reopens the head-architecture axis for tree-based methods but the domain gap remains the dominant bottleneck.
 
-### Current Work (Submitted)
+### Current Work
 
-| Exp | Approach | Goal |
-|-----|----------|------|
-| exp_045_RF_fixed | Random Forest (re-run, fixed shape) | Re-run exp_044 with ravel'd y arrays (shape bug was broadcasting to pairwise residual matrices). Uses cached features from exp_044. Same sklearndefaults, n_est=100. |
+No active experiments. Last: exp_045_RF_fixed completed — see Active Experiments table above for results.
+
+### Next Experiments Under Consideration
+
+| Priority | Experiment | Goal |
+|----------|-----------|------|
+| High | B1 — pre-attention RF | Tap `proj_to_d_model` output before `transformer_encoder`. Tests if the 3-layer MHA adds value for RF or is decorative on real data. Reuses cached latents. |
+| High | B3 — SNR-bucketed NMAD | Cluster test set by SNR bins (e.g., 2.5-5, 5-10, 10-20, 20+) using exp_045 predictions. Where is the 49.8% catastrophic outlier fraction coming from? |
+| Medium | ExtraTrees / GBDT | Different tree methods on same cached 512-d latents. Does RF's shrinkage benefit transfer? |
+| Long-term | D1 — sim+real joint training | Unfreeze encoder with joint sim reconstruction + real redshift loss. Domain gap remains the dominant lever. |
 
 ---
 

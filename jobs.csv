@@ -38,4 +38,4 @@ N/A,exp_041,4xqrr56o,exp_041,completed,,,0.26219,,,,-,,Frozen MLP (3-layer, 512�
 N/A,exp_042,p82m5074,exp_042,completed,,,0.25957,,,,-,,Frozen ResNet (3 blocks). Test NMAD 0.26646. Early stopped ep 62.
 N/A,exp_043,ckurr32l,exp_043,completed,,,0.26963,,,,-,,Frozen metric learning (NTXent+kNN). Test NMAD 0.27399. Never trained (best ep 1). Train loss 1.67.
 N/A,exp_044,if2qx78l,exp_044,failed,,,,,,,,FAILED: shape bug — y arrays saved as (n,1) 2-d, compute_metrics broadcast to n×n pairwise matrix. NMAD/η/RMSE logged are corrupt. Job crashed on np.save (line 193) shape mismatch.
-N/A,exp_045_RF_fixed,,exp_045_RF_fixed,submitted,,,,,,,,RF re-run with ravel'd y arrays. Uses cached features from exp_044. Sklearn defaults (n_est=100). SLURM job pending.
+21417596,exp_045_RF_fixed,a5ubhtwv,exp_045_RF_fixed,completed,2026-07-20T22:30,2026-07-20T22:38,0.20767,0.169,0.527,0.0743,0.094,NEW BEST REAL NMAD! RF beats exp_035 linear probe by 16.5% (0.2488→0.2077). Predictions shrink to [0.73,1.80] vs true [0.01,3.47]. Test R2=0.094 means no z-variance tracking. Improvement from RF's implicit shrinkage, not non-linear learning.
