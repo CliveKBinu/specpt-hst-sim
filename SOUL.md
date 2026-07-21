@@ -16,19 +16,16 @@ Autonomous optimization engine for SpecPT redshift estimation. Runs two parallel
 
 ## Current State (updated by agents)
 - Last updated: 2026-07-20
-- Active experiment: **exp_046_pre_attn_RF (B1+B3 diagnostic — submitted)**
+- Active experiment: **exp_047_huber_linear (loss-function ablation)**
 - Best NMAD (synthetic): 0.00785 (exp_032, Q1 quality data)
 - Best NMAD (real-data): **0.20767 (exp_045_RF_fixed, Random Forest on frozen post-attention 512-d latents)**
-- Total experiments completed: ~39 synthetic + 11 real-data = ~50 numeric exp_NNN launched
+- Total experiments completed: ~39 synthetic + 12 real-data = ~51 numeric exp_NNN launched
 - Direction:
-  - **RF beats linear probe by 16.5% NMAD (0.20767 vs 0.24883), η drops 54.6%→49.8%.**
-    - Improvement is from **implicit shrinkage**: RF predicts narrow [0.73, 1.80] vs true [0.01, 3.47]. Test R² = 0.094 → predictions don't track z-variation.
-    - The help is variance reduction (RF's bagging + deep trees acts as a smoother), not non-linear z-structure discovery.
-  - **B1 in flight:** Pre-attention RF taps `proj_to_d_model` output (BEFORE `transformer_encoder`). If pre-attn NMAD ≈ 0.2077, the 3-layer MHA is decorative on real data. If pre-attn NMAD > 0.23, MHA adds value. If pre-attn NMAD < 0.20, MHA is actively destructive.
-  - **B3 bundled:** SNR-bucketed NMAD included in same run — bins 2.5-5, 5-10, 10-20, 20+. Will identify where the 49.8% catastrophic outlier tail originates.
-  - **Next after B1/B3 result:**
-    - If MHA decorative → collapse to pre-attn encoder for real-data fine-tuning (faster, cheaper).
-    - If MHA valuable → D1 (sim+real joint training) is the main domain-gap lever.
+  - **B1 completed: MHA is decorative.** Pre-attention RF (NMAD 0.20844) within 0.4% of post-attention RF (0.20767). The 3-layer transformer_encoder adds zero z-discriminative value on real data.
+  - **B3 completed: Catastrophic η is primarily low-SNR-driven.** Per-bucket NMAD: <5→0.287 η 65%, 5-10→0.180 η 48%, 10-20→0.099 η 29%, 20+→0.082 η 26%. 45% of the test set is in SNR<5 (the catastrophic bucket). For SNR≥10, η is 28% — much more reasonable. This is a fundamental signal-to-noise problem, not a head-architecture problem.
+  - **Loss-coordinate mismatch identified.** NMADLoss (`src/specpt/losses.py:11-22`) optimizes |z_pred − z_true| in raw z space, but the metric uses normalized residual r = Δz/(1+z). NMADLoss assigns identical cost to catastrophic low-z errors and acceptable high-z errors. HuberNMADLoss (already implemented at losses.py:25-58) fixes this — operates in normalized residual space with δ=0.15 aligned to the η threshold.
+  - **exp_047 (HuberNMAD ablation) in flight.** Frozen linear probe, exp_035 hyperparams, delta=huber_nmad loss. Isolates whether the loss-function mismatch is a real lever or theoretical artifact. ~30 min wallclock.
+  - **Next after exp_047:** If loss helps (>10% improvement), use HuberNMAD in Path A/B. If not, jump to Path A (D1 sim+real joint training) with NMADLoss unchanged.
   - **exp_044 (RF) fixed** — shape bug diagnosed and fixed in exp_045_RF_fixed. Cached features reused.
 
 ## Frozen Architecture Constraints

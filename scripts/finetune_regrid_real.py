@@ -10,7 +10,7 @@ import sys, os, numpy as np, pandas as pd, torch, torch.nn as nn, time, argparse
 sys.path.insert(0, '.')
 from src.specpt.model import SpecPT, EnhancedSpecPTForRedshift, SpectrumNormalizer, Swish, ImprovedResidualMLPBlock
 from src.specpt.dataloader import HSTGrismDataset
-from src.specpt.losses import NMADLoss
+from src.specpt.losses import NMADLoss, HuberNMADLoss
 from torch.utils.data import DataLoader
 
 sys.path.insert(0, '/home/ckb2084/research/SpecPT')
@@ -178,7 +178,12 @@ def train_linear_probe(args, train, val, test):
     print(f"Trainable: {nt:,}/{sum(p.numel() for p in model.parameters()):,}")
     opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad],
                             lr=args.lr, weight_decay=args.weight_decay)
-    criterion = NMADLoss(normalization_factor='std')
+    if args.loss == 'huber_nmad':
+        criterion = HuberNMADLoss(delta=0.15, normalization_factor='std')
+        print(f"Loss: HuberNMADLoss (delta=0.15)")
+    else:
+        criterion = NMADLoss(normalization_factor='std')
+        print(f"Loss: NMADLoss")
     model.eval()
     for Xd, Yd, _, _ in va_ld:
         with torch.no_grad():
@@ -282,6 +287,8 @@ def main():
     parser.add_argument('--test_split', type=float, default=0.1)
     parser.add_argument('--freeze_backbone', action='store_true', default=False)
     parser.add_argument('--head_type', choices=['simple', 'linear', 'mlp', 'resnet', 'enhanced'], default='simple')
+    parser.add_argument('--loss', choices=['nmad', 'huber_nmad'], default='nmad',
+                        help='Training loss: nmad (NMADLoss) or huber_nmad (HuberNMADLoss, delta=0.15)')
     args = parser.parse_args()
     print(f"=== {args.exp_name}: mode={args.mode} head={args.head_type} ===")
     df = pd.read_pickle(REAL_DATA_PATH)

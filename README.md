@@ -28,7 +28,8 @@
 | Experiment | Approach | Test NMAD | Test η | Status |
 |------------|----------|-----------|--------|--------|
 | **exp_045_RF_fixed** | **Random Forest (re-run, shape fix)** | **0.20767** | **49.82%** | **✅ Complete (new best)** |
-| exp_046_pre_attn_RF | Random Forest (pre-attention) | — | — | 🚧 Submitted |
+| exp_047_huber_linear | Linear probe (loss ablation) | — | — | 🚧 Submitted |
+| exp_046_pre_attn_RF | Random Forest (pre-attention) | 0.20844 | 50.81% | ✅ Complete — MHA decorative |
 | exp_044 | Random Forest (sklearn, frozen latent) | — | — | ❌ Failed (shape bug) |
 | exp_044 | Random Forest (sklearn, frozen latent) | — | — | ❌ Failed (shape bug) |
 | exp_035 | Linear probe (frozen backbone, no augment) | **0.24883** | 54.64% | ✅ Complete |
@@ -80,12 +81,15 @@ Key finding: **Frozen backbone + simple head** (linear probe) outperforms end-to
 6. **Metric learning (NTXent + k-NN) never converged.** Train loss 1.67, best epoch 1 — the contrastive embedding objective does not extract redshift-discriminative structure from the frozen encoder's 512-d latent space.
 7. **exp_044 (RF) metrics were invalidated by a shape bug.** `y` arrays saved as 2-d `(n, 1)` from HSTGrismDataset, passed to `compute_metrics` where broadcasting created `n×n` pairwise residual matrices. Fixed and re-run as exp_045_RF_fixed.
 8. **RF beats linear probe on frozen features — but for the wrong reason.** exp_045_RF_fixed achieves NMAD 0.2077 (16.5% improvement) but predictions are shrunken to [0.73, 1.80] vs true [0.01, 3.47]. Test R² = 0.094 — predictions don't track z-variance. The improvement is from RF's implicit Bayesian shrinkage (variance reduction), not from learning non-linear z-discriminative structure. This partially reopens the head-architecture axis for tree-based methods but the domain gap remains the dominant bottleneck.
+9. **MHA is decorative on real data.** exp_046_pre_attn_RF (pre-attention RF, NMAD 0.20844) within 0.4% of exp_045 (post-attention, 0.20767). The 3-layer transformer_encoder adds zero discriminative value for real-data redshift prediction.
+10. **Catastrophic η is a low-SNR tail problem.** B3 SNR breakdown from exp_046: SNR<5 (45% of test) → NMAD 0.287 η 65%; SNR 5-10 → 0.180 η 48%; SNR 10-20 → 0.099 η 29%; SNR 20+ → 0.082 η 26%. The 49.8% global η is driven by low-SNR samples where there is fundamentally no signal to predict redshift.
+11. **Loss-space/metric-space mismatch in NMADLoss.** `src/specpt/losses.py:11-22` optimizes raw |Δz| in z-space, but the metric uses normalized Δz/(1+z). This assigns identical cost to catastrophic low-z errors and acceptable high-z errors. `HuberNMADLoss` (already implemented at losses.py:25-58, never used) fixes this. exp_047_huber_linear tests whether this is a real lever.
 
 ### Current Work
 
 | Exp | Approach | Goal |
 |-----|----------|------|
-| exp_046_pre_attn_RF | RF on pre-attention latents + SNR-bucketed NMAD | Tap proj_to_d_model output (BEFORE transformer_encoder). Tests if the 3-layer MHA adds value for real data. B3: SNR-bucketed NMAD identifies outlier tail origin. 🚧 Submitted |
+| exp_047_huber_linear | Linear probe with HuberNMADLoss | Loss-function controlled experiment: HuberNMADLoss (δ=0.15) vs exp_035's NMADLoss. Everything else bit-identical (frozen simple head, bs=128, lr=3e-4, wd=1e-3, epochs=300, patience=30). Isolates whether the loss-coordinate mismatch is a real lever. 🚧 Submitted |
 
 ### Next Experiments Under Consideration
 
