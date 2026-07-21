@@ -123,5 +123,6 @@ Real 3D-HST grism data (grism_specPT_v5.pkl, 11,156 spectra after SNR≥2.5) fin
 | **exp_045_RF_fixed** | **Random Forest (fixed)** | **Frozen** | **No** | **a5ubhtwv** | **0.20767** | **49.82** | **0.5269** | **n/a** | **New best NMAD on real data (16.5% improvement vs exp_035).** RF predicts narrow range [0.73, 1.80] vs true range [0.01, 3.47] — improvement is from implicit shrinkage, not non-linear z-structure. Test R² = 0.094 confirms no z-variance tracking. η = 49.8%—still half of test samples have >15% error. |
 | exp_046_pre_attn_RF | Random Forest (pre-attention) | Frozen | No | tjv2eltj | 0.20844 | 50.81 | 0.5270 | n/a | B1+B3: Pre-attention NF matches exp_045 within 0.4% → **MHA is decorative.** B3: NMAD by SNR — SNR<5: 0.287, SNR 5-10: 0.180, SNR 10-20: 0.099, SNR 20+: 0.082. Catastrophic η concentrated in low-SNR tail. |
 | exp_047_huber_linear | Linear probe (loss ablation) | Frozen | No | — | — | — | — | — | Loss-function controlled experiment: HuberNMADLoss (δ=0.15) vs exp_035's NMADLoss. Everything else bit-identical: simple linear head, frozen, bs=128, lr=3e-4, wd=1e-3, epochs=300, patience=30. One delta only. 🚧 Submitted |
+| exp_048_joint_sim_real | Joint sim+real | Unfrozen | No | — | — | — | — | — | D1: Joint training on 8924 real + 13k sim, flat LR=1e-5, α=1.0/β=0.5/γ=0.1 sim reconstruction regularizer, 50 ep. NMADLoss. 🚧 Submitted |
 
-*Last updated: 2026-07-20 19:30 UTC*
+*Last updated: 2026-07-20 18:00 UTC*

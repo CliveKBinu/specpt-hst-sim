@@ -11,15 +11,15 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Last updated: 2026-06-29 23:30 UTC
-- Active experiments: none (all completed)
-- Best NMAD: **0.00785 (exp_032)** — NEW ALL-TIME BEST
-- Second best NMAD: 0.01382 (exp_013)
-- Third best NMAD: 0.01489 (exp_031, patience=150)
-- Best Catastrophic Outliers: **15.17% (exp_032)** — NEW BEST
-- Total experiments completed: 37
-- Total experiments failed: 6
-- Direction: First data-level intervention (Q1 quality data) achieved 43% NMAD improvement (0.01382→0.00785) — the single largest gain in the project. Q1 data is a more effective lever than any hyperparameter tuning so far. Overfitting gap improved from 9.43x to 6.85x. Next: explore more data quality levels or combine Q1 with longer training / re-tuned LR schedule.
+- Last updated: 2026-07-20 18:00 UTC
+- Active experiment: exp_048_joint_sim_real (D1: joint sim+real training, unfrozen encoder)
+- Best NMAD (synthetic): **0.00785 (exp_032)**
+- Best NMAD (real 3D-HST): **0.20767 (exp_045_RF_fixed)** — RF shrinkage on frozen 512-d latents
+- Best Catastrophic Outliers (synthetic): **15.17% (exp_032)**
+- Best Catastrophic Outliers (real): **49.82% (exp_045_RF_fixed)** — dominated by low-SNR tail (SNR<5: η 65%)
+- Total experiments completed: 39 (synthetic) + 13 (real 3D-HST)
+- Total experiments running: 2 (exp_047, exp_048)
+- Direction: Head-axis exhausted (exp_041-043 flat). Frozen-features limits confirmed via RF shrinkage floor (exp_045, 0.2077) and MHA-decorative finding (exp_046, ±0.4%). Loss-coordinate mismatch identified (NMADLoss vs HuberNMADLoss, exp_047 testing). D1 joint sim+real training (exp_048) is the primary attack on the domain gap — unfrozen encoder with joint NMAD losses + sim reconstruction regularizer. If D1 succeeds (NMAD < 0.225), planned D1 variant with differential LR (exp_049) will isolate LR policy.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.

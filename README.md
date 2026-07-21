@@ -28,9 +28,9 @@
 | Experiment | Approach | Test NMAD | Test η | Status |
 |------------|----------|-----------|--------|--------|
 | **exp_045_RF_fixed** | **Random Forest (re-run, shape fix)** | **0.20767** | **49.82%** | **✅ Complete (new best)** |
+| exp_048_joint_sim_real | Joint sim+real (unfrozen encoder, D1) | — | — | 🚧 Submitted |
 | exp_047_huber_linear | Linear probe (loss ablation) | — | — | 🚧 Submitted |
 | exp_046_pre_attn_RF | Random Forest (pre-attention) | 0.20844 | 50.81% | ✅ Complete — MHA decorative |
-| exp_044 | Random Forest (sklearn, frozen latent) | — | — | ❌ Failed (shape bug) |
 | exp_044 | Random Forest (sklearn, frozen latent) | — | — | ❌ Failed (shape bug) |
 | exp_035 | Linear probe (frozen backbone, no augment) | **0.24883** | 54.64% | ✅ Complete |
 | exp_036 | Linear probe (frozen backbone, augment) | 0.33644 | 67.27% | ✅ Complete |
@@ -89,14 +89,14 @@ Key finding: **Frozen backbone + simple head** (linear probe) outperforms end-to
 
 | Exp | Approach | Goal |
 |-----|----------|------|
-| exp_047_huber_linear | Linear probe with HuberNMADLoss | Loss-function controlled experiment: HuberNMADLoss (δ=0.15) vs exp_035's NMADLoss. Everything else bit-identical (frozen simple head, bs=128, lr=3e-4, wd=1e-3, epochs=300, patience=30). Isolates whether the loss-coordinate mismatch is a real lever. 🚧 Submitted |
+| exp_048_joint_sim_real | Joint sim+real training (D1) | Unfreeze encoder with sim reconstruction regularizer (γ=0.1) + sim NMAD teacher (β=0.5) + real NMAD (α=1.0). Flat LR 1e-5, 50 ep, NMADLoss. Tests whether joint supervision can reconfigure encoder for z-discriminative latents. 🚧 Submitted |
+| exp_047_huber_linear | Linear probe with HuberNMADLoss | Loss-function controlled experiment. 🚧 Submitted |
 
 ### Next Experiments Under Consideration
 
 | Priority | Experiment | Goal |
 |----------|-----------|------|
-| Medium | ExtraTrees / GBDT | Different tree methods on cached 512-d latents. Does RF's shrinkage benefit transfer? |
-| Long-term | D1 — sim+real joint training | Unfreeze encoder with joint sim reconstruction + real redshift loss. Domain gap remains the dominant lever. |
+| Low | ExtraTrees / GBDT | Different tree methods on cached 512-d latents. Does RF's shrinkage benefit transfer? |
 
 ---
 
@@ -136,6 +136,8 @@ Key finding: **Frozen backbone + simple head** (linear probe) outperforms end-to
 | 30 | `exp_026` | **0.07718** | **30.36%** | 73 | HuberNMADLoss. 5.6x worse. Loss scale mismatch. |
 
 > 📝 `exp_034` uses the regridded sim data (10800–17100 Å) with an **unfrozen** DESI autoencoder (end-to-end training). It set the all-time outlier record (12.73%) at the cost of a moderate NMAD increase (0.00785 → 0.00909). Despite grid alignment, real-data transfer remains challenging — see [Real 3D-HST Evaluation](#-real-3d-hst-evaluation) for transfer learning results.
+
+*Last updated: 2026-07-20 18:00 UTC*
 
 ---
 
