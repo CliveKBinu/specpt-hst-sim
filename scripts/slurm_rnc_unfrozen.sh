@@ -18,5 +18,5 @@ conda activate specpt
 cd /home/ckb2084/research/specpt-hst-sim
 git pull
 
-python scripts/rnc_stage1.py --exp_name $EXP_NAME
+python scripts/rnc_stage1.py --exp_name $EXP_NAME --batch_size 128
 python scripts/rnc_stage2.py --exp_name $EXP_NAME --stage1_ckpt checkpoints/${EXP_NAME}_stage1_best.pth

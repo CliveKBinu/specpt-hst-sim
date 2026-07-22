@@ -62,8 +62,8 @@
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| exp_050_RNC_frozen | scripts/rnc_stage1.py (+stage2) | — | — | — | — | — | — | — | — | Stage 1: Frozen encoder + projection head RNC training (real-only, 200 ep, bs=256, T=2.0, proj=128-d). Stage 2: Linear probe on frozen RNC embeddings. Tests if z-ordering geometry is extractable from frozen 512-d latent. |
-| exp_051_RNC_unfrozen | scripts/rnc_stage1.py (+stage2) | — | — | — | — | — | — | — | — | Stage 1: Unfrozen encoder (LR 1e-6) + projection RNC training (real-only, same config). Stage 2: Linear probe. Tests if slow contrastive gradient can reorganize encoder for z-discrimination without destroying AE identity. |
+| exp_050_RNC_frozen | scripts/rnc_stage1.py (+stage2) | — | — | — | — | — | — | — | — | Stage 1: Frozen encoder + projection head RNC training (real-only, 200 ep, bs=128, T=2.0, proj=128-d). Stage 2: Linear probe. Bug fixed — full RNC (all pairs, z-ranking negatives), z-score normalization applied, torch.roll for shift. Resubmitted after bug fix. |
+| exp_051_RNC_unfrozen | scripts/rnc_stage1.py (+stage2) | — | — | — | — | — | — | — | — | Stage 1: Unfrozen encoder (LR 1e-6) + projection RNC training (real-only, same config). Stage 2: Linear probe. Bug fixed — full RNC loss, z-score normalization, correct dropout mode. Resubmitted after bug fix. |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
@@ -128,7 +128,7 @@ Real 3D-HST grism data (grism_specPT_v5.pkl, 11,156 spectra after SNR≥2.5) fin
 | exp_047_huber_linear | Linear probe (loss ablation) | Frozen | No | 0.26528 | 57.77 | 0.6368 | 12 | 42 | ❌ Loss-function mismatch is NOT the bottleneck. HuberNMADLoss (δ=0.15) degrades NMAD (0.265 vs exp_035 0.249). |
 | exp_048_joint_sim_real | Joint sim+real | Unfrozen | No | 0.27131 | 58.06 | 0.6446 | 1 | 16 | ❌ FAILED — sim volume 22:1 (72k rows). Encoder diverged (best ep=1). |
 | exp_048b_joint_corrected | Joint sim+real (corrected) | Unfrozen | No | 0.26806 | 57.78 | 0.6447 | 1 | 16 | ❌ FAILED — corrected sim volume (4.7:1, 14k). Same failure as exp_048. Encoder unfreezing per se is the killer, not sim volume. |
-| **exp_050_RNC_frozen** | **RNC (frozen encoder)** | **Frozen** | **No** | **—** | **—** | **—** | **—** | **—** | **Stage 1: Frozen AE encoder + projection head RNC training (real-only, 200 ep). Stage 2: Linear probe. Tests if z-ordering geometry can be extracted from frozen latent. 🚧 Submitted** |
-| **exp_051_RNC_unfrozen** | **RNC (unfrozen encoder)** | **Unfrozen (1e-6)** | **No** | **—** | **—** | **—** | **—** | **—** | **Stage 1: Encoder (LR 1e-6) + projection RNC (real-only, 200 ep). Stage 2: Linear probe. Tests if slow contrastive gradient reorganizes encoder without AE identity loss. 🚧 Submitted** |
+| **exp_050_RNC_frozen** | **RNC (frozen encoder)** | **Frozen** | **No** | **—** | **—** | **—** | **—** | **—** | **Stage 1: Frozen AE encoder + projection head RNC training (real-only, 200 ep, bs=128). Stage 2: Linear probe. 🚧 Resubmitted (bug fix: full RNC, z-score norm, torch.roll, correct dropout)** |
+| **exp_051_RNC_unfrozen** | **RNC (unfrozen encoder)** | **Unfrozen (1e-6)** | **No** | **—** | **—** | **—** | **—** | **—** | **Stage 1: Encoder (LR 1e-6) + projection RNC (real-only, 200 ep, bs=128). Stage 2: Linear probe. 🚧 Resubmitted (bug fix: full RNC, z-score norm, correct dropout)** |
 
-*Last updated: 2026-07-20 18:00 UTC*
+*Last updated: 2026-07-22 18:00 UTC*

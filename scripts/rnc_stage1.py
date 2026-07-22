@@ -89,21 +89,23 @@ class RnCLoss(nn.Module):
     def forward(self, features, labels):
         bs = features.shape[0]
         feat = features.reshape(-1, features.shape[-1])
-        z = torch.cat([labels.squeeze(1), labels.squeeze(1)], dim=0)
+        N = 2 * bs
+        z = torch.cat([labels.reshape(-1), labels.reshape(-1)], dim=0)
         z_dist = torch.abs(z.unsqueeze(0) - z.unsqueeze(1))
         sim = -torch.cdist(feat, feat, p=2)
-        pos_indices = torch.cat([torch.arange(bs, 2*bs), torch.arange(bs)], dim=0).to(feat.device)
+        exp_sim = torch.exp(sim / self.temperature)
+        diag = torch.eye(N, dtype=torch.bool, device=feat.device)
         loss = 0.0
-        for i in range(2 * bs):
-            pos_j = pos_indices[i]
+        for i in range(N):
             z_dist_i = z_dist[i]
-            z_dist_pos = z_dist_i[pos_j]
-            mask = torch.arange(2*bs, device=feat.device) != i
-            mask = mask & (z_dist_i >= z_dist_pos)
-            numerator = torch.exp(sim[i, pos_j] / self.temperature)
-            denominator = torch.sum(torch.exp(sim[i, mask] / self.temperature))
-            loss += -torch.log(numerator / denominator)
-        return loss / (2 * bs)
+            mask = z_dist_i[None, :] >= z_dist_i[:, None]
+            mask = mask & ~diag[i:i+1, :]
+            num = exp_sim[i].clone()
+            den = (exp_sim[i][None, :] * mask).sum(dim=1)
+            num[i] = 1.0
+            den[i] = 1.0
+            loss += -torch.log(num / (den + 1e-8)).sum()
+        return loss / (N * (N - 1))
 
 
 class SpectralAugment:
@@ -127,18 +129,16 @@ class SpectralAugment:
                 x[start:start+size] = 0.0
         if torch.rand(1).item() < self.p:
             shift = torch.randint(-self.shift_max, self.shift_max + 1, (1,)).item()
-            if shift > 0:
-                x[:-shift] = x[shift:]
-                x[-shift:] = 0.0
-            elif shift < 0:
-                x[-shift:] = x[:shift]
-                x[:-shift] = 0.0
+            if shift != 0:
+                x = torch.roll(x, shifts=shift, dims=0)
         return x
 
 
 class TwoCropRealDataset(Dataset):
     def __init__(self, df, augment_fn):
-        self.specs = [torch.from_numpy(s).float() for s in df['spec'].values]
+        from src.specpt.model import SpectrumNormalizer
+        specs = [SpectrumNormalizer.zscore_normalize(s) for s in df['spec'].values]
+        self.specs = [torch.from_numpy(np.asarray(s, dtype=np.float32)).float() for s in specs]
         self.zs = torch.from_numpy(df['z'].values.astype(np.float32)).float()
         self.augment = augment_fn
 
@@ -204,7 +204,7 @@ def train_stage1(args):
     patience_counter = 0
 
     for epoch in range(1, args.epochs + 1):
-        encoder.train(not args.freeze_encoder or True)
+        encoder.train(not args.freeze_encoder)
         projection.train()
         train_loss = 0.0
         n_batches = 0
@@ -285,7 +285,7 @@ if __name__ == '__main__':
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--val_split', type=float, default=0.1)
     parser.add_argument('--test_split', type=float, default=0.1)
-    parser.add_argument('--batch_size', type=int, default=256)
+    parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--epochs', type=int, default=200)
     parser.add_argument('--patience', type=int, default=30)
     parser.add_argument('--weight_decay', type=float, default=1e-3)
