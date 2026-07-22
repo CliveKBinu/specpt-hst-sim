@@ -27,23 +27,22 @@
 
 | Experiment | Approach | Test NMAD | Test η | Status |
 |------------|----------|-----------|--------|--------|
-| **exp_045_RF_fixed** | **Random Forest (re-run, shape fix)** | **0.20767** | **49.82%** | **✅ Complete (new best)** |
 | exp_050_RNC_frozen | RNC (frozen encoder + projection head) | — | — | 🚧 Submitted |
 | exp_051_RNC_unfrozen | RNC (unfrozen encoder, LR=1e-6) | — | — | 🚧 Submitted |
-| exp_047_huber_linear | Linear probe (loss ablation) | — | — | 🚧 Submitted |
-| exp_046_pre_attn_RF | Random Forest (pre-attention) | 0.20844 | 50.81% | ✅ Complete — MHA decorative |
 | exp_048_joint_sim_real | Joint sim+real (sim volume bug) | 0.27131 | 58.06% | ❌ Failed |
 | exp_048b_joint_corrected | Joint sim+real (corrected sim volume) | 0.26806 | 57.78% | ❌ Failed — encoder fragile |
 | exp_044 | Random Forest (sklearn, frozen latent) | — | — | ❌ Failed (shape bug) |
+| **exp_045_RF_fixed** | **Random Forest (re-run, shape fix)** | **0.20767** | **49.82%** | **✅ Complete (best real-data)** |
 | exp_035 | Linear probe (frozen backbone, no augment) | **0.24883** | 54.64% | ✅ Complete |
-| exp_036 | Linear probe (frozen backbone, augment) | 0.33644 | 67.27% | ✅ Complete |
-| exp_037 | End-to-end (enhanced head, no augment) | 0.28494 | 59.85% | ✅ Complete |
-| exp_038 | End-to-end (enhanced head, augment) | 0.32759 | 64.27% | ✅ Complete |
-| exp_039 | End-to-end (simple head, no augment) | 0.27547 | 58.80% | ✅ Complete |
-| exp_040 | End-to-end (linear head, no augment) | 0.27395 | 58.55% | ✅ Complete |
 | exp_041 | Simple MLP (3-layer, frozen backbone) | 0.26045 | 56.61% | ✅ Complete |
 | exp_042 | Simple ResNet (3 blocks, frozen backbone) | 0.26646 | 57.69% | ✅ Complete |
+| exp_047_huber_linear | Linear probe (loss ablation) | 0.26528 | 57.77% | ✅ Complete |
+| exp_040 | End-to-end (linear head, no augment) | 0.27395 | 58.55% | ✅ Complete |
+| exp_039 | End-to-end (simple head, no augment) | 0.27547 | 58.80% | ✅ Complete |
 | exp_043 | Metric Learning (NTXent + k-NN, frozen) | 0.27399 | 58.35% | ✅ Complete |
+| exp_037 | End-to-end (enhanced head, no augment) | 0.28494 | 59.85% | ✅ Complete |
+| exp_036 | Linear probe (frozen backbone, augment) | 0.33644 | 67.27% | ✅ Complete |
+| exp_038 | End-to-end (enhanced head, augment) | 0.32759 | 64.27% | ✅ Complete |
 
 > ℹ️ **Grid alignment.** The simulation data has been regridded from 10311–17465 Å to the real 3D-HST grid (10800–17100 Å, 0.81 Å/pix). This eliminates the 187-pixel feature shift that caused catastrophic real-data eval failure. See [`scripts/prep_sim_regridded.py`](scripts/prep_sim_regridded.py) and track [`EXPERIMENTS.md`](EXPERIMENTS.md) for details.
 
@@ -65,14 +64,15 @@ Key finding: **Frozen backbone + simple head** (linear probe) outperforms end-to
 |-----|------|----------|---------|-----------|--------|---------|------------|
 | **exp_045_RF_fixed** | **Random Forest** | **Frozen** | **No** | **0.20767** | **49.82%** | **n/a** | **n/a** |
 | exp_035 | Linear (simple) | Frozen | No | 0.24883 | 54.64% | 19 | 49 |
-| exp_036 | Linear (simple) | Frozen | Yes | 0.33644 | 67.27% | 1 | 31 |
+| exp_041 | MLP (3-layer 512→256→128) | Frozen | No | 0.26045 | 56.61% | 292 | 300 (none) |
+| exp_047_huber_linear | Linear (simple, HuberNMADLoss) | Frozen | No | 0.26528 | 57.77% | 12 | 42 |
+| exp_042 | ResNet (3 residual blocks) | Frozen | No | 0.26646 | 57.69% | 32 | 62 |
+| exp_040 | Simple (2-layer) | Unfrozen | No | 0.27395 | 58.55% | 1 | 31 |
+| exp_043 | Metric Learning (NTXent + k-NN) | Frozen | No | 0.27399 | 58.35% | 1 | 31 |
+| exp_039 | Simple (2-layer) | Unfrozen | No | 0.27547 | 58.80% | 1 | 31 |
 | exp_037 | Enhanced (5 blocks) | Unfrozen | No | 0.28494 | 59.85% | 1 | 31 |
 | exp_038 | Enhanced (5 blocks) | Unfrozen | Yes | 0.32759 | 64.27% | 58 | 88 |
-| exp_039 | Simple (2-layer) | Unfrozen | No | 0.27547 | 58.80% | 1 | 31 |
-| exp_040 | Simple (2-layer) | Unfrozen | No | 0.27395 | 58.55% | 1 | 31 |
-| exp_041 | MLP (3-layer 512→256→128) | Frozen | No | 0.26045 | 56.61% | 292 | 300 (none) |
-| exp_042 | ResNet (3 residual blocks) | Frozen | No | 0.26646 | 57.69% | 32 | 62 |
-| exp_043 | Metric Learning (NTXent + k-NN) | Frozen | No | 0.27399 | 58.35% | 1 | 31 |
+| exp_036 | Linear (simple) | Frozen | Yes | 0.33644 | 67.27% | 1 | 31 |
 
 ### Key Learnings
 
@@ -86,7 +86,7 @@ Key finding: **Frozen backbone + simple head** (linear probe) outperforms end-to
 8. **RF beats linear probe on frozen features — but for the wrong reason.** exp_045_RF_fixed achieves NMAD 0.2077 (16.5% improvement) but predictions are shrunken to [0.73, 1.80] vs true [0.01, 3.47]. Test R² = 0.094 — predictions don't track z-variance. The improvement is from RF's implicit Bayesian shrinkage (variance reduction), not from learning non-linear z-discriminative structure. This partially reopens the head-architecture axis for tree-based methods but the domain gap remains the dominant bottleneck.
 9. **MHA is decorative on real data.** exp_046_pre_attn_RF (pre-attention RF, NMAD 0.20844) within 0.4% of exp_045 (post-attention, 0.20767). The 3-layer transformer_encoder adds zero discriminative value for real-data redshift prediction.
 10. **Catastrophic η is a low-SNR tail problem.** B3 SNR breakdown from exp_046: SNR<5 (45% of test) → NMAD 0.287 η 65%; SNR 5-10 → 0.180 η 48%; SNR 10-20 → 0.099 η 29%; SNR 20+ → 0.082 η 26%. The 49.8% global η is driven by low-SNR samples where there is fundamentally no signal to predict redshift.
-11. **Loss-space/metric-space mismatch in NMADLoss.** `src/specpt/losses.py:11-22` optimizes raw |Δz| in z-space, but the metric uses normalized Δz/(1+z). This assigns identical cost to catastrophic low-z errors and acceptable high-z errors. `HuberNMADLoss` (already implemented at losses.py:25-58, never used) fixes this. exp_047_huber_linear tests whether this is a real lever.
+11. **Loss-space/metric-space mismatch is NOT the bottleneck.** exp_047 — HuberNMADLoss (δ=0.15) with all exp_035 hyperparams frozen → test NMAD 0.265 (WORSE than exp_035 NMADLoss at 0.249). The coordinate-space mismatch in NMADLoss (raw z vs normalized (z-ẑ)/(1+z)) is a theoretical concern but not what's holding back real-data performance. The bottleneck remains in the encoder, not the loss. <sup>exp_047</sup>
 12. **Encoder unfreezing for NMADLoss regression destroys real utility regardless of data volume.** exp_048 (22:1 sim:real) and exp_048b (4.7:1 sim:real) both produce identical failure: best epoch=1, test NMAD ~0.27, recon MSE 3.4x drift. Reducing sim volume 5× changed nothing. The AE-pretrained encoder is fragile to gradient-driven modification from regression loss, at LR as low as 1e-5. Consequence: D1/D4 (joint sim+real with unfrozen encoder) is falsified for all tested sim:real ratios. All future encoder-unfreezing experiments must use non-regression loss (RNC) to attempt reorganization without identity destruction.
 13. **RNC (Rank-N-Contrast) is the principled pivot.** Two parallel experiments submitted: exp_050 (frozen encoder + projection head — tests if z-ordering geometry is extractable from frozen 512-d latent) and exp_051 (unfrozen encoder at LR 1e-6 — tests if slow contrastive gradient can reorganize encoder differently from NMADLoss regression). Real-only, no sim contamination.
 
@@ -96,7 +96,6 @@ Key finding: **Frozen backbone + simple head** (linear probe) outperforms end-to
 |-----|----------|------|
 | exp_050_RNC_frozen | RNC (frozen encoder) | Stage 1: Frozen AE encoder + projection head (512→128) RNC training, real-only, 200 ep, T=2.0. Stage 2: Linear probe on frozen RNC embeddings. Tests whether z-ordering geometry is extractable from frozen 512-d latent. 🚧 Submitted |
 | exp_051_RNC_unfrozen | RNC (unfrozen encoder, LR=1e-6) | Stage 1: Unfrozen encoder (LR 1e-6) + projection RNC training, real-only, 200 ep. Stage 2: Linear probe. Tests if slow contrastive gradient reorganizes encoder without AE identity loss. 🚧 Submitted |
-| exp_047_huber_linear | Linear probe with HuberNMADLoss | Loss-function controlled experiment. 🚧 Submitted |
 
 ### Next Experiments Under Consideration
 
@@ -144,7 +143,7 @@ Key finding: **Frozen backbone + simple head** (linear probe) outperforms end-to
 
 > 📝 `exp_034` uses the regridded sim data (10800–17100 Å) with an **unfrozen** DESI autoencoder (end-to-end training). It set the all-time outlier record (12.73%) at the cost of a moderate NMAD increase (0.00785 → 0.00909). Despite grid alignment, real-data transfer remains challenging — see [Real 3D-HST Evaluation](#-real-3d-hst-evaluation) for transfer learning results.
 
-*Last updated: 2026-07-22 16:30 UTC*
+*Last updated: 2026-07-22 17:00 UTC*
 
 ---
 

@@ -17,8 +17,8 @@ systematic experimentation.
 - Best NMAD (real 3D-HST): **0.20767 (exp_045_RF_fixed)** — RF shrinkage on frozen 512-d latents
 - Best Catastrophic Outliers (synthetic): **15.17% (exp_032)**
 - Best Catastrophic Outliers (real): **49.82% (exp_045_RF_fixed)** — dominated by low-SNR tail (SNR<5: η 65%)
-- Total experiments completed: 39 (synthetic) + 15 (real 3D-HST)
-- Total experiments running: 4 (exp_047, exp_050, exp_051)
+- Total experiments completed: 39 (synthetic) + 16 (real 3D-HST)
+- Total experiments running: 2 (exp_050, exp_051)
 - Direction: D1 (joint sim+real unfrozen encoder) falsified — exp_048 and exp_048b both fail (NMAD > 0.265, best ep=1). Encoder unfreezing with NMADLoss regression destroys AE identity regardless of sim volume (4.7:1 or 22:1) or split methodology. Pivoted to RNC (Rank-N-Contrast) as primary attack. Two parallel experiments: exp_050 (frozen encoder + projection head RNC — tests if z-ordering geometry is extractable from frozen latent) and exp_051 (unfrozen encoder at slow LR 1e-6 + projection RNC — tests if contrastive gradient reorganizes encoder without destroying AE identity). Both are real-only (no sim contamination). Parallel submission, independent SLURM jobs. exp_049 (differential LR) cancelled — D1 failure was encoder fragility, not LR allocation.
 
 ## Frozen Architecture Constraints
