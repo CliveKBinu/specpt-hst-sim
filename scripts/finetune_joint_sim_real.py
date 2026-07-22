@@ -47,10 +47,18 @@ def prepare_real(df, val_split, test_split, seed):
     return train[cols].copy(), val[cols].copy(), test[cols].copy()
 
 
-def prepare_sim(df):
-    df = df.rename(columns={'grism_id': 'TARGETID'})
+def prepare_sim(df, val_split, test_split, seed, n_subset=None):
+    train, val, _test = split_by_grism_id(
+        df, test_size=val_split + test_split,
+        val_size=test_split / (val_split + test_split), random_state=seed,
+    )
+    train = train.rename(columns={'grism_id': 'TARGETID'})
+    val = val.rename(columns={'grism_id': 'TARGETID'})
+    if n_subset and len(train) > n_subset:
+        train = train.sample(n=n_subset, random_state=seed).reset_index(drop=True)
     cols = ['TARGETID', 'z', 'spec', 'SNR']
-    return df[cols].copy()
+    print(f"Sim split: train={len(train)} val={len(val)} tested={len(_test)} subset={n_subset}")
+    return train[cols].copy(), val[cols].copy()
 
 
 class SimpleRedshiftHead(nn.Module):
@@ -130,10 +138,7 @@ def train_joint(args):
 
     print("Loading sim data...")
     df_sim = pd.read_parquet(SIM_DATA_PATH)
-    sim_all = prepare_sim(df_sim)
-    sim_train = sim_all.sample(frac=0.9, random_state=args.seed).reset_index(drop=True)
-    sim_val = sim_all.drop(sim_train.index).reset_index(drop=True)
-    print(f"Sim: train={len(sim_train)} val={len(sim_val)}")
+    sim_train, sim_val = prepare_sim(df_sim, args.val_split, args.test_split, args.seed, args.sim_subset_size)
 
     real_train_ds = HSTGrismDataset(real_train)
     real_val_ds = HSTGrismDataset(real_val)
@@ -339,6 +344,8 @@ def main():
     parser.add_argument('--loss_weight_recon', type=float, default=0.1)
     parser.add_argument('--no_recon', action='store_true', default=False,
                         help='Disable reconstruction loss (γ=0)')
+    parser.add_argument('--sim_subset_size', type=int, default=None,
+                        help='Cap sim train rows after split (e.g. 14000)')
     args = parser.parse_args()
     if args.no_recon:
         args.loss_weight_recon = 0.0

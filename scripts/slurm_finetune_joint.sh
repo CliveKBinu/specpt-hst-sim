@@ -17,7 +17,7 @@ cd /home/ckb2084/research/specpt-hst-sim
 git pull
 
 python scripts/finetune_joint_sim_real.py \
-    --exp_name exp_048_joint_sim_real \
+    --exp_name exp_048b_joint_corrected \
     --lr_policy flat \
     --lr 1e-5 \
     --epochs 50 \
@@ -26,4 +26,5 @@ python scripts/finetune_joint_sim_real.py \
     --real_frac 0.25 \
     --loss_weight_real 1.0 \
     --loss_weight_sim 0.5 \
-    --loss_weight_recon 0.1
+    --loss_weight_recon 0.1 \
+    --sim_subset_size 14000

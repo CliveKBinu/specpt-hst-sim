@@ -62,7 +62,7 @@
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-(none)
+| exp_048b_joint_corrected | scripts/finetune_joint_sim_real.py | — | — | — | — | — | — | — | — | D1 rerun: corrected sim volume to ~14k (random subset), split_by_grism_id instead of random 90/10. Flat LR 1e-5, α=1.0 β=0.5 γ=0.1. Single-variable change from exp_048 (sim volume was 22:1, now ~4.7:1). SLURM job pending. |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
@@ -74,6 +74,7 @@
 | exp_011 | peach-pine-24 | ee7l4hgl | pretrained_redshift="" → torch.load("") crash | pretrained_redshift="" bypassed the guard, passed empty string path to torch.load(), raising FileNotFoundError. Not a shape-mismatch like exp_010 — different root cause. Code fixed with guard before torch.load(). Died during model init, zero metrics logged. |
 | exp_012 | sparkling-wood-25 | 2e9b7ic2 | mlp_dim 1024 → residual dim mismatch | mlp_dim=1024, num_mlp_blocks=12, ImprovedResidualMLPBlock residual connection size mismatch — residual target dim (512) ≠ MLP output dim (1024). Added residual projection layer to fix. Died during model init, zero metrics logged. |
 | deep-energy-43 | deep-energy-43 | t18mboez | curriculum=True (string weight_decay) | Old experiment submitted before curriculum fix. Config has `curriculum: True` and `weight_decay: '5e-5'` (string, not float). Failed with zero metrics. Pre-dates systematic experiment tracking. |
+| exp_048_joint_sim_real | 21424155 | exp_048_joint_sim_real | FAILED — data bug: sim volume 72,361 rows (22:1 ratio vs real) instead of planned ~14k. Random 90/10 split instead of split_by_grism_id. Encoder diverged from real utility (best ep=1). NMAD: initial 0.254 → final 0.277. D1 needs sim volume fix + split_by_grism_id. Rerun as exp_048b. |
 
 ## Early Untracked Runs
 These are early test baseline runs on the HST augmented autoencoder before the tracking system was operational. All failed during model init or data loading and are kept for historical reference.

@@ -11,15 +11,15 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Last updated: 2026-07-20 18:00 UTC
-- Active experiment: exp_048_joint_sim_real (D1: joint sim+real training, unfrozen encoder)
+- Last updated: 2026-07-22 14:45 UTC
+- Active experiment: exp_048b_joint_corrected (D1 rerun: corrected sim volume + split_by_grism_id)
 - Best NMAD (synthetic): **0.00785 (exp_032)**
 - Best NMAD (real 3D-HST): **0.20767 (exp_045_RF_fixed)** — RF shrinkage on frozen 512-d latents
 - Best Catastrophic Outliers (synthetic): **15.17% (exp_032)**
 - Best Catastrophic Outliers (real): **49.82% (exp_045_RF_fixed)** — dominated by low-SNR tail (SNR<5: η 65%)
-- Total experiments completed: 39 (synthetic) + 13 (real 3D-HST)
-- Total experiments running: 2 (exp_047, exp_048)
-- Direction: Head-axis exhausted (exp_041-043 flat). Frozen-features limits confirmed via RF shrinkage floor (exp_045, 0.2077) and MHA-decorative finding (exp_046, ±0.4%). Loss-coordinate mismatch identified (NMADLoss vs HuberNMADLoss, exp_047 testing). D1 joint sim+real training (exp_048) is the primary attack on the domain gap — unfrozen encoder with joint NMAD losses + sim reconstruction regularizer. If D1 succeeds (NMAD < 0.225), planned D1 variant with differential LR (exp_049) will isolate LR policy.
+- Total experiments completed: 39 (synthetic) + 14 (real 3D-HST)
+- Total experiments running: 2 (exp_047, exp_048b)
+- Direction: D1 (exp_048) failed — sim volume 22:1 (72k rows) overwhelmed real signal. Encoder diverged from real utility (best ep=1, recon MSE 3.3x drift). D1 corrected rerun (exp_048b) submitted with ~14k sim subset + split_by_grism_id. Single-variable change isolates data volume as root cause. If exp_048b NMAD < 0.225, differential LR variant (exp_049) planned. If NMAD > 0.255, pivot to RNC (exp_050).
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.
