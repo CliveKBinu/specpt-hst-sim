@@ -28,10 +28,12 @@
 | Experiment | Approach | Test NMAD | Test η | Status |
 |------------|----------|-----------|--------|--------|
 | **exp_045_RF_fixed** | **Random Forest (re-run, shape fix)** | **0.20767** | **49.82%** | **✅ Complete (new best)** |
-| exp_048b_joint_corrected | Joint sim+real corrected (D1 rerun) | — | — | 🚧 Submitted |
+| exp_050_RNC_frozen | RNC (frozen encoder + projection head) | — | — | 🚧 Submitted |
+| exp_051_RNC_unfrozen | RNC (unfrozen encoder, LR=1e-6) | — | — | 🚧 Submitted |
 | exp_047_huber_linear | Linear probe (loss ablation) | — | — | 🚧 Submitted |
 | exp_046_pre_attn_RF | Random Forest (pre-attention) | 0.20844 | 50.81% | ✅ Complete — MHA decorative |
-| exp_048_joint_sim_real | Joint sim+real (sim volume bug) | 0.27131 | 58.06% | ❌ Failed (sim 22:1, random split) |
+| exp_048_joint_sim_real | Joint sim+real (sim volume bug) | 0.27131 | 58.06% | ❌ Failed |
+| exp_048b_joint_corrected | Joint sim+real (corrected sim volume) | 0.26806 | 57.78% | ❌ Failed — encoder fragile |
 | exp_044 | Random Forest (sklearn, frozen latent) | — | — | ❌ Failed (shape bug) |
 | exp_035 | Linear probe (frozen backbone, no augment) | **0.24883** | 54.64% | ✅ Complete |
 | exp_036 | Linear probe (frozen backbone, augment) | 0.33644 | 67.27% | ✅ Complete |
@@ -85,19 +87,22 @@ Key finding: **Frozen backbone + simple head** (linear probe) outperforms end-to
 9. **MHA is decorative on real data.** exp_046_pre_attn_RF (pre-attention RF, NMAD 0.20844) within 0.4% of exp_045 (post-attention, 0.20767). The 3-layer transformer_encoder adds zero discriminative value for real-data redshift prediction.
 10. **Catastrophic η is a low-SNR tail problem.** B3 SNR breakdown from exp_046: SNR<5 (45% of test) → NMAD 0.287 η 65%; SNR 5-10 → 0.180 η 48%; SNR 10-20 → 0.099 η 29%; SNR 20+ → 0.082 η 26%. The 49.8% global η is driven by low-SNR samples where there is fundamentally no signal to predict redshift.
 11. **Loss-space/metric-space mismatch in NMADLoss.** `src/specpt/losses.py:11-22` optimizes raw |Δz| in z-space, but the metric uses normalized Δz/(1+z). This assigns identical cost to catastrophic low-z errors and acceptable high-z errors. `HuberNMADLoss` (already implemented at losses.py:25-58, never used) fixes this. exp_047_huber_linear tests whether this is a real lever.
-12. **D1 joint sim+real training failed — sim volume was the confound.** exp_048 used 72,361 sim rows (22:1 sim:real ratio vs planned 4.4:1) with random 90/10 split (not split_by_grism_id). Encoder diverged from real utility (best ep=1, NMAD 0.254→0.277, recon MSE 3.3x drift). Corrected rerun exp_048b uses ~14k sim subset + split_by_grism_id. Single-variable change isolates data volume as the root cause of the failure.
+12. **Encoder unfreezing for NMADLoss regression destroys real utility regardless of data volume.** exp_048 (22:1 sim:real) and exp_048b (4.7:1 sim:real) both produce identical failure: best epoch=1, test NMAD ~0.27, recon MSE 3.4x drift. Reducing sim volume 5× changed nothing. The AE-pretrained encoder is fragile to gradient-driven modification from regression loss, at LR as low as 1e-5. Consequence: D1/D4 (joint sim+real with unfrozen encoder) is falsified for all tested sim:real ratios. All future encoder-unfreezing experiments must use non-regression loss (RNC) to attempt reorganization without identity destruction.
+13. **RNC (Rank-N-Contrast) is the principled pivot.** Two parallel experiments submitted: exp_050 (frozen encoder + projection head — tests if z-ordering geometry is extractable from frozen 512-d latent) and exp_051 (unfrozen encoder at LR 1e-6 — tests if slow contrastive gradient can reorganize encoder differently from NMADLoss regression). Real-only, no sim contamination.
 
 ### Current Work
 
 | Exp | Approach | Goal |
 |-----|----------|------|
-| exp_048b_joint_corrected | Joint sim+real corrected rerun (D1) | Sim volume fixed to ~14k (random subset) + split_by_grism_id. Previously exp_048 failed (22:1 sim:real ratio, random 90/10 split). Flat LR 1e-5, α=1.0 β=0.5 γ=0.1, NMADLoss. Tests if corrected data volume enables encoder reconfiguration. 🚧 Submitted |
+| exp_050_RNC_frozen | RNC (frozen encoder) | Stage 1: Frozen AE encoder + projection head (512→128) RNC training, real-only, 200 ep, T=2.0. Stage 2: Linear probe on frozen RNC embeddings. Tests whether z-ordering geometry is extractable from frozen 512-d latent. 🚧 Submitted |
+| exp_051_RNC_unfrozen | RNC (unfrozen encoder, LR=1e-6) | Stage 1: Unfrozen encoder (LR 1e-6) + projection RNC training, real-only, 200 ep. Stage 2: Linear probe. Tests if slow contrastive gradient reorganizes encoder without AE identity loss. 🚧 Submitted |
 | exp_047_huber_linear | Linear probe with HuberNMADLoss | Loss-function controlled experiment. 🚧 Submitted |
 
 ### Next Experiments Under Consideration
 
 | Priority | Experiment | Goal |
 |----------|-----------|------|
+| Medium | RNC hyperparameter sweep (T, aug strength) | After exp_050/051 land: if RNC works, explore temperature, augmentation strength, and projection dimension. |
 | Low | ExtraTrees / GBDT | Different tree methods on cached 512-d latents. Does RF's shrinkage benefit transfer? |
 
 ---
@@ -139,7 +144,7 @@ Key finding: **Frozen backbone + simple head** (linear probe) outperforms end-to
 
 > 📝 `exp_034` uses the regridded sim data (10800–17100 Å) with an **unfrozen** DESI autoencoder (end-to-end training). It set the all-time outlier record (12.73%) at the cost of a moderate NMAD increase (0.00785 → 0.00909). Despite grid alignment, real-data transfer remains challenging — see [Real 3D-HST Evaluation](#-real-3d-hst-evaluation) for transfer learning results.
 
-*Last updated: 2026-07-22 14:45 UTC*
+*Last updated: 2026-07-22 16:30 UTC*
 
 ---
 

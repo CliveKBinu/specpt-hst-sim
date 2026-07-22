@@ -62,7 +62,8 @@
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| exp_048b_joint_corrected | scripts/finetune_joint_sim_real.py | — | — | — | — | — | — | — | — | D1 rerun: corrected sim volume to ~14k (random subset), split_by_grism_id instead of random 90/10. Flat LR 1e-5, α=1.0 β=0.5 γ=0.1. Single-variable change from exp_048 (sim volume was 22:1, now ~4.7:1). SLURM job pending. |
+| exp_050_RNC_frozen | scripts/rnc_stage1.py (+stage2) | — | — | — | — | — | — | — | — | Stage 1: Frozen encoder + projection head RNC training (real-only, 200 ep, bs=256, T=2.0, proj=128-d). Stage 2: Linear probe on frozen RNC embeddings. Tests if z-ordering geometry is extractable from frozen 512-d latent. |
+| exp_051_RNC_unfrozen | scripts/rnc_stage1.py (+stage2) | — | — | — | — | — | — | — | — | Stage 1: Unfrozen encoder (LR 1e-6) + projection RNC training (real-only, same config). Stage 2: Linear probe. Tests if slow contrastive gradient can reorganize encoder for z-discrimination without destroying AE identity. |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
@@ -74,7 +75,8 @@
 | exp_011 | peach-pine-24 | ee7l4hgl | pretrained_redshift="" → torch.load("") crash | pretrained_redshift="" bypassed the guard, passed empty string path to torch.load(), raising FileNotFoundError. Not a shape-mismatch like exp_010 — different root cause. Code fixed with guard before torch.load(). Died during model init, zero metrics logged. |
 | exp_012 | sparkling-wood-25 | 2e9b7ic2 | mlp_dim 1024 → residual dim mismatch | mlp_dim=1024, num_mlp_blocks=12, ImprovedResidualMLPBlock residual connection size mismatch — residual target dim (512) ≠ MLP output dim (1024). Added residual projection layer to fix. Died during model init, zero metrics logged. |
 | deep-energy-43 | deep-energy-43 | t18mboez | curriculum=True (string weight_decay) | Old experiment submitted before curriculum fix. Config has `curriculum: True` and `weight_decay: '5e-5'` (string, not float). Failed with zero metrics. Pre-dates systematic experiment tracking. |
-| exp_048_joint_sim_real | 21424155 | exp_048_joint_sim_real | FAILED — data bug: sim volume 72,361 rows (22:1 ratio vs real) instead of planned ~14k. Random 90/10 split instead of split_by_grism_id. Encoder diverged from real utility (best ep=1). NMAD: initial 0.254 → final 0.277. D1 needs sim volume fix + split_by_grism_id. Rerun as exp_048b. |
+| exp_048_joint_sim_real | 21424155 | exp_048_joint_sim_real | FAILED — data bug: sim volume 72,361 rows (22:1 ratio vs real) instead of planned ~14k. Random 90/10 split instead of split_by_grism_id. Encoder diverged from real utility (best ep=1). NMAD: initial 0.254 → final 0.277. Rerun as exp_048b. |
+| exp_048b_joint_corrected | 21427640 | exp_048b_joint_corrected | FAILED — even with corrected sim volume (~14k, 4.7:1 ratio) + split_by_grism_id, result identical to exp_048. Test NMAD 0.268, best ep=1, recon MSE 3.4x drift. Root cause: **encoder unfreezing itself** destroys AE identity regardless of sim volume. The fragility is gradient-driven (NMADLoss regression), not sim volume. Pivoting to RNC (exp_050/051). |
 
 ## Early Untracked Runs
 These are early test baseline runs on the HST augmented autoencoder before the tracking system was operational. All failed during model init or data loading and are kept for historical reference.
@@ -123,7 +125,10 @@ Real 3D-HST grism data (grism_specPT_v5.pkl, 11,156 spectra after SNR≥2.5) fin
 | exp_044 | Random Forest | Frozen | No | if2qx78l | — | — | — | — | 🚧 **Failed** — shape bug corrupts metrics (y arrays are (n,1) 2-d, compute_metrics broadcast to n×n pairwise matrix). Fixed in re-run. |
 | **exp_045_RF_fixed** | **Random Forest (fixed)** | **Frozen** | **No** | **a5ubhtwv** | **0.20767** | **49.82** | **0.5269** | **n/a** | **New best NMAD on real data (16.5% improvement vs exp_035).** RF predicts narrow range [0.73, 1.80] vs true range [0.01, 3.47] — improvement is from implicit shrinkage, not non-linear z-structure. Test R² = 0.094 confirms no z-variance tracking. η = 49.8%—still half of test samples have >15% error. |
 | exp_046_pre_attn_RF | Random Forest (pre-attention) | Frozen | No | tjv2eltj | 0.20844 | 50.81 | 0.5270 | n/a | B1+B3: Pre-attention NF matches exp_045 within 0.4% → **MHA is decorative.** B3: NMAD by SNR — SNR<5: 0.287, SNR 5-10: 0.180, SNR 10-20: 0.099, SNR 20+: 0.082. Catastrophic η concentrated in low-SNR tail. |
-| exp_047_huber_linear | Linear probe (loss ablation) | Frozen | No | — | — | — | — | — | Loss-function controlled experiment: HuberNMADLoss (δ=0.15) vs exp_035's NMADLoss. Everything else bit-identical: simple linear head, frozen, bs=128, lr=3e-4, wd=1e-3, epochs=300, patience=30. One delta only. 🚧 Submitted |
-| exp_048_joint_sim_real | Joint sim+real | Unfrozen | No | — | — | — | — | — | D1: Joint training on 8924 real + 13k sim, flat LR=1e-5, α=1.0/β=0.5/γ=0.1 sim reconstruction regularizer, 50 ep. NMADLoss. 🚧 Submitted |
+| exp_047_huber_linear | Linear probe (loss ablation) | Frozen | No | — | — | — | — | — | Loss-function controlled experiment: HuberNMADLoss (δ=0.15) vs exp_035's NMADLoss. Everything else bit-identical. |
+| exp_048_joint_sim_real | Joint sim+real | Unfrozen | No | 0.27131 | 58.06 | 0.6446 | 1 | 16 | ❌ FAILED — sim volume 22:1 (72k rows). Encoder diverged (best ep=1). |
+| exp_048b_joint_corrected | Joint sim+real (corrected) | Unfrozen | No | 0.26806 | 57.78 | 0.6447 | 1 | 16 | ❌ FAILED — corrected sim volume (4.7:1, 14k). Same failure as exp_048. Encoder unfreezing per se is the killer, not sim volume. |
+| **exp_050_RNC_frozen** | **RNC (frozen encoder)** | **Frozen** | **No** | **—** | **—** | **—** | **—** | **—** | **Stage 1: Frozen AE encoder + projection head RNC training (real-only, 200 ep). Stage 2: Linear probe. Tests if z-ordering geometry can be extracted from frozen latent. 🚧 Submitted** |
+| **exp_051_RNC_unfrozen** | **RNC (unfrozen encoder)** | **Unfrozen (1e-6)** | **No** | **—** | **—** | **—** | **—** | **—** | **Stage 1: Encoder (LR 1e-6) + projection RNC (real-only, 200 ep). Stage 2: Linear probe. Tests if slow contrastive gradient reorganizes encoder without AE identity loss. 🚧 Submitted** |
 
 *Last updated: 2026-07-20 18:00 UTC*

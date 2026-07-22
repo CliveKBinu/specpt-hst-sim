@@ -11,15 +11,15 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Last updated: 2026-07-22 14:45 UTC
-- Active experiment: exp_048b_joint_corrected (D1 rerun: corrected sim volume + split_by_grism_id)
+- Last updated: 2026-07-22 16:30 UTC
+- Active experiments: exp_050_RNC_frozen, exp_051_RNC_unfrozen (parallel RNC tests)
 - Best NMAD (synthetic): **0.00785 (exp_032)**
 - Best NMAD (real 3D-HST): **0.20767 (exp_045_RF_fixed)** — RF shrinkage on frozen 512-d latents
 - Best Catastrophic Outliers (synthetic): **15.17% (exp_032)**
 - Best Catastrophic Outliers (real): **49.82% (exp_045_RF_fixed)** — dominated by low-SNR tail (SNR<5: η 65%)
-- Total experiments completed: 39 (synthetic) + 14 (real 3D-HST)
-- Total experiments running: 2 (exp_047, exp_048b)
-- Direction: D1 (exp_048) failed — sim volume 22:1 (72k rows) overwhelmed real signal. Encoder diverged from real utility (best ep=1, recon MSE 3.3x drift). D1 corrected rerun (exp_048b) submitted with ~14k sim subset + split_by_grism_id. Single-variable change isolates data volume as root cause. If exp_048b NMAD < 0.225, differential LR variant (exp_049) planned. If NMAD > 0.255, pivot to RNC (exp_050).
+- Total experiments completed: 39 (synthetic) + 15 (real 3D-HST)
+- Total experiments running: 4 (exp_047, exp_050, exp_051)
+- Direction: D1 (joint sim+real unfrozen encoder) falsified — exp_048 and exp_048b both fail (NMAD > 0.265, best ep=1). Encoder unfreezing with NMADLoss regression destroys AE identity regardless of sim volume (4.7:1 or 22:1) or split methodology. Pivoted to RNC (Rank-N-Contrast) as primary attack. Two parallel experiments: exp_050 (frozen encoder + projection head RNC — tests if z-ordering geometry is extractable from frozen latent) and exp_051 (unfrozen encoder at slow LR 1e-6 + projection RNC — tests if contrastive gradient reorganizes encoder without destroying AE identity). Both are real-only (no sim contamination). Parallel submission, independent SLURM jobs. exp_049 (differential LR) cancelled — D1 failure was encoder fragility, not LR allocation.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.
@@ -32,7 +32,7 @@ Only the redshift estimator head can be modified: num_mlp_blocks, mlp_dim,
 dropout_rate, and training hyperparams (lr, batch_size, epochs, patience, weight_decay).
 
 ## Operating Rules
-1. One experiment at a time (one SLURM job on cluster)
+1. One experiment at a time (one SLURM job on cluster), unless running orthogonal hypothesis tests in parallel (e.g., frozen vs unfrozen encoder)
 2. One change per experiment (controlled variables)
 3. Log EVERY experiment to EXPERIMENTS.md with reasoning
 4. If job crashes → diagnose → fix → retry (max 3x per config)
