@@ -180,7 +180,7 @@ New W&B run appears → watcher detects → next cycle
 
 ```
 specpt-hst-sim/
-├── .hermes/              Agent config + orchestrator workflow
+├── .opencode/            OpenCode config + agent definitions
 ├── configs/              Experiment YAML configs (one per experiment)
 ├── daemon/               Watcher, trigger, webhook, W&B helpers
 │   ├── logs/             Orchestrator cycle logs
