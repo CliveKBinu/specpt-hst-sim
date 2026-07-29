@@ -62,8 +62,8 @@
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| exp_050_RNC_frozen | scripts/rnc_stage1.py (+stage2) | — | — | — | — | — | — | — | — | Stage 1: Frozen encoder + projection head RNC training (real-only, 200 ep, bs=128, T=2.0, proj=128-d). Stage 2: Linear probe. Bug fixed — full RNC (all pairs, z-ranking negatives), z-score normalization applied, torch.roll for shift. Resubmitted after bug fix. |
-| exp_051_RNC_unfrozen | scripts/rnc_stage1.py (+stage2) | — | — | — | — | — | — | — | — | Stage 1: Unfrozen encoder (LR 1e-6) + projection RNC training (real-only, same config). Stage 2: Linear probe. Bug fixed — full RNC loss, z-score normalization, correct dropout mode. Resubmitted after bug fix. |
+| exp_050_RNC_frozen | scripts/rnc_stage1.py (+stage2) | — | — | — | — | — | — | — | — | Stage 1: Frozen encoder + RNC (real-only, 200 ep, bs=128, T=0.5, 128-d). FIX: no L2-norm (raw features), T 2.0→0.5, proj LR 3e-3. Previously failed — L2-norm saddle (loss flat at 4.577). Resubmitted as job 21436332. |
+| exp_051_RNC_unfrozen | scripts/rnc_stage1.py (+stage2) | — | — | — | — | — | — | — | — | Stage 1: Unfrozen encoder (LR 1e-5) + RNC (real-only, 200 ep, bs=128, T=0.5). FIX: no L2-norm, T 2.0→0.5, proj LR 3e-3, enc LR 1e-5. + recon MSE monitoring. Resubmitted as job 21436333. |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
@@ -77,6 +77,8 @@
 | deep-energy-43 | deep-energy-43 | t18mboez | curriculum=True (string weight_decay) | Old experiment submitted before curriculum fix. Config has `curriculum: True` and `weight_decay: '5e-5'` (string, not float). Failed with zero metrics. Pre-dates systematic experiment tracking. |
 | exp_048_joint_sim_real | 21424155 | exp_048_joint_sim_real | FAILED — data bug: sim volume 72,361 rows (22:1 ratio vs real) instead of planned ~14k. Random 90/10 split instead of split_by_grism_id. Encoder diverged from real utility (best ep=1). NMAD: initial 0.254 → final 0.277. Rerun as exp_048b. |
 | exp_048b_joint_corrected | 21427640 | exp_048b_joint_corrected | FAILED — even with corrected sim volume (~14k, 4.7:1 ratio) + split_by_grism_id, result identical to exp_048. Test NMAD 0.268, best ep=1, recon MSE 3.4x drift. Root cause: **encoder unfreezing itself** destroys AE identity regardless of sim volume. The fragility is gradient-driven (NMADLoss regression), not sim volume. Pivoting to RNC (exp_050/051). |
+| exp_050_RNC_frozen (attempt 1) | 21428513 | exp_050_RNC_frozen_stage1+stage2 | FAILED — RNC loss flat at 4.577 (train) / 4.544 (val) across 77 Stage 1 epochs. L2-normalized features create a numerical saddle point where all pairwise distances are uniform → gradient vanishes. Test NMAD 0.243 (indistinguishable from random init). Rerunning with no L2-norm, T=0.5, proj LR 3e-3. |
+| exp_051_RNC_unfrozen (attempt 1) | 21428514 | exp_051_RNC_unfrozen_stage1+stage2 | FAILED — identical L2-norm saddle bug. RNC loss flat at 4.577/4.544. Test NMAD 0.245. Rerunning with no L2-norm, T=0.5, proj LR 3e-3, enc LR 1e-5. + recon MSE monitoring for AE identity tracking. |
 
 ## Early Untracked Runs
 These are early test baseline runs on the HST augmented autoencoder before the tracking system was operational. All failed during model init or data loading and are kept for historical reference.
@@ -128,7 +130,7 @@ Real 3D-HST grism data (grism_specPT_v5.pkl, 11,156 spectra after SNR≥2.5) fin
 | exp_047_huber_linear | Linear probe (loss ablation) | Frozen | No | 0.26528 | 57.77 | 0.6368 | 12 | 42 | ❌ Loss-function mismatch is NOT the bottleneck. HuberNMADLoss (δ=0.15) degrades NMAD (0.265 vs exp_035 0.249). |
 | exp_048_joint_sim_real | Joint sim+real | Unfrozen | No | 0.27131 | 58.06 | 0.6446 | 1 | 16 | ❌ FAILED — sim volume 22:1 (72k rows). Encoder diverged (best ep=1). |
 | exp_048b_joint_corrected | Joint sim+real (corrected) | Unfrozen | No | 0.26806 | 57.78 | 0.6447 | 1 | 16 | ❌ FAILED — corrected sim volume (4.7:1, 14k). Same failure as exp_048. Encoder unfreezing per se is the killer, not sim volume. |
-| **exp_050_RNC_frozen** | **RNC (frozen encoder)** | **Frozen** | **No** | **—** | **—** | **—** | **—** | **—** | **Stage 1: Frozen AE encoder + projection head RNC training (real-only, 200 ep, bs=128). Stage 2: Linear probe. 🚧 Resubmitted (bug fix: full RNC, z-score norm, torch.roll, correct dropout)** |
-| **exp_051_RNC_unfrozen** | **RNC (unfrozen encoder)** | **Unfrozen (1e-6)** | **No** | **—** | **—** | **—** | **—** | **—** | **Stage 1: Encoder (LR 1e-6) + projection RNC (real-only, 200 ep, bs=128). Stage 2: Linear probe. 🚧 Resubmitted (bug fix: full RNC, z-score norm, correct dropout)** |
+| exp_050_RNC_frozen | RNC (frozen encoder) | Frozen | No | 0.24335 | 54.66 | 0.2362 | 1 | ❌ FAILED — L2-norm saddle: RNC loss flat at 4.577 (no learning). Test NMAD = random init expectation. Rerunning with no L2-norm, T=0.5, proj LR 3e-3. |
+| exp_051_RNC_unfrozen | RNC (unfrozen encoder) | Unfrozen (1e-5) | No | 0.24455 | 54.57 | 0.2363 | 1 | ❌ FAILED — identical L2-norm saddle. Rerunning with no L2-norm, T=0.5, proj LR 3e-3, enc LR 1e-5. + recon MSE monitoring. |
 
-*Last updated: 2026-07-22 18:00 UTC*
+*Last updated: 2026-07-22 19:30 UTC*
