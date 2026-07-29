@@ -77,12 +77,11 @@ class ProjectionHead(nn.Module):
         )
 
     def forward(self, x):
-        x = self.net(x)
-        return F.normalize(x, p=2, dim=-1)
+        return self.net(x)
 
 
 class RnCLoss(nn.Module):
-    def __init__(self, temperature=2.0):
+    def __init__(self, temperature=0.5):
         super().__init__()
         self.temperature = temperature
 
@@ -196,6 +195,15 @@ def train_stage1(args):
     opt = torch.optim.AdamW(params, lr=args.proj_lr if args.freeze_encoder else args.proj_lr, weight_decay=args.weight_decay)
     rnc_loss_fn = RnCLoss(temperature=args.temperature)
 
+    ref_indices = list(range(min(16, len(real_train))))
+    ref_specs = [train_ds.specs[i] for i in ref_indices]
+    ref_batch_raw = torch.stack(ref_specs, dim=0).to(device)
+    sp.eval()
+    with torch.no_grad():
+        initial_recon = sp(ref_batch_raw)
+        initial_recon_mse = F.mse_loss(initial_recon, ref_batch_raw).item()
+    print(f"Initial recon MSE (16 samples): {initial_recon_mse:.6f}")
+
     run_name = f"{args.exp_name}_stage1"
     wandb.init(project='specpt-hst-sim-z', entity='ckb2084-rochester-institute-of-technology',
                name=run_name, config=vars(args))
@@ -249,6 +257,12 @@ def train_stage1(args):
             'lr': opt.param_groups[0]['lr'],
             'time_sec': time.time() - t0,
         })
+        if epoch % 5 == 0:
+            with torch.no_grad():
+                recon = sp(ref_batch_raw)
+                mse = F.mse_loss(recon, ref_batch_raw).item()
+                drift = mse / max(initial_recon_mse, 1e-10)
+            wandb.log({'recon_mse': mse, 'recon_mse_drift': drift, 'epoch': epoch})
         print(f"Epoch {epoch:>3}/{args.epochs}  train_rnc={avg_train:.4f}  val_rnc={avg_val:.4f}  "
               f"lr={opt.param_groups[0]['lr']:.2e}  {time.time() - t0:.0f}s")
 
@@ -289,10 +303,10 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=200)
     parser.add_argument('--patience', type=int, default=30)
     parser.add_argument('--weight_decay', type=float, default=1e-3)
-    parser.add_argument('--temperature', type=float, default=2.0)
+    parser.add_argument('--temperature', type=float, default=0.5)
     parser.add_argument('--proj_dim', type=int, default=128)
-    parser.add_argument('--enc_lr', type=float, default=1e-6)
-    parser.add_argument('--proj_lr', type=float, default=1e-4)
+    parser.add_argument('--enc_lr', type=float, default=1e-5)
+    parser.add_argument('--proj_lr', type=float, default=3e-3)
     parser.add_argument('--augment_p', type=float, default=0.5)
     args = parser.parse_args()
     train_stage1(args)
