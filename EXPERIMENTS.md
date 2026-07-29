@@ -60,10 +60,7 @@
 
 
 ## Running Experiments
-| exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
-|-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| exp_050_RNC_frozen | scripts/rnc_stage1.py (+stage2) | — | — | — | — | — | — | — | — | Stage 1: Frozen encoder + RNC (real-only, 200 ep, bs=128, T=0.5, 128-d). FIX: no L2-norm (raw features), T 2.0→0.5, proj LR 3e-3. Previously failed — L2-norm saddle (loss flat at 4.577). Resubmitted as job 21436332. |
-| exp_051_RNC_unfrozen | scripts/rnc_stage1.py (+stage2) | — | — | — | — | — | — | — | — | Stage 1: Unfrozen encoder (LR 1e-5) + RNC (real-only, 200 ep, bs=128, T=0.5). FIX: no L2-norm, T 2.0→0.5, proj LR 3e-3, enc LR 1e-5. + recon MSE monitoring. Resubmitted as job 21436333. |
+None currently active.
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
@@ -79,6 +76,8 @@
 | exp_048b_joint_corrected | 21427640 | exp_048b_joint_corrected | FAILED — even with corrected sim volume (~14k, 4.7:1 ratio) + split_by_grism_id, result identical to exp_048. Test NMAD 0.268, best ep=1, recon MSE 3.4x drift. Root cause: **encoder unfreezing itself** destroys AE identity regardless of sim volume. The fragility is gradient-driven (NMADLoss regression), not sim volume. Pivoting to RNC (exp_050/051). |
 | exp_050_RNC_frozen (attempt 1) | 21428513 | exp_050_RNC_frozen_stage1+stage2 | FAILED — RNC loss flat at 4.577 (train) / 4.544 (val) across 77 Stage 1 epochs. L2-normalized features create a numerical saddle point where all pairwise distances are uniform → gradient vanishes. Test NMAD 0.243 (indistinguishable from random init). Rerunning with no L2-norm, T=0.5, proj LR 3e-3. |
 | exp_051_RNC_unfrozen (attempt 1) | 21428514 | exp_051_RNC_unfrozen_stage1+stage2 | FAILED — identical L2-norm saddle bug. RNC loss flat at 4.577/4.544. Test NMAD 0.245. Rerunning with no L2-norm, T=0.5, proj LR 3e-3, enc LR 1e-5. + recon MSE monitoring for AE identity tracking. |
+| exp_050_RNC_frozen (attempt 2) | 21436332 | exp_050_RNC_frozen_stage1+stage2 | FAILED — RNC loss STILL flat even after removing L2-norm and lowering T to 0.5 (train 4.584→4.577, val 4.548→4.544, only 0.15% drop over 53 ep). Recon MSE stable at 0.00825 (encoder frozen perfectly). Test NMAD 0.2422, η 52.2%, R² -0.033 (indistinguishable from random init). Root cause: RNC gradient at random projection init requires z-discriminative features in the encoder — which don't exist. |
+| exp_051_RNC_unfrozen (attempt 2) | 21436333 | exp_051_RNC_unfrozen_stage1+stage2 | FAILED — RNC loss flat at 4.584→4.577 despite encoder LR 1e-5. Recon MSE drifted CATASTROPHICALLY: 0.008→1.039 (126× drift over 66 ep). RNC gradient IS flowing to encoder, but it's noise — no z-organization, just random drift destroying AE identity. Test NMAD 0.2394, η 52.2%, R² -0.035 (worse than random init baseline). Confirms: RNC cannot bootstrap z-ordering, and unfrozen encoder suffers uncontrolled drift from the noise gradient. |
 
 ## Early Untracked Runs
 These are early test baseline runs on the HST augmented autoencoder before the tracking system was operational. All failed during model init or data loading and are kept for historical reference.
@@ -130,7 +129,24 @@ Real 3D-HST grism data (grism_specPT_v5.pkl, 11,156 spectra after SNR≥2.5) fin
 | exp_047_huber_linear | Linear probe (loss ablation) | Frozen | No | 0.26528 | 57.77 | 0.6368 | 12 | 42 | ❌ Loss-function mismatch is NOT the bottleneck. HuberNMADLoss (δ=0.15) degrades NMAD (0.265 vs exp_035 0.249). |
 | exp_048_joint_sim_real | Joint sim+real | Unfrozen | No | 0.27131 | 58.06 | 0.6446 | 1 | 16 | ❌ FAILED — sim volume 22:1 (72k rows). Encoder diverged (best ep=1). |
 | exp_048b_joint_corrected | Joint sim+real (corrected) | Unfrozen | No | 0.26806 | 57.78 | 0.6447 | 1 | 16 | ❌ FAILED — corrected sim volume (4.7:1, 14k). Same failure as exp_048. Encoder unfreezing per se is the killer, not sim volume. |
-| exp_050_RNC_frozen | RNC (frozen encoder) | Frozen | No | 0.24335 | 54.66 | 0.2362 | 1 | ❌ FAILED — L2-norm saddle: RNC loss flat at 4.577 (no learning). Test NMAD = random init expectation. Rerunning with no L2-norm, T=0.5, proj LR 3e-3. |
-| exp_051_RNC_unfrozen | RNC (unfrozen encoder) | Unfrozen (1e-5) | No | 0.24455 | 54.57 | 0.2363 | 1 | ❌ FAILED — identical L2-norm saddle. Rerunning with no L2-norm, T=0.5, proj LR 3e-3, enc LR 1e-5. + recon MSE monitoring. |
+| exp_050_RNC_frozen | RNC (attempt 1: L2-norm, T=2.0) | Frozen | No | 0.24335 | 54.66 | 0.2362 | 1 | ❌ RNC loss flat at 4.577 — L2-norm init saddle. |
+| exp_051_RNC_unfrozen | RNC (attempt 1: L2-norm, T=2.0) | Unfrozen (1e-6) | No | 0.24455 | 54.57 | 0.2363 | 1 | ❌ RNC loss flat — same L2-norm saddle. |
+| exp_050_RNC_frozen_v2 | RNC (attempt 2: no L2-norm, T=0.5) | Frozen | No | 0.24224 | 52.24 | 0.2333 | 1 | ❌ Still flat. RNC gradient requires z-discriminative encoder features. Recon MSE 1.0× (frozen OK). |
+| exp_051_RNC_unfrozen_v2 | RNC (attempt 2: no L2-norm, T=0.5) | Unfrozen (1e-5) | No | 0.23935 | 52.24 | 0.2330 | 1 | ❌ Still flat. Encoder DRIFTED 126× (recon 0.008→1.039). RNC gradient is noise shredding AE identity. |
 
-*Last updated: 2026-07-22 19:30 UTC*
+## Consolidated Findings
+
+After 9 experiments (exp_035–051) on the regridded autoencoder with real 3D-HST data, **all six axes for extracting z-discrimination from the frozen AE encoder are exhausted:** 
+
+| Axis | Exp | Outcome |
+|------|-----|---------|
+| Head capacity (MLP, ResNet) | 035, 041, 042 | Plateau at NMAD 0.25 — encoder features don't have z-discriminative structure |
+| Tree methods (RF, pre-attn RF) | 045, 046 | RF shrinkage helps NMAD (0.208) but no z-variance tracking (R²=0.094). MHA is decorative (pre/post Δ=0.4%) |
+| Loss function (NMADLoss vs Huber) | 047 | NMADLoss confirmed optimal; loss-axis dead |
+| Unfrozen encoder regression (joint training) | 048, 048b | Encoder drift destroys AE identity monotonically from ep 1 regardless of sim volume or split |
+| Contrastive learning (RNC, frozen) | 050 (×2) | RNC loss flat — gradient vanishes at random projection init because features are z-entangled, not z-discriminative |
+| Contrastive learning (RNC, unfrozen) | 051 (×2) | RNC loss flat even with encoder LR 1e-5. Encoder drifts 126× via noise gradient. All destruction, no z-organization |
+
+**Conclusion: The frozen autoencoder encoder produces features that are z-entangled for reconstruction, not z-discriminative. No downstream method can extract z-signal that isn't there. The bottleneck is the encoder itself.**
+
+*Last updated: 2026-07-22 20:30 UTC*

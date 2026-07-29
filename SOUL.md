@@ -11,15 +11,15 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Last updated: 2026-07-22 16:30 UTC
-- Active experiments: exp_050_RNC_frozen, exp_051_RNC_unfrozen (parallel RNC tests)
+- Last updated: 2026-07-22 20:30 UTC
+- Active experiments: none (all six axes exhausted)
 - Best NMAD (synthetic): **0.00785 (exp_032)**
 - Best NMAD (real 3D-HST): **0.20767 (exp_045_RF_fixed)** — RF shrinkage on frozen 512-d latents
 - Best Catastrophic Outliers (synthetic): **15.17% (exp_032)**
 - Best Catastrophic Outliers (real): **49.82% (exp_045_RF_fixed)** — dominated by low-SNR tail (SNR<5: η 65%)
-- Total experiments completed: 39 (synthetic) + 16 (real 3D-HST)
-- Total experiments running: 2 (exp_050, exp_051)
-- Direction: D1 (joint sim+real unfrozen encoder) falsified — exp_048 and exp_048b both fail (NMAD > 0.265, best ep=1). Encoder unfreezing with NMADLoss regression destroys AE identity regardless of sim volume (4.7:1 or 22:1) or split methodology. Pivoted to RNC (Rank-N-Contrast) as primary attack. Two parallel experiments: exp_050 (frozen encoder + projection head RNC — tests if z-ordering geometry is extractable from frozen latent) and exp_051 (unfrozen encoder at slow LR 1e-6 + projection RNC — tests if contrastive gradient reorganizes encoder without destroying AE identity). Both are real-only (no sim contamination). Parallel submission, independent SLURM jobs. exp_049 (differential LR) cancelled — D1 failure was encoder fragility, not LR allocation.
+- Total experiments completed: 39 (synthetic) + 21 (real 3D-HST)
+- Total experiments running: 0
+- Direction: Six-axes exhausted. RNC variant (exp_050/051) tested twice: loss flat both times regardless of L2-norm, temperature, or LR. Encoder drift in unfrozen variant is 126× recon MSE (catastrophic). **The bottleneck is the encoder itself** — it produces z-entangled (not z-discriminative) features. No downstream method on frozen features or safe unfreezing with regression/contrastive gradient has yielded test NMAD < 0.20 or non-negative R². All 6 candidate axes for "fix from outside the encoder" are exhausted. Next step requires encoder-level change: joint reconstruction + contrastive pretraining on sim data (new encoder from scratch), or alternative backbone.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.
