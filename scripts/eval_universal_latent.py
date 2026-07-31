@@ -215,9 +215,9 @@ def main():
     nt = sum(p.numel() for p in use.student.parameters())
     print(f"Loaded USE student ({nt:,} params)")
 
-    tr_ds = HSTDataset(train)
-    va_ds = HSTDataset(val)
-    te_ds = HSTDataset(test)
+    tr_ds = HSTDataset(train, with_z=False)
+    va_ds = HSTDataset(val, with_z=False)
+    te_ds = HSTDataset(test, with_z=False)
     tr_ld = DataLoader(tr_ds, 64, shuffle=False, num_workers=0)
     va_ld = DataLoader(va_ds, 64, shuffle=False, num_workers=0)
     te_ld = DataLoader(te_ds, 64, shuffle=False, num_workers=0)
