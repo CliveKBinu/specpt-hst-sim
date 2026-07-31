@@ -60,7 +60,9 @@
 
 
 ## Running Experiments
-None currently active.
+| exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
+|-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
+| use_stageA | scripts/pretrain_universal_encoder.py | — | use_stageA_stageA | — | — | — | — | — | — | Universal Spectral Encoder Stage A: label-free masked reconstruction + distillation anchor to frozen AE. Real 3D-HST, bs=64 lr=1e-4 ep=100 patience=20, stop_on_drift. Job 21441546. Downstream z-head evaluated only AFTER pretraining (eval_universal_latent.py). See docs/universal_spectral_encoder.md |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
@@ -149,4 +151,4 @@ After 9 experiments (exp_035–051) on the regridded autoencoder with real 3D-HS
 
 **Conclusion: The frozen autoencoder encoder produces features that are z-entangled for reconstruction, not z-discriminative. No downstream method can extract z-signal that isn't there. The bottleneck is the encoder itself.**
 
-*Last updated: 2026-07-22 20:30 UTC*
+*Last updated: 2026-07-31 12:10 UTC*

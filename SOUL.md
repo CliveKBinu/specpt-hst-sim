@@ -11,15 +11,15 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Last updated: 2026-07-22 20:30 UTC
-- Active experiments: none (all six axes exhausted)
+- Last updated: 2026-07-31 12:10 UTC
+- Active experiments: use_stageA (Universal Spectral Encoder, Stage A)
 - Best NMAD (synthetic): **0.00785 (exp_032)**
 - Best NMAD (real 3D-HST): **0.20767 (exp_045_RF_fixed)** — RF shrinkage on frozen 512-d latents
 - Best Catastrophic Outliers (synthetic): **15.17% (exp_032)**
 - Best Catastrophic Outliers (real): **49.82% (exp_045_RF_fixed)** — dominated by low-SNR tail (SNR<5: η 65%)
 - Total experiments completed: 39 (synthetic) + 21 (real 3D-HST)
-- Total experiments running: 0
-- Direction: Six-axes exhausted. RNC variant (exp_050/051) tested twice: loss flat both times regardless of L2-norm, temperature, or LR. Encoder drift in unfrozen variant is 126× recon MSE (catastrophic). **The bottleneck is the encoder itself** — it produces z-entangled (not z-discriminative) features. No downstream method on frozen features or safe unfreezing with regression/contrastive gradient has yielded test NMAD < 0.20 or non-negative R². All 6 candidate axes for "fix from outside the encoder" are exhausted. Next step requires encoder-level change: joint reconstruction + contrastive pretraining on sim data (new encoder from scratch), or alternative backbone.
+- Total experiments running: 1 (use_stageA)
+- Direction: All six downstream axes on the frozen AE encoder are exhausted (head capacity, trees, loss, unfrozen regression, RNC frozen/unfrozen). Pivoted to a **Universal Spectral Encoder (USE)** — a label-free self-supervised encoder that preserves broad spectral information via a latent-distillation anchor to the frozen AE and learns robustness via masked/noise-corrupted views + two-view consistency. Redshift is a downstream head on the frozen latent, never the organizing objective. Stage A (masked recon + distill) submitted as job 21441546; stages B (noise recon) and C (consistency) follow. Reference: docs/universal_spectral_encoder.md
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.
