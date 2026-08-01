@@ -179,8 +179,11 @@ def main():
         ckpt = torch.load(args.resume, map_location=device, weights_only=False)
         model.student.load_state_dict(ckpt["model_state_dict"], strict=True)
         start_epoch = ckpt.get("epoch", 0) + 1
-        best_val_loss = ckpt.get("best_val_loss", float("inf"))
-        print(f"Resumed from {args.resume} (epoch {start_epoch})")
+        # best_val_loss is intentionally NOT carried over: resume across stages
+        # changes the loss composition, so the previous stage's best is meaningless.
+        best_val_loss = float("inf")
+        print(f"Resumed weights from {args.resume} (epoch {start_epoch}); "
+              f"early-stopping baseline reset for stage {args.stage}")
 
     def compute_loss(clean):
         """Compute the full USE loss on a batch of clean spectra.

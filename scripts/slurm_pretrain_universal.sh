@@ -13,11 +13,17 @@
 
 EXP_NAME=${1:-use_stageA}
 STAGE=${2:-A}
+RESUME=${3:-}
 
 source ~/.bashrc
 conda activate specpt
 cd /home/ckb2084/research/specpt-hst-sim
 git pull origin main
+
+RESUME_ARG=""
+if [ -n "$RESUME" ]; then
+  RESUME_ARG="--resume $RESUME"
+fi
 
 python scripts/pretrain_universal_encoder.py \
     --exp_name $EXP_NAME \
@@ -27,4 +33,5 @@ python scripts/pretrain_universal_encoder.py \
     --lr 1e-4 \
     --weight_decay 1e-5 \
     --patience 20 \
-    --stop_on_drift
+    --stop_on_drift \
+    $RESUME_ARG
