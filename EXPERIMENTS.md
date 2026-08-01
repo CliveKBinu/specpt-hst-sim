@@ -62,7 +62,16 @@
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| use_stageA | scripts/pretrain_universal_encoder.py | — | use_stageA_stageA | — | — | — | — | — | — | Universal Spectral Encoder Stage A: label-free masked reconstruction + distillation anchor to frozen AE. Real 3D-HST, bs=64 lr=1e-4 ep=100 patience=20, stop_on_drift. Job 21441546. Downstream z-head evaluated only AFTER pretraining (eval_universal_latent.py). See docs/universal_spectral_encoder.md |
+| use_stageB | scripts/pretrain_universal_encoder.py | — | use_stageB_stageB | — | — | — | — | — | — | Universal Spectral Encoder Stage B: masked + noise reconstruction + distill anchor, resuming from use_stageA_stageA_best.pth. Real 3D-HST, bs=64 lr=1e-4 ep=100. Job TBD. |
+
+## Universal Spectral Encoder (USE)
+Label-free self-supervised encoder preserving broad spectral info + adding robustness. Reference: docs/universal_spectral_encoder.md.
+
+| Stage | Status | Train | Val | Drift | Latent cos | Eval NMAD | Notes |
+|-------|--------|-------|-----|-------|------------|-----------|-------|
+| A (masked + distill) | ✅ Complete (ep 49/100) | 0.013 | 0.0137 | ~1.0 | 0.995 | **0.2169** | Eval vs AE baseline 0.2162 (tied). Latent robust to mask/noise (cos 0.996+). Recon MSE 0.0077 (baseline 0.0103). z not improved by masked recon alone — expected; robustness stages B/C are the z-relevant levers. |
+| B (masked + noise) | 🚧 Running | — | — | — | — | — | Adds noise-corrupted reconstruction. |
+| C (+ consistency) | — | — | — | — | — | — | Two-view latent consistency attacks noise-entanglement behind SNR<5 tail. |
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
@@ -151,4 +160,4 @@ After 9 experiments (exp_035–051) on the regridded autoencoder with real 3D-HS
 
 **Conclusion: The frozen autoencoder encoder produces features that are z-entangled for reconstruction, not z-discriminative. No downstream method can extract z-signal that isn't there. The bottleneck is the encoder itself.**
 
-*Last updated: 2026-07-31 12:10 UTC*
+*Last updated: 2026-07-31 13:30 UTC*
