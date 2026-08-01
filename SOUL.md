@@ -11,15 +11,15 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Last updated: 2026-07-31 12:10 UTC
-- Active experiments: use_stageA (Universal Spectral Encoder, Stage A)
+- Last updated: 2026-07-31 23:50 UTC
+- Active experiments: none (USE A/B/C complete; next direction TBD)
 - Best NMAD (synthetic): **0.00785 (exp_032)**
 - Best NMAD (real 3D-HST): **0.20767 (exp_045_RF_fixed)** — RF shrinkage on frozen 512-d latents
 - Best Catastrophic Outliers (synthetic): **15.17% (exp_032)**
 - Best Catastrophic Outliers (real): **49.82% (exp_045_RF_fixed)** — dominated by low-SNR tail (SNR<5: η 65%)
-- Total experiments completed: 39 (synthetic) + 21 (real 3D-HST)
-- Total experiments running: 1 (use_stageA)
-- Direction: All six downstream axes on the frozen AE encoder are exhausted (head capacity, trees, loss, unfrozen regression, RNC frozen/unfrozen). Pivoted to a **Universal Spectral Encoder (USE)** — a label-free self-supervised encoder that preserves broad spectral information via a latent-distillation anchor to the frozen AE and learns robustness via masked/noise-corrupted views + two-view consistency. Redshift is a downstream head on the frozen latent, never the organizing objective. Stage A (masked recon + distill) submitted as job 21441546; stages B (noise recon) and C (consistency) follow. Reference: docs/universal_spectral_encoder.md
+- Total experiments completed: 39 (synthetic) + 24 (real 3D-HST, incl. USE A/B/C)
+- Total experiments running: 0
+- Direction: Universal Spectral Encoder (USE) A/B/C complete — label-free self-supervised robustness pretraining (masked recon, noise recon, two-view consistency, distillation anchor to frozen AE) faithfully preserves the AE latent (cos ~0.995), improves noise robustness (0.9961→0.9995) and recon quality, but does NOT change redshift: NMAD 0.217-0.220, tied with (C marginally worse than) the frozen AE baseline 0.216. Self-supervised robustness cannot create z-discriminative structure the frozen encoder lacks. USE stands as the reusable foundation for future multi-task heads (SFR/AGN), but the z<0.100 target remains unsolved. Next lever must introduce z-supervised signal without destroying AE identity (e.g., sim-data supervised encoder pretraining with recon anchor), or a fresh encoder trained from scratch.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.

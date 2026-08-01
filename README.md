@@ -27,7 +27,7 @@
 
 | Experiment | Approach | Test NMAD | Test η | Status |
 |------------|----------|-----------|--------|--------|
-| use_stageA | Universal Spectral Encoder — label-free masked recon + distill anchor | — | — | 🚧 Submitted (job 21441546) |
+| — | None currently active | — | — | — |
 
 > ℹ️ **Grid alignment.** The simulation data has been regridded from 10311–17465 Å to the real 3D-HST grid (10800–17100 Å, 0.81 Å/pix). This eliminates the 187-pixel feature shift that caused catastrophic real-data eval failure. See [`scripts/prep_sim_regridded.py`](scripts/prep_sim_regridded.py) and track [`EXPERIMENTS.md`](EXPERIMENTS.md) for details.
 
@@ -80,22 +80,15 @@ Key finding: **All six axes of downstream methods on the frozen AE encoder are e
 
 ### Current Work
 
-**Universal Spectral Encoder (USE)** — label-free self-supervised pretraining that preserves broad spectral information (for future SFR/AGN/mass heads) while fixing the encoder bottleneck. See [`docs/universal_spectral_encoder.md`](docs/universal_spectral_encoder.md).
-
-| Exp | Approach | Goal |
-|-----|----------|------|
-| use_stageA | Masked recon + distillation anchor | Label-free robust encoder, no drift. 🚧 Submitted |
-| use_stageB | + noise-corrupted recon | Robustness to low-SNR corruption |
-| use_stageC | + two-view consistency | Stable latent under perturbations |
-| use_eval | Frozen-latent linear probe | Compare NMAD/R² vs AE baseline (exp_035 0.249, exp_045 0.208) |
+**Universal Spectral Encoder (USE)** — completed A/B/C. Label-free self-supervised robustness pretraining preserves the AE latent (cos ~0.995) and improves noise robustness (0.9961→0.9995) but does NOT improve redshift (NMAD 0.217–0.220, tied with frozen-AE baseline 0.216). Good foundation for future multi-task heads; z remains unsolved. See [`docs/universal_spectral_encoder.md`](docs/universal_spectral_encoder.md).
 
 ### Next Experiments Under Consideration
 
 | Priority | Experiment | Goal |
 |----------|-----------|------|
-| High | USE Stage A → B → C → eval | Build and validate the reusable encoder |
-| Medium | Redshift head on frozen USE latent | First downstream consumer of the universal representation |
-| Low | SFR/AGN heads (when labels exist) | Attach new heads without retraining the encoder |
+| High | Sim-supervised encoder pretraining (z label + recon anchor on clean sim) | Inject z signal without AE-identity drift; test transfer to real |
+| High | Fresh encoder from scratch (multi-task: recon + z on sim) | Replace z-entangled AE with z-organized latent |
+| Medium | RF on USE latent | Check if USE's robustness helps tree methods beyond AE latent (exp_045: 0.2077) |
 
 ---
 
@@ -136,7 +129,7 @@ Key finding: **All six axes of downstream methods on the frozen AE encoder are e
 
 > 📝 `exp_034` uses the regridded sim data (10800–17100 Å) with an **unfrozen** DESI autoencoder (end-to-end training). It set the all-time outlier record (12.73%) at the cost of a moderate NMAD increase (0.00785 → 0.00909). Despite grid alignment, real-data transfer remains challenging — see [Real 3D-HST Evaluation](#-real-3d-hst-evaluation) for transfer learning results.
 
-*Last updated: 2026-07-31 12:10 UTC*
+*Last updated: 2026-07-31 23:50 UTC*
 
 ---
 

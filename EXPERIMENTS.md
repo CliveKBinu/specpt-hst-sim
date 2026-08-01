@@ -62,7 +62,7 @@
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| use_stageC | scripts/pretrain_universal_encoder.py | — | use_stageC_stageC | — | — | — | — | — | — | Universal Spectral Encoder Stage C: masked + noise + two-view latent consistency, resuming from use_stageB_stageB_best.pth. Real 3D-HST, bs=64 lr=1e-4 ep=100. Job TBD. |
+| none | — | — | — | — | — | — | — | — | — | All USE stages complete. Next direction TBD. |
 
 ## Universal Spectral Encoder (USE)
 Label-free self-supervised encoder preserving broad spectral info + adding robustness. Reference: docs/universal_spectral_encoder.md.
@@ -71,7 +71,9 @@ Label-free self-supervised encoder preserving broad spectral info + adding robus
 |-------|--------|-------|-----|-------|------------|-----------|-------|
 | A (masked + distill) | ✅ Complete (ep 49/100) | 0.013 | 0.0137 | ~1.0 | 0.995 | **0.2169** | Eval vs AE baseline 0.2162 (tied). Latent robust to mask/noise (cos 0.996+). Recon MSE 0.0077 (baseline 0.0103). z not improved by masked recon alone — expected; robustness stages B/C are the z-relevant levers. |
 | B (masked + noise) | ✅ Complete (ep 55/100) | 0.014 | 0.0172 | ~0.85 | 0.996 | **0.2175** | Eval vs AE baseline 0.2162 (tied). Noise robustness improved (noisy-vs-clean latent cos 0.9994), recon MSE 0.00704. z still not improved by robustness training. |
-| C (+ consistency) | 🚧 Running | — | — | — | — | — | Two-view latent consistency attacks noise-entanglement behind SNR<5 tail. |
+| C (+ consistency) | ✅ Complete (ep 61/100) | 0.014 | 0.0168 | ~0.85 | 0.995 | **0.2198** | Eval vs AE baseline 0.2162 (marginally worse). Consistency did not help z. |
+
+**USE verdict:** All three stages (masked recon → +noise → +consistency) faithfully preserve the frozen AE latent (student↔teacher cos ~0.995) and progressively improve noise robustness (0.9961→0.9995) and recon quality (0.0077→0.0069). But redshift NMAD is tied or marginally worse than the frozen AE linear-probe baseline (0.2162) across all stages. **Self-supervised robustness pretraining on real data cannot create z-discriminative structure that the frozen encoder lacks.** USE remains the right foundation for future multi-task heads (SFR/AGN) but does not solve z by itself.
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
@@ -160,4 +162,4 @@ After 9 experiments (exp_035–051) on the regridded autoencoder with real 3D-HS
 
 **Conclusion: The frozen autoencoder encoder produces features that are z-entangled for reconstruction, not z-discriminative. No downstream method can extract z-signal that isn't there. The bottleneck is the encoder itself.**
 
-*Last updated: 2026-07-31 23:30 UTC*
+*Last updated: 2026-07-31 23:50 UTC*
