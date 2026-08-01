@@ -11,15 +11,15 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Last updated: 2026-07-31 23:50 UTC
-- Active experiments: none (USE A/B/C complete; next direction TBD)
+- Last updated: 2026-08-01 00:05 UTC
+- Active experiments: fac_stage1 (Factorized Universal Encoder Stage 1)
 - Best NMAD (synthetic): **0.00785 (exp_032)**
 - Best NMAD (real 3D-HST): **0.20767 (exp_045_RF_fixed)** — RF shrinkage on frozen 512-d latents
 - Best Catastrophic Outliers (synthetic): **15.17% (exp_032)**
 - Best Catastrophic Outliers (real): **49.82% (exp_045_RF_fixed)** — dominated by low-SNR tail (SNR<5: η 65%)
 - Total experiments completed: 39 (synthetic) + 24 (real 3D-HST, incl. USE A/B/C)
-- Total experiments running: 0
-- Direction: Universal Spectral Encoder (USE) A/B/C complete — label-free self-supervised robustness pretraining (masked recon, noise recon, two-view consistency, distillation anchor to frozen AE) faithfully preserves the AE latent (cos ~0.995), improves noise robustness (0.9961→0.9995) and recon quality, but does NOT change redshift: NMAD 0.217-0.220, tied with (C marginally worse than) the frozen AE baseline 0.216. Self-supervised robustness cannot create z-discriminative structure the frozen encoder lacks. USE stands as the reusable foundation for future multi-task heads (SFR/AGN), but the z<0.100 target remains unsolved. Next lever must introduce z-supervised signal without destroying AE identity (e.g., sim-data supervised encoder pretraining with recon anchor), or a fresh encoder trained from scratch.
+- Total experiments running: 1 (fac_stage1)
+- Direction: USE A/B/C proved self-supervised robustness preserves the AE latent but cannot create z-discriminative structure (z tied ~0.217). Pivoted to a **Factorized Universal Encoder (FUSE)**: shared h_universal (reconstruction-anchored, reusable for future SFR/AGN heads) + task-specific early z branch (h_z) supervised by redshift. Stage 1 (sim, frozen shared) submitted as job 21442065; stages 2 (real diagnostic) and 3 (joint unfreeze with anchors) follow. Design: docs/factorized_universal_encoder.md
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.

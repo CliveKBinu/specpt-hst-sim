@@ -62,7 +62,9 @@
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| none | — | — | — | — | — | — | — | — | — | All USE stages complete. Next direction TBD. |
+| fac_stage1 | scripts/pretrain_factorized_encoder.py | — | fac_stage1_stage1 | — | — | — | — | — | — | Factorized encoder Stage 1: sim-only, shared encoder FROZEN, early z branch (h_z) trains on clean sim z labels (14k rows, grism_id split). Implementation/signal test. Job 21442065. |
+| fac_stage2 | scripts/pretrain_factorized_encoder.py | — | fac_stage2_stage2 | — | — | — | — | — | — | Factorized encoder Stage 2: real-only, shared encoder FROZEN, early z branch on real. Diagnostic: do early conv features carry real z beyond the 512-d latent? |
+| fac_stage3 | scripts/pretrain_factorized_encoder.py | — | fac_stage3_stage3 | — | — | — | — | — | — | Factorized encoder Stage 3: joint sim+real, shared encoder UNFROZEN at 1e-5 with recon+distill anchor, z branch at 3e-4. The actual factorization. |
 
 ## Universal Spectral Encoder (USE)
 Label-free self-supervised encoder preserving broad spectral info + adding robustness. Reference: docs/universal_spectral_encoder.md.
@@ -74,6 +76,18 @@ Label-free self-supervised encoder preserving broad spectral info + adding robus
 | C (+ consistency) | ✅ Complete (ep 61/100) | 0.014 | 0.0168 | ~0.85 | 0.995 | **0.2198** | Eval vs AE baseline 0.2162 (marginally worse). Consistency did not help z. |
 
 **USE verdict:** All three stages (masked recon → +noise → +consistency) faithfully preserve the frozen AE latent (student↔teacher cos ~0.995) and progressively improve noise robustness (0.9961→0.9995) and recon quality (0.0077→0.0069). But redshift NMAD is tied or marginally worse than the frozen AE linear-probe baseline (0.2162) across all stages. **Self-supervised robustness pretraining on real data cannot create z-discriminative structure that the frozen encoder lacks.** USE remains the right foundation for future multi-task heads (SFR/AGN) but does not solve z by itself.
+
+## Factorized Universal Encoder (FUSE)
+
+A trainable encoder with two explicit outputs: a **shared h_universal** (reconstruction-anchored, reusable for future SFR/AGN heads) and a **task-specific h_z** (early conv-map branch supervised by redshift). Unlike USE, z supervision is injected through a separate pathway instead of re-shaping the whole latent. Design + gates: docs/factorized_universal_encoder.md.
+
+| Stage | Data | Shared encoder | z branch | Purpose | Status |
+|-------|------|----------------|----------|---------|--------|
+| 1 | sim | frozen | trainable | implementation / signal test (clean z) | 🚧 Running (job 21442065) |
+| 2 | real | frozen | trainable | does early conv info carry real z? | — |
+| 3 | joint sim+real | trainable @ 1e-5 | trainable @ 3e-4 | the actual factorization (recon+distill anchor on, λ_z ramped) | — |
+
+Gate: real test NMAD must beat 0.2162 (AE frozen-latent baseline) with positive R² and no prediction-range collapse. Job 21442065 = fac_stage1.
 
 ## Diagnostics (failed/crashed runs)
 | exp | run_name | run_id | failure | diagnosis |
@@ -162,4 +176,4 @@ After 9 experiments (exp_035–051) on the regridded autoencoder with real 3D-HS
 
 **Conclusion: The frozen autoencoder encoder produces features that are z-entangled for reconstruction, not z-discriminative. No downstream method can extract z-signal that isn't there. The bottleneck is the encoder itself.**
 
-*Last updated: 2026-07-31 23:50 UTC*
+*Last updated: 2026-08-01 00:05 UTC*
