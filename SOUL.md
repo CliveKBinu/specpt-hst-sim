@@ -11,15 +11,15 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Last updated: 2026-08-01 00:05 UTC
-- Active experiments: fac_stage1 (Factorized Universal Encoder Stage 1)
+- Last updated: 2026-08-01 00:30 UTC
+- Active experiments: fac_stage2 (Factorized Universal Encoder Stage 2, real diagnostic)
 - Best NMAD (synthetic): **0.00785 (exp_032)**
 - Best NMAD (real 3D-HST): **0.20767 (exp_045_RF_fixed)** — RF shrinkage on frozen 512-d latents
 - Best Catastrophic Outliers (synthetic): **15.17% (exp_032)**
 - Best Catastrophic Outliers (real): **49.82% (exp_045_RF_fixed)** — dominated by low-SNR tail (SNR<5: η 65%)
 - Total experiments completed: 39 (synthetic) + 24 (real 3D-HST, incl. USE A/B/C)
-- Total experiments running: 1 (fac_stage1)
-- Direction: USE A/B/C proved self-supervised robustness preserves the AE latent but cannot create z-discriminative structure (z tied ~0.217). Pivoted to a **Factorized Universal Encoder (FUSE)**: shared h_universal (reconstruction-anchored, reusable for future SFR/AGN heads) + task-specific early z branch (h_z) supervised by redshift. Stage 1 (sim, frozen shared) submitted as job 21442065; stages 2 (real diagnostic) and 3 (joint unfreeze with anchors) follow. Design: docs/factorized_universal_encoder.md
+- Total experiments running: 2 (fac_stage2 + fac_stage1 eval)
+- Direction: USE A/B/C proved self-supervised robustness preserves the AE latent but cannot create z-discriminative structure (z tied ~0.217). Pivoted to a **Factorized Universal Encoder (FUSE)**: shared h_universal (reconstruction-anchored, reusable for future SFR/AGN heads) + task-specific early z branch (h_z) supervised by redshift. Stage 1 (sim) complete: branch learns z from the frozen conv map (sim val NMAD 0.149), shared unchanged (drift 1.0). Stage 2 (real diagnostic) running as job 21443368; Stage 3 (joint unfreeze with anchors) next. Design: docs/factorized_universal_encoder.md
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.

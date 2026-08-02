@@ -27,7 +27,8 @@
 
 | Experiment | Approach | Test NMAD | Test η | Status |
 |------------|----------|-----------|--------|--------|
-| fac_stage1 | Factorized encoder Stage 1 — sim-only, frozen shared encoder, early z branch | — | — | 🚧 Submitted (job 21442065) |
+| fac_stage1 | Factorized encoder Stage 1 — sim-only, frozen shared, early z branch | 0.149 (sim val) | — | ✅ Complete |
+| fac_stage2 | Factorized encoder Stage 2 — real-only, frozen shared, early z branch | — | — | 🚧 Submitted (job 21443368) |
 
 > ℹ️ **Grid alignment.** The simulation data has been regridded from 10311–17465 Å to the real 3D-HST grid (10800–17100 Å, 0.81 Å/pix). This eliminates the 187-pixel feature shift that caused catastrophic real-data eval failure. See [`scripts/prep_sim_regridded.py`](scripts/prep_sim_regridded.py) and track [`EXPERIMENTS.md`](EXPERIMENTS.md) for details.
 
@@ -129,7 +130,7 @@ Key finding: **All six axes of downstream methods on the frozen AE encoder are e
 
 > 📝 `exp_034` uses the regridded sim data (10800–17100 Å) with an **unfrozen** DESI autoencoder (end-to-end training). It set the all-time outlier record (12.73%) at the cost of a moderate NMAD increase (0.00785 → 0.00909). Despite grid alignment, real-data transfer remains challenging — see [Real 3D-HST Evaluation](#-real-3d-hst-evaluation) for transfer learning results.
 
-*Last updated: 2026-08-01 00:05 UTC*
+*Last updated: 2026-08-01 00:30 UTC*
 
 ---
 

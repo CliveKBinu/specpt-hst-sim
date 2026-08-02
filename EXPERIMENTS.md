@@ -63,7 +63,7 @@
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
 | fac_stage1 | scripts/pretrain_factorized_encoder.py | — | fac_stage1_stage1 | — | — | — | — | — | — | Factorized encoder Stage 1: sim-only, shared encoder FROZEN, early z branch (h_z) trains on clean sim z labels (14k rows, grism_id split). Implementation/signal test. Job 21442065. |
-| fac_stage2 | scripts/pretrain_factorized_encoder.py | — | fac_stage2_stage2 | — | — | — | — | — | — | Factorized encoder Stage 2: real-only, shared encoder FROZEN, early z branch on real. Diagnostic: do early conv features carry real z beyond the 512-d latent? |
+| fac_stage2 | scripts/pretrain_factorized_encoder.py | — | fac_stage2_stage2 | — | — | — | — | — | — | Factorized encoder Stage 2: real-only, shared encoder FROZEN, early z branch on real. Diagnostic: do early conv features carry real z beyond the 512-d latent? Job 21443368. |
 | fac_stage3 | scripts/pretrain_factorized_encoder.py | — | fac_stage3_stage3 | — | — | — | — | — | — | Factorized encoder Stage 3: joint sim+real, shared encoder UNFROZEN at 1e-5 with recon+distill anchor, z branch at 3e-4. The actual factorization. |
 
 ## Universal Spectral Encoder (USE)
@@ -83,8 +83,8 @@ A trainable encoder with two explicit outputs: a **shared h_universal** (reconst
 
 | Stage | Data | Shared encoder | z branch | Purpose | Status |
 |-------|------|----------------|----------|---------|--------|
-| 1 | sim | frozen | trainable | implementation / signal test (clean z) | 🚧 Running (job 21442065) |
-| 2 | real | frozen | trainable | does early conv info carry real z? | — |
+| 1 | sim | frozen | trainable | implementation / signal test (clean z) | ✅ Complete (ep 88) — best sim val NMAD **0.14898** (from 0.293 @ ep0). Branch learns z from frozen conv map. Drift 1.0, cos 1.0. Eval job 21443369. |
+| 2 | real | frozen | trainable | does early conv info carry real z? | 🚧 Running (job 21443368) |
 | 3 | joint sim+real | trainable @ 1e-5 | trainable @ 3e-4 | the actual factorization (recon+distill anchor on, λ_z ramped) | — |
 
 Gate: real test NMAD must beat 0.2162 (AE frozen-latent baseline) with positive R² and no prediction-range collapse. Job 21442065 = fac_stage1.
@@ -176,4 +176,4 @@ After 9 experiments (exp_035–051) on the regridded autoencoder with real 3D-HS
 
 **Conclusion: The frozen autoencoder encoder produces features that are z-entangled for reconstruction, not z-discriminative. No downstream method can extract z-signal that isn't there. The bottleneck is the encoder itself.**
 
-*Last updated: 2026-08-01 00:05 UTC*
+*Last updated: 2026-08-01 00:30 UTC*
