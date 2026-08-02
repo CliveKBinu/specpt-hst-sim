@@ -11,15 +11,15 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Last updated: 2026-08-01 00:30 UTC
-- Active experiments: fac_stage2 (Factorized Universal Encoder Stage 2, real diagnostic)
+- Last updated: 2026-08-01 01:50 UTC
+- Active experiments: fac_stage3 (Factorized Universal Encoder Stage 3, joint unfreeze on tigris)
 - Best NMAD (synthetic): **0.00785 (exp_032)**
 - Best NMAD (real 3D-HST): **0.20767 (exp_045_RF_fixed)** — RF shrinkage on frozen 512-d latents
 - Best Catastrophic Outliers (synthetic): **15.17% (exp_032)**
 - Best Catastrophic Outliers (real): **49.82% (exp_045_RF_fixed)** — dominated by low-SNR tail (SNR<5: η 65%)
 - Total experiments completed: 39 (synthetic) + 24 (real 3D-HST, incl. USE A/B/C)
-- Total experiments running: 2 (fac_stage2 + fac_stage1 eval)
-- Direction: USE A/B/C proved self-supervised robustness preserves the AE latent but cannot create z-discriminative structure (z tied ~0.217). Pivoted to a **Factorized Universal Encoder (FUSE)**: shared h_universal (reconstruction-anchored, reusable for future SFR/AGN heads) + task-specific early z branch (h_z) supervised by redshift. Stage 1 (sim) complete: branch learns z from the frozen conv map (sim val NMAD 0.149), shared unchanged (drift 1.0). Stage 2 (real diagnostic) running as job 21443368; Stage 3 (joint unfreeze with anchors) next. Design: docs/factorized_universal_encoder.md
+- Total experiments running: 1 (fac_stage3)
+- Direction: FUSE Stage 1 (sim) proved the early z branch learns z from the conv map. **Stage 2 (real) confirmed the bottleneck**: the early conv map carries more real z than the 512-d latent (h_z probe 0.202 / R² +0.08 vs h_universal 0.215 / R² −0.04) — the projection/attention discards z. Direct z_head 0.184 is shrinkage-dominated (std_ratio 0.33). Stage 3 (joint sim+real, shared encoder unfrozen at 1e-5 with recon+distill anchors, λ_z ramped) running as job 32808 on **tigris** (GH200). All FUSE jobs on tigris (pytorch ARM env, wrappers scripts/slurm_*_factorized_tigris.sh). Design: docs/factorized_universal_encoder.md
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.

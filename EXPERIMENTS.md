@@ -64,7 +64,9 @@
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
 | fac_stage1 | scripts/pretrain_factorized_encoder.py | — | fac_stage1_stage1 | — | — | — | — | — | — | Factorized encoder Stage 1: sim-only, shared encoder FROZEN, early z branch (h_z) trains on clean sim z labels (14k rows, grism_id split). Implementation/signal test. Job 21442065. |
 | fac_stage2 | scripts/pretrain_factorized_encoder.py | — | fac_stage2_stage2 | — | — | — | — | — | — | Factorized encoder Stage 2: real-only, shared encoder FROZEN, early z branch on real. Diagnostic: do early conv features carry real z beyond the 512-d latent? Job 21443368. |
-| fac_stage3 | scripts/pretrain_factorized_encoder.py | — | fac_stage3_stage3 | — | — | — | — | — | — | Factorized encoder Stage 3: joint sim+real, shared encoder UNFROZEN at 1e-5 with recon+distill anchor, z branch at 3e-4. The actual factorization. |
+| fac_stage3 | scripts/pretrain_factorized_encoder.py | — | fac_stage3_stage3 | — | — | — | — | — | — | Factorized encoder Stage 3: joint sim+real, shared encoder UNFROZEN at 1e-5 with recon+distill anchor, z branch init from fac_stage2 ckpt, λ_z ramped 10 ep. Job 32808 (tigris). |
+
+**Note:** FUSE jobs now run on the **tigris** cluster (GH200 GPUs, partition=tigris, pytorch ARM conda env, wrappers `scripts/slurm_*_factorized_tigris.sh`). Sporc A100 nodes were down/drained; tigris is ~20x faster (1s/epoch vs ~20s).
 
 ## Universal Spectral Encoder (USE)
 Label-free self-supervised encoder preserving broad spectral info + adding robustness. Reference: docs/universal_spectral_encoder.md.
@@ -83,9 +85,9 @@ A trainable encoder with two explicit outputs: a **shared h_universal** (reconst
 
 | Stage | Data | Shared encoder | z branch | Purpose | Status |
 |-------|------|----------------|----------|---------|--------|
-| 1 | sim | frozen | trainable | implementation / signal test (clean z) | ✅ Complete (ep 88) — best sim val NMAD **0.14898** (from 0.293 @ ep0). Branch learns z from frozen conv map. Drift 1.0, cos 1.0. Eval job 21443369. |
-| 2 | real | frozen | trainable | does early conv info carry real z? | 🚧 Running (job 21443368) |
-| 3 | joint sim+real | trainable @ 1e-5 | trainable @ 3e-4 | the actual factorization (recon+distill anchor on, λ_z ramped) | — |
+| 1 | sim | frozen | trainable | implementation / signal test (clean z) | ✅ Complete (ep 88) — best sim val NMAD **0.14898**. Branch learns z from frozen conv map. Eval (tigris 32806): h_z probe 0.2347 / R² -0.01 — sim-trained branch features do NOT transfer to real. |
+| 2 | real | frozen | trainable | does early conv info carry real z? | ✅ Complete (ep 60, tigris 32805) — best REAL val NMAD **0.17449**. Eval (tigris 32807): z_head direct 0.184 but **shrinkage** (pred [0.38,1.92], std_ratio 0.33, R² −0.24); **h_z probe 0.202 / R² +0.08 vs h_universal 0.215 / R² −0.04** — first non-shrinkage win: the early conv map carries real z beyond the 512-d latent. |
+| 3 | joint sim+real | trainable @ 1e-5 | trainable @ 3e-4 | the actual factorization (recon+distill anchor on, λ_z ramped) | 🚧 Running (tigris 32808, init from stage2 ckpt) |
 
 Gate: real test NMAD must beat 0.2162 (AE frozen-latent baseline) with positive R² and no prediction-range collapse. Job 21442065 = fac_stage1.
 
@@ -176,4 +178,4 @@ After 9 experiments (exp_035–051) on the regridded autoencoder with real 3D-HS
 
 **Conclusion: The frozen autoencoder encoder produces features that are z-entangled for reconstruction, not z-discriminative. No downstream method can extract z-signal that isn't there. The bottleneck is the encoder itself.**
 
-*Last updated: 2026-08-01 00:30 UTC*
+*Last updated: 2026-08-01 01:50 UTC*

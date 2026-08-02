@@ -28,7 +28,8 @@
 | Experiment | Approach | Test NMAD | Test η | Status |
 |------------|----------|-----------|--------|--------|
 | fac_stage1 | Factorized encoder Stage 1 — sim-only, frozen shared, early z branch | 0.149 (sim val) | — | ✅ Complete |
-| fac_stage2 | Factorized encoder Stage 2 — real-only, frozen shared, early z branch | — | — | 🚧 Submitted (job 21443368) |
+| fac_stage2 | Factorized encoder Stage 2 — real-only, frozen shared, early z branch | 0.202 (h_z probe) / 0.184 (z_head, shrunk) | 47.2% | ✅ Complete |
+| fac_stage3 | Factorized encoder Stage 3 — joint sim+real, shared unfrozen w/ anchors | — | — | 🚧 Submitted (tigris 32808) |
 
 > ℹ️ **Grid alignment.** The simulation data has been regridded from 10311–17465 Å to the real 3D-HST grid (10800–17100 Å, 0.81 Å/pix). This eliminates the 187-pixel feature shift that caused catastrophic real-data eval failure. See [`scripts/prep_sim_regridded.py`](scripts/prep_sim_regridded.py) and track [`EXPERIMENTS.md`](EXPERIMENTS.md) for details.
 
@@ -81,15 +82,15 @@ Key finding: **All six axes of downstream methods on the frozen AE encoder are e
 
 ### Current Work
 
-**Factorized Universal Encoder (FUSE)** — replacing the single-undifferentiated-latent approach. Shared `h_universal` (reconstruction-anchored, reusable for future SFR/AGN heads) + task-specific early `h_z` branch supervised by redshift. USE A/B/C proved self-supervised robustness cannot create z-discriminative structure (z tied ~0.217 vs AE 0.216); FUSE injects z through a separate pathway. See [`docs/factorized_universal_encoder.md`](docs/factorized_universal_encoder.md).
+**Factorized Universal Encoder (FUSE)** — shared `h_universal` (reconstruction-anchored, reusable for future SFR/AGN heads) + task-specific early `h_z` branch supervised by redshift. **Stage 2 result: the bottleneck is real.** Early conv-map features carry more real z than the final 512-d latent (h_z linear probe **0.202 / R² +0.08** vs h_universal **0.215 / R² −0.04**) — the projection/attention discards z. Direct z_head 0.184 is shrinkage-dominated (pred collapse std_ratio 0.33, R² −0.24). Stage 3 (joint sim+real, shared encoder unfrozen at 1e-5 with recon+distill anchors) is running. Runs on **tigris** (GH200, ~20× faster than sporc). See [`docs/factorized_universal_encoder.md`](docs/factorized_universal_encoder.md).
 
 ### Next Experiments Under Consideration
 
 | Priority | Experiment | Goal |
 |----------|-----------|------|
-| High | FUSE Stage 1 (sim, frozen shared) → Stage 2 (real) → Stage 3 (joint unfreeze) | Test whether an early z branch + factorized latent breaks the 0.2162 plateau without AE drift |
-| High | Bootstrap CIs + R²/range checks in every eval | Kill shrinkage false-positives (exp_045 lesson) |
-| Medium | RF on FUSE shared latent | Compare tree methods on the factorized vs AE latent |
+| High | FUSE Stage 3 (joint unfreeze w/ anchors) | Amplify real z by letting the shared encoder reorganize early features without AE drift |
+| High | Anti-shrinkage head on h_z (e.g. calibrated output, range penalty) | Convert the 0.184 shrinkage into genuine prediction spread (R² > 0) |
+| Medium | RF on FUSE h_z latent | Compare tree methods on the richer early feature space |
 
 ---
 
@@ -130,7 +131,7 @@ Key finding: **All six axes of downstream methods on the frozen AE encoder are e
 
 > 📝 `exp_034` uses the regridded sim data (10800–17100 Å) with an **unfrozen** DESI autoencoder (end-to-end training). It set the all-time outlier record (12.73%) at the cost of a moderate NMAD increase (0.00785 → 0.00909). Despite grid alignment, real-data transfer remains challenging — see [Real 3D-HST Evaluation](#-real-3d-hst-evaluation) for transfer learning results.
 
-*Last updated: 2026-08-01 00:30 UTC*
+*Last updated: 2026-08-01 01:50 UTC*
 
 ---
 
