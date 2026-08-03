@@ -69,7 +69,7 @@ def save_checkpoint(model, optimizer, scheduler, epoch, train_losses, val_losses
 
 def load_checkpoint(path, model, optimizer, scheduler=None, device="cpu"):
     try:
-        checkpoint = torch.load(path, map_location=device)
+        checkpoint = torch.load(path, map_location=device, weights_only=False)
     except (RuntimeError, zipfile.BadZipFile, EOFError) as e:
         print(f"Warning: Corrupted checkpoint at {path}: {e}")
         print("  Skipping checkpoint load — model will use current weights")
@@ -139,12 +139,16 @@ def main():
 
     ae_path = os.path.expanduser(data_cfg.get("pretrained_autoencoder", ""))
     if ae_path and os.path.exists(ae_path):
-        state_dict = torch.load(ae_path, map_location=device)
+        state_dict = torch.load(ae_path, map_location=device, weights_only=False)
+        if isinstance(state_dict, dict) and "model_state_dict" in state_dict:
+            state_dict = state_dict["model_state_dict"]
         missing, unexpected = model.load_state_dict(state_dict, strict=False)
         print(f"Loaded pretrained autoencoder from {ae_path}")
         print(f"  Missing: {len(missing)}, Unexpected: {len(unexpected)}")
+        initialized_from_scratch = False
     else:
         print("No pretrained autoencoder — initializing from scratch.")
+        initialized_from_scratch = True
 
     for param in model.parameters():
         param.requires_grad = True
@@ -153,14 +157,23 @@ def main():
     total_params = sum(p.numel() for p in model.parameters())
     print(f"Total parameters: {total_params:,}")
 
+    wandb.config.update({
+        "initialized_from_scratch": initialized_from_scratch,
+        "total_params": total_params,
+    })
+
     # ========== DATA ==========
     data = load_grism_data(data_cfg["path"])
+    split_by_group = data_cfg.get("split_by_group", False)
+    group_col = data_cfg.get("group_column", "TARGETID") if split_by_group else None
     train_df, val_df, test_df = split_data(
         data,
         val_split=data_cfg.get("val_split", 0.15),
         test_split=data_cfg.get("test_split", 0.15),
+        group_col=group_col,
     )
-    print(f"Train: {len(train_df)}, Val: {len(val_df)}, Test: {len(test_df)}")
+    print(f"Train: {len(train_df)}, Val: {len(val_df)}, Test: {len(test_df)}"
+          + (f" (grouped by {group_col})" if group_col else ""))
 
     train_loader, val_loader, test_loader = create_autoenc_dataloaders(
         train_df, val_df, test_df,

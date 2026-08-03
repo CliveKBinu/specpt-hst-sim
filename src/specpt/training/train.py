@@ -59,7 +59,7 @@ def save_checkpoint(model, optimizer, scheduler, epoch, train_losses, val_losses
 
 def load_checkpoint(path, model, optimizer, scheduler=None, device="cpu"):
     try:
-        checkpoint = torch.load(path, map_location=device)
+        checkpoint = torch.load(path, map_location=device, weights_only=False)
     except (RuntimeError, zipfile.BadZipFile, EOFError) as e:
         print(f"Warning: Corrupted checkpoint at {path}: {e}")
         print("  Skipping checkpoint load — model will use current weights")
@@ -228,9 +228,21 @@ def main():
     )
     auto_model = auto_model.to(device)
 
-    ae_path = os.path.expanduser(data_cfg["pretrained_autoencoder"])
-    state_dict = torch.load(ae_path, map_location=device)
-    auto_model.load_state_dict(state_dict, strict=True)
+    ae_path = os.path.expanduser(data_cfg.get("pretrained_autoencoder", ""))
+    if ae_path and os.path.exists(ae_path):
+        ae_state = torch.load(ae_path, map_location=device, weights_only=False)
+        if isinstance(ae_state, dict) and "model_state_dict" in ae_state:
+            ae_state = ae_state["model_state_dict"]
+        missing, unexpected = auto_model.load_state_dict(ae_state, strict=True)
+        if missing or unexpected:
+            raise RuntimeError(
+                f"Autoencoder checkpoint {ae_path} does not match the configured "
+                f"architecture (missing {len(missing)}, unexpected {len(unexpected)}). "
+                f"Check d_model/nhead/layers/dim_feedforward against the checkpoint."
+            )
+        print(f"Loaded autoencoder from {ae_path}")
+    else:
+        print("No pretrained autoencoder — initializing AE from scratch.")
 
     # Check for MDN prediction type
     prediction_type = model_cfg.get("prediction_type", "point")
@@ -276,14 +288,25 @@ def main():
         total_trainable = sum(p.numel() for p in redshift_model.parameters() if p.requires_grad)
         print(f"Trainable parameters: {total_trainable:,}")
 
+    def pin_frozen_bn_eval():
+        if freeze_backbone:
+            for m in redshift_model.pretrained_model.modules():
+                if isinstance(m, torch.nn.modules.batchnorm._BatchNorm):
+                    m.eval()
+
     redshift_model.to(device)
 
     data = load_grism_data(data_cfg["path"])
+    split_by_group = data_cfg.get("split_by_group", False)
+    group_col = data_cfg.get("group_column", "TARGETID") if split_by_group else None
     train_df, val_df, test_df = split_data(
         data,
         val_split=data_cfg.get("val_split", 0.1),
         test_split=data_cfg.get("test_split", 0.1),
+        group_col=group_col,
     )
+    print(f"Train: {len(train_df)}, Val: {len(val_df)}, Test: {len(test_df)}"
+          + (f" (grouped by {group_col})" if group_col else ""))
 
     train_loader, val_loader, test_loader = create_dataloaders(
         train_df, val_df, test_df,
@@ -353,6 +376,7 @@ def main():
 
     for epoch in range(start_epoch, train_cfg["epochs"]):
         redshift_model.train()
+        pin_frozen_bn_eval()
         loss_epoch = 0.0
         batch_count = 0
 
@@ -560,6 +584,7 @@ def main():
 
         for epoch in range(stage2_epochs):
             redshift_model.train()
+            pin_frozen_bn_eval()
             loss_epoch = 0.0
             batch_count = 0
 

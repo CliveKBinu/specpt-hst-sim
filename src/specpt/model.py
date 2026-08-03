@@ -126,13 +126,16 @@ class EnhancedSpecPTForRedshift(nn.Module):
         self.proj_to_d_model = pretrained_model.proj_to_d_model
         self.pretrained_model = pretrained_model
 
+        d_model = self.proj_to_d_model.out_features
+        nhead = self.encoder.layers[0].self_attn.num_heads
+
         for param in list(self.encoder.parameters())[-4:]:
             param.requires_grad = True
 
         self.mlp_blocks = nn.Sequential(
             *[
                 ImprovedResidualMLPBlock(
-                    mlp_dim if i > 0 else 512, mlp_dim, dropout_rate
+                    mlp_dim if i > 0 else d_model, mlp_dim, dropout_rate
                 )
                 for i in range(num_mlp_blocks)
             ]
@@ -146,7 +149,7 @@ class EnhancedSpecPTForRedshift(nn.Module):
             nn.Softplus(),
         )
 
-        self.attention = nn.MultiheadAttention(embed_dim=512, num_heads=8)
+        self.attention = nn.MultiheadAttention(embed_dim=d_model, num_heads=nhead)
 
     def forward(self, x):
         x = x.unsqueeze(1)
@@ -217,20 +220,23 @@ class EnhancedSpecPTForRedshiftMDN(nn.Module):
         self.proj_to_d_model = pretrained_model.proj_to_d_model
         self.pretrained_model = pretrained_model
 
+        d_model = self.proj_to_d_model.out_features
+        nhead = self.encoder.layers[0].self_attn.num_heads
+
         for param in list(self.encoder.parameters())[-4:]:
             param.requires_grad = True
 
         self.mlp_blocks = nn.Sequential(
             *[
                 ImprovedResidualMLPBlock(
-                    mlp_dim if i > 0 else 512, mlp_dim, dropout_rate
+                    mlp_dim if i > 0 else d_model, mlp_dim, dropout_rate
                 )
                 for i in range(num_mlp_blocks)
             ]
         )
 
         self.mdn_head = MDNHead(mlp_dim, output_features, num_mixtures)
-        self.attention = nn.MultiheadAttention(embed_dim=512, num_heads=8)
+        self.attention = nn.MultiheadAttention(embed_dim=d_model, num_heads=nhead)
 
     def forward(self, x):
         """

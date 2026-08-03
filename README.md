@@ -27,9 +27,14 @@
 
 | Experiment | Approach | Test NMAD | Test η | Status |
 |------------|----------|-----------|--------|--------|
-| — | None currently active (FUSE Stages 1–3 complete) | — | — | — |
+| ae_tracka_control | AE from scratch, 512/8/3+3/2048 (control) | — | — | pending |
+| ae_tracka_small | AE from scratch, 256/4/2+2/1024 | — | — | pending |
+| ae_tracka_tiny | AE from scratch, 128/4/1+1/512 | — | — | pending |
+| tracka_control_z | Redshift head on frozen ae_tracka_control | — | — | pending |
+| tracka_small_z | Redshift head on frozen ae_tracka_small | — | — | pending |
+| tracka_tiny_z | Redshift head on frozen ae_tracka_tiny | — | — | pending |
 
-> ℹ️ **FUSE (Factorized Universal Encoder) program complete.** Stage 1 (sim, frozen shared): branch learns z from conv map (sim val 0.149) but sim features don't transfer to real. Stage 2 (real, frozen shared): **h_z probe 0.202 / R² +0.08 vs h_universal 0.215 / R² −0.04** — the 512-d projection discards some real z, but direct z_head 0.184 is shrinkage-dominated (std_ratio 0.33, R² −0.24). Stage 3 (joint unfreeze w/ anchors): anchors prevented AE drift (drift 0.92, cos 0.998 — first controlled unfreeze) but the encoder stayed too static and sim-dominated batches degraded real z (val 0.237, worse than Stage 2's 0.174). Runs on **tigris** (GH200, ~20× faster than sporc).
+> ℹ️ **Track A (AE capacity sweep).** Retrain the SpecPT autoencoder from scratch on regridded sim data (`grism_training_sim_v3_regrid.parquet`) with reduced transformer capacity, then freeze it and train a redshift head on top. Each AE→redshift pair is chained with SLURM `afterok` on **tigris** (AE) / **sporc** (redshift). Grouped split by TARGETID prevents leakage. NOTE: transformer capacity is only a small slice of total AE size — the decoder `linear2` (~970M params) dominates, so total params only shrink 1.12B→1.00B across the three configs. If no real-data transfer gain, the next test is a decoder bottleneck (Track B).
 
 > ℹ️ **Grid alignment.** The simulation data has been regridded from 10311–17465 Å to the real 3D-HST grid (10800–17100 Å, 0.81 Å/pix). This eliminates the 187-pixel feature shift that caused catastrophic real-data eval failure. See [`scripts/prep_sim_regridded.py`](scripts/prep_sim_regridded.py) and track [`EXPERIMENTS.md`](EXPERIMENTS.md) for details.
 
@@ -133,7 +138,7 @@ Key finding: **All six axes of downstream methods on the frozen AE encoder are e
 
 > 📝 `exp_034` uses the regridded sim data (10800–17100 Å) with an **unfrozen** DESI autoencoder (end-to-end training). It set the all-time outlier record (12.73%) at the cost of a moderate NMAD increase (0.00785 → 0.00909). Despite grid alignment, real-data transfer remains challenging — see [Real 3D-HST Evaluation](#-real-3d-hst-evaluation) for transfer learning results.
 
-*Last updated: 2026-08-02 00:45 UTC*
+*Last updated: 2026-08-03 00:00 UTC*
 
 ---
 

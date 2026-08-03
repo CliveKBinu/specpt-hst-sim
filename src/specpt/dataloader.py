@@ -90,7 +90,22 @@ def load_grism_data(data_path, min_snr=2.5):
     return data
 
 
-def split_data(data, val_split=0.1, test_split=0.1, seed=42):
+def split_data(data, val_split=0.1, test_split=0.1, seed=42, group_col=None):
+    if group_col and group_col in data.columns:
+        from sklearn.model_selection import GroupShuffleSplit
+
+        n_groups = data[group_col].nunique()
+        if n_groups < len(data):
+            gss = GroupShuffleSplit(n_splits=1, test_size=val_split + test_split, random_state=seed)
+            train_idx, temp_idx = next(gss.split(data, groups=data[group_col]))
+            train_df = data.iloc[train_idx].reset_index(drop=True)
+            temp_df = data.iloc[temp_idx].reset_index(drop=True)
+            gss2 = GroupShuffleSplit(n_splits=1, test_size=0.5, random_state=seed)
+            test_idx, val_idx = next(gss2.split(temp_df, groups=temp_df[group_col]))
+            test_df = temp_df.iloc[test_idx].reset_index(drop=True)
+            val_df = temp_df.iloc[val_idx].reset_index(drop=True)
+            return train_df, val_df, test_df
+
     from sklearn.model_selection import train_test_split
 
     train_df, temp_test_df = train_test_split(

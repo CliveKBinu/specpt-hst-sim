@@ -32,6 +32,14 @@ sys.path.insert(0, str(REPO_ROOT))
 from src.specpt.model import SpecPT, SpectrumNormalizer
 from src.specpt.dataloader import AutoencoderDataset
 
+import yaml
+
+
+def load_model_config(config_path):
+    with open(config_path, "r") as f:
+        cfg = yaml.safe_load(f)
+    return cfg["model"]
+
 
 def load_checkpoint(path, model, device):
     print(f"Loading checkpoint: {path}")
@@ -370,6 +378,9 @@ def main():
                         help="Path to autoencoder checkpoint (.pth)")
     parser.add_argument("--data", required=True,
                         help="Path to real 3D-HST pickle file")
+    parser.add_argument("--config", default=None,
+                        help="Path to autoencoder YAML config (model architecture). "
+                             "Defaults to 512/8/3/3/2048 if omitted.")
     parser.add_argument("--run-name", default="autoencoder",
                         help="W&B run name for output filename prefix")
     parser.add_argument("--output-dir", default="outputs/autoencoder_reconstruction",
@@ -386,11 +397,23 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
 
-    model = SpecPT(
-        input_size=7781, d_model=512, nhead=8,
-        num_encoder_layers=3, num_decoder_layers=3,
-        dim_feedforward=2048, dropout=0.1,
-    )
+    if args.config:
+        mc = load_model_config(args.config)
+        model = SpecPT(
+            input_size=mc["input_size"],
+            d_model=mc["d_model"],
+            nhead=mc["nhead"],
+            num_encoder_layers=mc["num_encoder_layers"],
+            num_decoder_layers=mc["num_decoder_layers"],
+            dim_feedforward=mc["dim_feedforward"],
+            dropout=mc["dropout"],
+        )
+    else:
+        model = SpecPT(
+            input_size=7781, d_model=512, nhead=8,
+            num_encoder_layers=3, num_decoder_layers=3,
+            dim_feedforward=2048, dropout=0.1,
+        )
     print(f"Model: {sum(p.numel() for p in model.parameters()):,} params")
     model = load_checkpoint(args.ckpt, model, device)
 
