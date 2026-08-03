@@ -11,15 +11,15 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Last updated: 2026-08-01 01:50 UTC
-- Active experiments: fac_stage3 (Factorized Universal Encoder Stage 3, joint unfreeze on tigris)
+- Last updated: 2026-08-02 00:45 UTC
+- Active experiments: none (FUSE Stages 1–3 complete)
 - Best NMAD (synthetic): **0.00785 (exp_032)**
 - Best NMAD (real 3D-HST): **0.20767 (exp_045_RF_fixed)** — RF shrinkage on frozen 512-d latents
 - Best Catastrophic Outliers (synthetic): **15.17% (exp_032)**
 - Best Catastrophic Outliers (real): **49.82% (exp_045_RF_fixed)** — dominated by low-SNR tail (SNR<5: η 65%)
 - Total experiments completed: 39 (synthetic) + 24 (real 3D-HST, incl. USE A/B/C)
-- Total experiments running: 1 (fac_stage3)
-- Direction: FUSE Stage 1 (sim) proved the early z branch learns z from the conv map. **Stage 2 (real) confirmed the bottleneck**: the early conv map carries more real z than the 512-d latent (h_z probe 0.202 / R² +0.08 vs h_universal 0.215 / R² −0.04) — the projection/attention discards z. Direct z_head 0.184 is shrinkage-dominated (std_ratio 0.33). Stage 3 (joint sim+real, shared encoder unfrozen at 1e-5 with recon+distill anchors, λ_z ramped) running as job 32808 on **tigris** (GH200). All FUSE jobs on tigris (pytorch ARM env, wrappers scripts/slurm_*_factorized_tigris.sh). Design: docs/factorized_universal_encoder.md
+- Total experiments running: 0
+- Direction: FUSE complete. **Established**: (1) early conv-map extraction is a real but modest win (Stage 2 h_z probe 0.202 / R² +0.08 vs h_universal 0.215 / R² −0.04 — the 512-d projection discards some real z); (2) direct z_head NMAD is shrinkage-dominated and must not be trusted without range/R² checks; (3) unfreezing with recon+distill anchors prevents AE drift (drift 0.92, cos 0.998 — first successful controlled unfreeze) but holds the encoder too static to reorganize AND joint sim+real z-supervision contaminates the real pathway (sim z does not transfer, so 75%-sim batches degrade real z). All FUSE jobs ran on **tigris** (GH200, ~20× faster than sporc, pytorch ARM env). Design: docs/factorized_universal_encoder.md. Next candidates: harden Stage-2 probe claim with multi-seed + bootstrap CI; real-only controlled unfreeze (sim only in recon, never z); anti-shrinkage/calibration head; bigger multi-scale conv-map extractor; USE-student backbone swap.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.

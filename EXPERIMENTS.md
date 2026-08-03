@@ -62,9 +62,7 @@
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| fac_stage1 | scripts/pretrain_factorized_encoder.py | — | fac_stage1_stage1 | — | — | — | — | — | — | Factorized encoder Stage 1: sim-only, shared encoder FROZEN, early z branch (h_z) trains on clean sim z labels (14k rows, grism_id split). Implementation/signal test. Job 21442065. |
-| fac_stage2 | scripts/pretrain_factorized_encoder.py | — | fac_stage2_stage2 | — | — | — | — | — | — | Factorized encoder Stage 2: real-only, shared encoder FROZEN, early z branch on real. Diagnostic: do early conv features carry real z beyond the 512-d latent? Job 21443368. |
-| fac_stage3 | scripts/pretrain_factorized_encoder.py | — | fac_stage3_stage3 | — | — | — | — | — | — | Factorized encoder Stage 3: joint sim+real, shared encoder UNFROZEN at 1e-5 with recon+distill anchor, z branch init from fac_stage2 ckpt, λ_z ramped 10 ep. Job 32808 (tigris). |
+| — | — | — | — | — | — | — | — | — | — | No experiments currently active. FUSE Stages 1–3 complete; next direction TBD. |
 
 **Note:** FUSE jobs now run on the **tigris** cluster (GH200 GPUs, partition=tigris, pytorch ARM conda env, wrappers `scripts/slurm_*_factorized_tigris.sh`). Sporc A100 nodes were down/drained; tigris is ~20x faster (1s/epoch vs ~20s).
 
@@ -87,7 +85,9 @@ A trainable encoder with two explicit outputs: a **shared h_universal** (reconst
 |-------|------|----------------|----------|---------|--------|
 | 1 | sim | frozen | trainable | implementation / signal test (clean z) | ✅ Complete (ep 88) — best sim val NMAD **0.14898**. Branch learns z from frozen conv map. Eval (tigris 32806): h_z probe 0.2347 / R² -0.01 — sim-trained branch features do NOT transfer to real. |
 | 2 | real | frozen | trainable | does early conv info carry real z? | ✅ Complete (ep 60, tigris 32805) — best REAL val NMAD **0.17449**. Eval (tigris 32807): z_head direct 0.184 but **shrinkage** (pred [0.38,1.92], std_ratio 0.33, R² −0.24); **h_z probe 0.202 / R² +0.08 vs h_universal 0.215 / R² −0.04** — first non-shrinkage win: the early conv map carries real z beyond the 512-d latent. |
-| 3 | joint sim+real | trainable @ 1e-5 | trainable @ 3e-4 | the actual factorization (recon+distill anchor on, λ_z ramped) | 🚧 Running (tigris 32808, init from stage2 ckpt) |
+| 3 | joint sim+real | trainable @ 1e-5 | trainable @ 3e-4 | the actual factorization (recon+distill anchor on, λ_z ramped) | ✅ Complete (ep 21/100, tigris 32808) — best REAL val NMAD **0.23673** (ep 6). **Never beat its own Stage-2 init (0.174).** Anchors held AE identity (drift 0.92, cos 0.998 — first successful controlled unfreeze, no exp_048/051 shredding) but the encoder barely moved (cos 0.998) so unfreezing bought nothing; sim-dominated batches (real_frac 0.25) pulled h_z toward sim geometry, degrading real z monotonically with the λ_z ramp. Eval not yet run. |
+
+**FUSE verdict:** Early conv-map extraction is a *real but modest* win (Stage 2: h_z probe **0.202 / R² +0.08** vs h_universal **0.215 / R² −0.04**) — the 512-d projection does discard some real z. Direct z_head NMAD (0.184) is shrinkage-dominated (pred collapse std_ratio 0.33, R² −0.24) and must not be read as a win. Unfreezing with the current anchor balance is wash-to-harm (Stage 3): anchors prevent AE drift but hold the encoder too static to reorganize, while joint sim+real z-supervision contaminates the real pathway (consistent with Stage 1's sim→real non-transfer). **Gate NOT passed**: best non-shrinkage result 0.202 (h_z probe) does not beat the gate's 0.2162-with-positive-R² unambiguously (single-seed, no probe CI, and h_z was z-supervised while h_universal was not — comparison is confounded).
 
 Gate: real test NMAD must beat 0.2162 (AE frozen-latent baseline) with positive R² and no prediction-range collapse. Job 21442065 = fac_stage1.
 
@@ -178,4 +178,4 @@ After 9 experiments (exp_035–051) on the regridded autoencoder with real 3D-HS
 
 **Conclusion: The frozen autoencoder encoder produces features that are z-entangled for reconstruction, not z-discriminative. No downstream method can extract z-signal that isn't there. The bottleneck is the encoder itself.**
 
-*Last updated: 2026-08-01 01:50 UTC*
+*Last updated: 2026-08-02 00:45 UTC*
