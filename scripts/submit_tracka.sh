@@ -1,10 +1,15 @@
 #!/bin/bash
 # Chain a Track A autoencoder job into its redshift-training job on the cluster.
 #
-# Submits the AE training job (tigris) then, only after it completes OK,
-# submits the redshift-training job (sporc) with an SLURM afterok dependency.
+# Submits the AE training job then, only after it completes OK, submits the
+# redshift-training job with an SLURM afterok dependency. Both jobs run on the
+# SAME cluster (tigris) so the cross-job dependency is valid — SLURM
+# dependencies cannot span separate clusters (tigris vs sporc).
 #
-# Usage (run on the cluster login node, or via ssh from the orchestrator):
+# Must be run from the tigris login node (tigris.rc.rit.edu) where the tigris
+# partition exists.
+#
+# Usage:
 #     bash scripts/submit_tracka.sh <ae_exp_name> <z_exp_name>
 #     bash scripts/submit_tracka.sh autoencoder_tracka_control tracka_control_z
 set -euo pipefail
@@ -19,6 +24,6 @@ AE_JOB=$(sbatch --parsable "scripts/slurm_autoencoder_tigris.sh" "$AE_EXP")
 echo "AE job id: $AE_JOB"
 
 echo "Submitting redshift job: $Z_EXP (afterok:$AE_JOB)"
-sbatch --dependency="afterok:${AE_JOB}" "scripts/slurm_train.sh" "$Z_EXP"
+sbatch --dependency="afterok:${AE_JOB}" "scripts/slurm_train_tigris.sh" "$Z_EXP"
 
 echo "DONE — AE=$AE_JOB chained into $Z_EXP"
