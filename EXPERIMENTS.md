@@ -62,12 +62,12 @@
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| ae_tracka_control | configs/autoencoder_tracka_control.yaml | — | — | — | — | — | — | — | — | TRACK A: AE from scratch, regrid sim v3, d_model 512 / nhead 8 / 3+3 / ff 2048 (control, matches historical arch). 1,120,475,621 params. Grouped split by TARGETID. |
-| ae_tracka_small | configs/autoencoder_tracka_small.yaml | — | — | — | — | — | — | — | — | TRACK A: AE from scratch, regrid sim v3, d_model 256 / nhead 4 / 2+2 / ff 1024. 1,038,260,453 params. Grouped split by TARGETID. |
-| ae_tracka_tiny | configs/autoencoder_tracka_tiny.yaml | — | — | — | — | — | — | — | — | TRACK A: AE from scratch, regrid sim v3, d_model 128 / nhead 4 / 1+1 / ff 512. 1,003,120,741 params. Grouped split by TARGETID. |
-| tracka_control_z | configs/tracka_control_z.yaml | — | — | — | — | — | — | — | — | TRACK A: redshift head (frozen ae_tracka_control backbone), regrid sim v3, head-only training. Runs after ae_tracka_control via SLURM afterok. |
-| tracka_small_z | configs/tracka_small_z.yaml | — | — | — | — | — | — | — | — | TRACK A: redshift head (frozen ae_tracka_small backbone), regrid sim v3, head-only training. Runs after ae_tracka_small via SLURM afterok. |
-| tracka_tiny_z | configs/tracka_tiny_z.yaml | — | — | — | — | — | — | — | — | TRACK A: redshift head (frozen ae_tracka_tiny backbone), regrid sim v3, head-only training. Runs after ae_tracka_tiny via SLURM afterok. |
+| ae_tracka_control | configs/autoencoder_tracka_control.yaml | — | — | — | — | — | — | — | — | TRACK A: AE from scratch, regrid sim v3, d_model 512 / nhead 8 / 3+3 / ff 2048 (control, matches historical arch). 1,120,475,621 params. Grouped split by TARGETID. SUBMITTED (job 38007). |
+| ae_tracka_small | configs/autoencoder_tracka_small.yaml | — | — | — | — | — | — | — | — | TRACK A: AE from scratch, regrid sim v3, d_model 256 / nhead 4 / 2+2 / ff 1024. 1,038,260,453 params. Grouped split by TARGETID. SUBMITTED (job 38009). |
+| ae_tracka_tiny | configs/autoencoder_tracka_tiny.yaml | — | — | — | — | — | — | — | — | TRACK A: AE from scratch, regrid sim v3, d_model 128 / nhead 4 / 1+1 / ff 512. 1,003,120,741 params. Grouped split by TARGETID. SUBMITTED (job 38011). |
+| tracka_control_z | configs/tracka_control_z.yaml | — | — | — | — | — | — | — | — | TRACK A: redshift head (frozen ae_tracka_control backbone), regrid sim v3, head-only training. SUBMITTED (job 38008, afterok 38007). |
+| tracka_small_z | configs/tracka_small_z.yaml | — | — | — | — | — | — | — | — | TRACK A: redshift head (frozen ae_tracka_small backbone), regrid sim v3, head-only training. SUBMITTED (job 38010, afterok 38009). |
+| tracka_tiny_z | configs/tracka_tiny_z.yaml | — | — | — | — | — | — | — | — | TRACK A: redshift head (frozen ae_tracka_tiny backbone), regrid sim v3, head-only training. SUBMITTED (job 38012, afterok 38011). |
 
 **Track A premise:** test whether reducing transformer capacity (d_model/nhead/layers/ff) of an AE trained from scratch on regrid sim data yields a representation with better downstream redshift utility than the 512/8/3/3/2048 baseline. NOTE: total params barely shrink (1.12B→1.00B) because the decoder `linear2` (~970M) dominates — Track A isolates transformer capacity, NOT overall AE size. If no transfer gain, Track B (decoder bottleneck) is next.
 

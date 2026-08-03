@@ -18,7 +18,7 @@ systematic experimentation.
 - Best Catastrophic Outliers (synthetic): **15.17% (exp_032)**
 - Best Catastrophic Outliers (real): **49.82% (exp_045_RF_fixed)** — dominated by low-SNR tail (SNR<5: η 65%)
 - Total experiments completed: 39 (synthetic) + 24 (real 3D-HST, incl. USE A/B/C)
-- Total experiments running: 6 (3 AE + 3 redshift, pending submission)
+- Total experiments running: 6 (3 AE + 3 redshift, submitted on tigris: 38007/09/11 → 38008/10/12)
 - Direction: Track A tests whether a smaller transformer AE (reduced d_model/nhead/layers/ff, trained from scratch on regrid sim) produces a latent with better downstream redshift utility than the frozen 512/8/3/3/2048 baseline. All six Track A runs use identical training settings, regrid sim v3 data, and a grouped TARGETID split so the only variable is AE architecture. Redshift heads train on frozen backbones; each AE→redshift pair is chained with SLURM afterok. NOTE: transformer capacity is a small slice of total AE size (decoder linear2 ~970M dominates; 1.12B→1.00B across Track A) — if no transfer gain, next step is Track B (decoder bottleneck).
 
 ## Frozen Architecture Constraints
