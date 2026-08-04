@@ -62,14 +62,20 @@
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| ae_tracka_control | configs/autoencoder_tracka_control.yaml | — | — | — | — | — | — | — | — | TRACK A: AE from scratch, regrid sim v3, d_model 512 / nhead 8 / 3+3 / ff 2048 (control, matches historical arch). 1,120,475,621 params. Grouped split by TARGETID. SUBMITTED (job 38007). |
-| ae_tracka_small | configs/autoencoder_tracka_small.yaml | — | — | — | — | — | — | — | — | TRACK A: AE from scratch, regrid sim v3, d_model 256 / nhead 4 / 2+2 / ff 1024. 1,038,260,453 params. Grouped split by TARGETID. SUBMITTED (job 38009). |
-| ae_tracka_tiny | configs/autoencoder_tracka_tiny.yaml | — | — | — | — | — | — | — | — | TRACK A: AE from scratch, regrid sim v3, d_model 128 / nhead 4 / 1+1 / ff 512. 1,003,120,741 params. Grouped split by TARGETID. SUBMITTED (job 38011). |
-| tracka_control_z | configs/tracka_control_z.yaml | — | — | — | — | — | — | — | — | TRACK A: redshift head (frozen ae_tracka_control backbone), regrid sim v3, head-only training. SUBMITTED (job 38008, afterok 38007). |
-| tracka_small_z | configs/tracka_small_z.yaml | — | — | — | — | — | — | — | — | TRACK A: redshift head (frozen ae_tracka_small backbone), regrid sim v3, head-only training. SUBMITTED (job 38010, afterok 38009). |
-| tracka_tiny_z | configs/tracka_tiny_z.yaml | — | — | — | — | — | — | — | — | TRACK A: redshift head (frozen ae_tracka_tiny backbone), regrid sim v3, head-only training. SUBMITTED (job 38012, afterok 38011). |
+| tracka_control_z | configs/tracka_control_z.yaml | — | — | — | — | — | — | — | — | TRACK A: redshift head (frozen ae_tracka_control backbone). First attempt OOM at 64g (job 38008). RERUNNING at 128g (job 41183, tigris). |
+| tracka_control_z_eval | configs/tracka_control_z.yaml | — | — | — | — | — | — | — | — | TRACK A: real 3D-HST eval of control z. PENDING — will submit after 41183 completes. |
+| tracka_small_z_eval | configs/tracka_small_z.yaml | — | — | — | — | — | — | — | — | TRACK A: real 3D-HST eval of small z (synthetic NMAD 0.01321). SUBMITTED (job 21445774, sporc). |
+| tracka_tiny_z_eval | configs/tracka_tiny_z.yaml | — | — | — | — | — | — | — | — | TRACK A: real 3D-HST eval of tiny z (synthetic NMAD 0.06776). SUBMITTED (job 21445775, sporc). |
 
-**Track A premise:** test whether reducing transformer capacity (d_model/nhead/layers/ff) of an AE trained from scratch on regrid sim data yields a representation with better downstream redshift utility than the 512/8/3/3/2048 baseline. NOTE: total params barely shrink (1.12B→1.00B) because the decoder `linear2` (~970M) dominates — Track A isolates transformer capacity, NOT overall AE size. If no transfer gain, Track B (decoder bottleneck) is next.
+**Track A synthetic results (completed):**
+
+| AE arch | AE test cos sim | Z test NMAD | Z test η | Z test RMSE | Status |
+|---------|----------------|-------------|----------|-------------|--------|
+| control 512/8/3+3 | 0.9949 | — | — | — | AE done, Z rerunning (OOM→128g) |
+| small 256/4/2+2 | 0.9831 | **0.01321** | **15.37%** | 0.3384 | ✅ Best Track A candidate |
+| tiny 128/4/1+1 | 0.9415 | 0.06776 | 26.95% | 0.2981 | ❌ Over-compressed |
+
+**Track A premise:** test whether reducing transformer capacity yields better downstream redshift utility. Small is the current best (synthetic NMAD 0.01321). Tiny is over-compressed. Control unknown until rerun completes. Real 3D-HST eval in progress for small/tiny.
 
 **Note:** FUSE jobs now run on the **tigris** cluster (GH200 GPUs, partition=tigris, pytorch ARM conda env, wrappers `scripts/slurm_*_factorized_tigris.sh`). Sporc A100 nodes were down/drained; tigris is ~20x faster (1s/epoch vs ~20s).
 
