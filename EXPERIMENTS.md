@@ -62,10 +62,7 @@
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| tracka_control_z | configs/tracka_control_z.yaml | — | — | — | — | — | — | — | — | TRACK A: redshift head (frozen ae_tracka_control backbone). First attempt OOM at 64g (job 38008). RERUNNING at 128g (job 41183, tigris). |
-| tracka_control_z_eval | configs/tracka_control_z.yaml | — | — | — | — | — | — | — | — | TRACK A: real 3D-HST eval of control z. PENDING — will submit after 41183 completes. |
-| tracka_small_z_eval | configs/tracka_small_z.yaml | — | — | — | — | — | — | — | — | TRACK A: real 3D-HST eval of small z (synthetic NMAD 0.01321). SUBMITTED (job 21445774, sporc). |
-| tracka_tiny_z_eval | configs/tracka_tiny_z.yaml | — | — | — | — | — | — | — | — | TRACK A: real 3D-HST eval of tiny z (synthetic NMAD 0.06776). SUBMITTED (job 21445775, sporc). |
+| tracka_control_z | configs/tracka_control_z.yaml | — | — | — | — | — | — | — | — | TRACK A: redshift head (frozen ae_tracka_control). First attempt OOM at 64g (job 38008). RERUNNING at 128g (job 41183, tigris). |
 
 **Track A synthetic results (completed):**
 
@@ -75,7 +72,14 @@
 | small 256/4/2+2 | 0.9831 | **0.01321** | **15.37%** | 0.3384 | ✅ Best Track A candidate |
 | tiny 128/4/1+1 | 0.9415 | 0.06776 | 26.95% | 0.2981 | ❌ Over-compressed |
 
-**Track A premise:** test whether reducing transformer capacity yields better downstream redshift utility. Small is the current best (synthetic NMAD 0.01321). Tiny is over-compressed. Control unknown until rerun completes. Real 3D-HST eval in progress for small/tiny.
+**Track A real 3D-HST eval results (completed):**
+
+| AE arch | Real NMAD | Real η | Real R² | pred_std | std_ratio | Real bias | Verdict |
+|---------|-----------|--------|---------|----------|-----------|-----------|---------|
+| small 256/4/2+2 | **0.485** | **73.1%** | **-4.65** | 0.942 | 1.69 | +0.319 | ❌ Catastrophic degradation vs frozen AE (0.216) |
+| tiny 128/4/1+1 | 0.620 | 81.5% | -4.27 | 0.685 | 1.23 | +0.413 | ❌ Over-compressed + catastrophic degradation |
+
+**Track A verdict:** FAILED on real data. Reducing AE transformer capacity via d_model/nhead/layers/ff does NOT improve real-data redshift utility — it catastrophically degrades it. The smaller AE encoders lose critical z-discriminative features for real spectra. Sim-to-real gap widens dramatically with reduced capacity (small: synthetic NMAD 0.013 → real 0.485; tiny: 0.068 → 0.620). Track A is abandoned. Move to Track B (decoder bottleneck) or alternative approaches.
 
 **Note:** FUSE jobs now run on the **tigris** cluster (GH200 GPUs, partition=tigris, pytorch ARM conda env, wrappers `scripts/slurm_*_factorized_tigris.sh`). Sporc A100 nodes were down/drained; tigris is ~20x faster (1s/epoch vs ~20s).
 

@@ -119,5 +119,5 @@ N/A,exp_044,if2qx78l,exp_044,failed,,,,,,,,FAILED: shape bug — y arrays saved 
 38010,tracka_small_z,,,completed,,,,,,,,TRACK A: redshift head (frozen ae_tracka_small). COMPLETED. Test NMAD 0.01321, eta 15.37%, RMSE 0.3384. Best Track A candidate.
 38012,tracka_tiny_z,,,completed,,,,,,,,TRACK A: redshift head (frozen ae_tracka_tiny). COMPLETED. Test NMAD 0.06776, eta 26.95%, RMSE 0.2981. Over-compressed.
 41183,tracka_control_z_rerun,,,submitted,,,,,,,,TRACK A: redshift head (frozen ae_tracka_control) RERUN at 128g memory. afterok N/A (standalone).
-21445774,tracka_small_z_eval,,,submitted,,,,,,,,TRACK A: real 3D-HST eval of tracka_small_z (synthetic NMAD 0.01321). Sporc.
-21445775,tracka_tiny_z_eval,,,submitted,,,,,,,,TRACK A: real 3D-HST eval of tracka_tiny_z (synthetic NMAD 0.06776). Sporc.
+21445774,tracka_small_z_eval,,,completed,,,,,,,,TRACK A: real 3D-HST eval of tracka_small_z. COMPLETED. NMAD 0.485, eta 73.1%, R² -4.65, bias +0.319. CATASTROPHIC degradation vs frozen AE baseline (0.216). Predictions collapse to z~2 training prior.
+21445775,tracka_tiny_z_eval,,,completed,,,,,,,,TRACK A: real 3D-HST eval of tracka_tiny_z. COMPLETED. NMAD 0.620, eta 81.5%, R² -4.27, bias +0.413. Over-compressed + catastrophic degradation.

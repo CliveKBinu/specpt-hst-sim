@@ -11,15 +11,15 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Last updated: 2026-08-03 16:00 UTC
-- Active experiment: Track A — AE capacity sweep completed. Small (256/4/2+2) is the best candidate (synthetic NMAD 0.01321). Control z rerunning at 128g (job 41183). Real 3D-HST eval submitted for small (21445774) and tiny (21445775).
+- Last updated: 2026-08-03 17:00 UTC
+- Active experiment: Track A completed on real 3D-HST — FAILED catastrophically. Both small and tiny degrade from frozen AE baseline (real NMAD 0.216) to 0.485 and 0.620 respectively. Track A abandoned.
 - Best NMAD (synthetic): **0.00785 (exp_032)**
 - Best NMAD (real 3D-HST): **0.20767 (exp_045_RF_fixed)** — RF shrinkage on frozen 512-d latents
 - Best Catastrophic Outliers (synthetic): **15.17% (exp_032)**
-- Best Catastrophic Outliers (real): **49.82% (exp_045_RF_fixed)** — dominated by low-SNR tail (SNR<5: η 65%)
-- Total experiments completed: 39 (synthetic) + 24 (real 3D-HST, incl. USE A/B/C)
-- Total experiments running: 3 (control z rerun 41183, small eval 21445774, tiny eval 21445775)
-- Direction: Track A synthetic sweep done. Small AE (d256/n4/2+2) achieved best synthetic NMAD 0.01321 (vs tiny 0.06776). Real 3D-HST evaluation in progress. Control z needs 128g memory (OOM at 64g). Next: compare real NMAD/R²/prediction spread across Track A configs; if small beats frozen AE baseline (0.216), proceed to Track B (decoder bottleneck).
+- Best Catastrophic Outliers (real): **49.82% (exp_045_RF_fixed)** — dominated by low-SNR tail
+- Total experiments completed: 39 (synthetic) + 26 (real 3D-HST, incl. Track A small/tiny)
+- Total experiments running: 1 (control z rerun 41183 at 128g on tigris — can be cancelled)
+- Direction: Track A abandoned. Reducing AE transformer capacity catastrophically degrades real-data NMAD (0.216 → 0.485 for small, 0.620 for tiny). Sim-to-real gap widens with reduced capacity. Next: explore alternative approaches — decoder bottleneck, head-only tuning on frozen baseline, or SNR-aware training.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.

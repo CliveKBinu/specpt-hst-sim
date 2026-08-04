@@ -297,8 +297,19 @@ def main():
     print(f"Saved: {preds_path}")
 
     metrics_path = os.path.join(output_dir, f"{args.exp_name}_metrics.json")
+
+    class NpEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, (np.integer,)):
+                return int(obj)
+            if isinstance(obj, (np.floating,)):
+                return float(obj)
+            if isinstance(obj, np.ndarray):
+                return obj.tolist()
+            return super().default(obj)
+
     with open(metrics_path, "w") as f:
-        json.dump(metrics, f, indent=2)
+        json.dump(metrics, f, indent=2, cls=NpEncoder)
     print(f"Saved: {metrics_path}")
 
     try:

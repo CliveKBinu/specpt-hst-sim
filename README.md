@@ -27,12 +27,7 @@
 
 | Experiment | Approach | Test NMAD | Test η | Status |
 |------------|----------|-----------|--------|--------|
-| tracka_control_z | Redshift head on frozen ae_tracka_control | — | — | rerunning (41183, 128g) |
-| tracka_control_z_eval | Real 3D-HST eval of control z | — | — | pending |
-| tracka_small_z | Redshift head on frozen ae_tracka_small | **0.01321** | **15.37%** | ✅ synthetic done |
-| tracka_tiny_z | Redshift head on frozen ae_tracka_tiny | 0.06776 | 26.95% | ✅ synthetic done |
-| tracka_small_z_eval | Real 3D-HST eval of small z | — | — | submitted (21445774) |
-| tracka_tiny_z_eval | Real 3D-HST eval of tiny z | — | — | submitted (21445775) |
+| tracka_control_z | Redshift head on frozen ae_tracka_control | — | — | rerunning (41183, 128g) — can be cancelled |
 
 > ℹ️ **Track A (AE capacity sweep).** Retrain the SpecPT autoencoder from scratch on regridded sim data (`grism_training_sim_v3_regrid.parquet`) with reduced transformer capacity, then freeze it and train a redshift head on top. Each AE→redshift pair is chained with SLURM `afterok` on **tigris** (both AE and redshift run on GH200; dependencies can't span clusters). Grouped split by TARGETID prevents leakage. NOTE: transformer capacity is only a small slice of total AE size — the decoder `linear2` (~970M params) dominates, so total params only shrink 1.12B→1.00B across the three configs. If no real-data transfer gain, the next test is a decoder bottleneck (Track B).
 
