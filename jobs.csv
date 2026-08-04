@@ -125,3 +125,6 @@ N/A,exp_044,if2qx78l,exp_044,failed,,,,,,,,FAILED: shape bug — y arrays saved 
 41788,tracka_control_z_transfer,,,completed,,,,,,,,TRANSFER: head-only fine-tune of sim-trained control on real 3D-HST. Tigris GH200. COMPLETED. NMAD 0.26141, eta 57.14%, R2 -237.3, pred_std 0.240.
 41789,tracka_small_z_transfer,,,completed,,,,,,,,TRANSFER: head-only fine-tune of sim-trained small on real 3D-HST. Tigris GH200. COMPLETED. NMAD 0.26422, eta 57.15%, R2 -240.1, pred_std 0.234.
 41790,tracka_tiny_z_transfer,,,completed,,,,,,,,TRANSFER: head-only fine-tune of sim-trained tiny on real 3D-HST. Tigris GH200. COMPLETED. NMAD 0.25668, eta 55.96%, R2 -229.9, pred_std 0.207. Strong shrinkage.
+42004,tracka_control_z_partial_unfreeze,,,submitted,,,,,,,,PARTIAL UNFREEZE: last 2 encoder layers + head on real 3D-HST. Enc lr 1e-6, head lr 1e-5. Tigris GH200.
+42006,tracka_small_z_partial_unfreeze,,,submitted,,,,,,,,PARTIAL UNFREEZE: last 2 encoder layers + head on real 3D-HST. Enc lr 1e-6, head lr 1e-5. Tigris GH200.
+42005,tracka_tiny_z_partial_unfreeze,,,submitted,,,,,,,,PARTIAL UNFREEZE: only encoder layer (1 total) + head on real 3D-HST. Enc lr 1e-6, head lr 1e-5. Tigris GH200.
