@@ -118,6 +118,10 @@ N/A,exp_044,if2qx78l,exp_044,failed,,,,,,,,FAILED: shape bug — y arrays saved 
 38008,tracka_control_z,,,failed,,,,,,,,TRACK A: redshift head (frozen ae_tracka_control). FAILED: OUT_OF_MEMORY at 64g (peak RSS 67.6GB). Rerun at 128g = job 41183.
 38010,tracka_small_z,,,completed,,,,,,,,TRACK A: redshift head (frozen ae_tracka_small). COMPLETED. Test NMAD 0.01321, eta 15.37%, RMSE 0.3384. Best Track A candidate.
 38012,tracka_tiny_z,,,completed,,,,,,,,TRACK A: redshift head (frozen ae_tracka_tiny). COMPLETED. Test NMAD 0.06776, eta 26.95%, RMSE 0.2981. Over-compressed.
-41685,tracka_control_z_eval,,,submitted,,,,,,,,TRACK A: real 3D-HST eval of tracka_control_z (synthetic NMAD 0.01154). Tigris GH200.
+41685,tracka_control_z_eval,,,completed,,,,,,,,TRACK A: real 3D-HST eval of tracka_control_z (synthetic NMAD 0.01154). Tigris GH200. COMPLETED.
 21445774,tracka_small_z_eval,,,completed,,,,,,,,TRACK A: real 3D-HST eval of tracka_small_z. COMPLETED. NMAD 0.485, eta 73.1%, R² -4.65, bias +0.319. CATASTROPHIC degradation vs frozen AE baseline (0.216). Predictions collapse to z~2 training prior.
 21445775,tracka_tiny_z_eval,,,completed,,,,,,,,TRACK A: real 3D-HST eval of tracka_tiny_z. COMPLETED. NMAD 0.620, eta 81.5%, R² -4.27, bias +0.413. Over-compressed + catastrophic degradation.
+21445979,tracka_control_z_eval_dup,,,submitted,,,,,,,,DUPLICATE: same eval as 41685 (already completed). Sporc. Can be cancelled.
+41788,tracka_control_z_transfer,,,submitted,,,,,,,,TRANSFER: head-only fine-tune of sim-trained control on real 3D-HST. Tigris GH200. AE frozen, lr=1e-5, 150 ep.
+41789,tracka_small_z_transfer,,,submitted,,,,,,,,TRANSFER: head-only fine-tune of sim-trained small on real 3D-HST. Tigris GH200. AE frozen, lr=1e-5, 150 ep.
+41790,tracka_tiny_z_transfer,,,submitted,,,,,,,,TRANSFER: head-only fine-tune of sim-trained tiny on real 3D-HST. Tigris GH200. AE frozen, lr=1e-5, 150 ep.
