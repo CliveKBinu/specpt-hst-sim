@@ -122,6 +122,6 @@ N/A,exp_044,if2qx78l,exp_044,failed,,,,,,,,FAILED: shape bug — y arrays saved 
 21445774,tracka_small_z_eval,,,completed,,,,,,,,TRACK A: real 3D-HST eval of tracka_small_z. COMPLETED. NMAD 0.485, eta 73.1%, R² -4.65, bias +0.319. CATASTROPHIC degradation vs frozen AE baseline (0.216). Predictions collapse to z~2 training prior.
 21445775,tracka_tiny_z_eval,,,completed,,,,,,,,TRACK A: real 3D-HST eval of tracka_tiny_z. COMPLETED. NMAD 0.620, eta 81.5%, R² -4.27, bias +0.413. Over-compressed + catastrophic degradation.
 21445979,tracka_control_z_eval_dup,,,cancelled,,,,,,,,Duplicate of 41685 (already completed). Cancelled per user request.
-41788,tracka_control_z_transfer,,,submitted,,,,,,,,TRANSFER: head-only fine-tune of sim-trained control on real 3D-HST. Tigris GH200. AE frozen, lr=1e-5, 150 ep.
-41789,tracka_small_z_transfer,,,submitted,,,,,,,,TRANSFER: head-only fine-tune of sim-trained small on real 3D-HST. Tigris GH200. AE frozen, lr=1e-5, 150 ep.
-41790,tracka_tiny_z_transfer,,,submitted,,,,,,,,TRANSFER: head-only fine-tune of sim-trained tiny on real 3D-HST. Tigris GH200. AE frozen, lr=1e-5, 150 ep.
+41788,tracka_control_z_transfer,,,completed,,,,,,,,TRANSFER: head-only fine-tune of sim-trained control on real 3D-HST. Tigris GH200. COMPLETED. NMAD 0.26141, eta 57.14%, R2 -237.3, pred_std 0.240.
+41789,tracka_small_z_transfer,,,completed,,,,,,,,TRANSFER: head-only fine-tune of sim-trained small on real 3D-HST. Tigris GH200. COMPLETED. NMAD 0.26422, eta 57.15%, R2 -240.1, pred_std 0.234.
+41790,tracka_tiny_z_transfer,,,completed,,,,,,,,TRANSFER: head-only fine-tune of sim-trained tiny on real 3D-HST. Tigris GH200. COMPLETED. NMAD 0.25668, eta 55.96%, R2 -229.9, pred_std 0.207. Strong shrinkage.

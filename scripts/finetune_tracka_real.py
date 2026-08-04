@@ -118,19 +118,37 @@ def load_model(config, checkpoint_path):
     return model
 
 
-def freeze_backbone(model):
+def freeze_backbone(model, unfreeze_encoder_layers=0):
     for p in model.parameters():
         p.requires_grad = False
+
     for p in model.mlp_blocks.parameters():
         p.requires_grad = True
     for p in model.prediction.parameters():
         p.requires_grad = True
     for p in model.attention.parameters():
         p.requires_grad = True
+
+    unfrozen_enc_names = []
+    if unfreeze_encoder_layers > 0:
+        enc_layers = model.pretrained_model.transformer_encoder.layers
+        n = len(enc_layers)
+        for i in range(n - unfreeze_encoder_layers, n):
+            for p in enc_layers[i].parameters():
+                p.requires_grad = True
+            unfrozen_enc_names.append(f"encoder.layers[{i}]")
+
     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
     frozen = sum(p.numel() for p in model.parameters() if not p.requires_grad)
+    head_trainable = sum(p.numel() for p in model.mlp_blocks.parameters() if p.requires_grad)
+    head_trainable += sum(p.numel() for p in model.prediction.parameters() if p.requires_grad)
+    head_trainable += sum(p.numel() for p in model.attention.parameters() if p.requires_grad)
+    enc_trainable = trainable - head_trainable
     print(f"  Frozen AE: {frozen:,} params")
-    print(f"  Trainable head: {trainable:,} params")
+    print(f"  Trainable head: {head_trainable:,} params")
+    if unfrozen_enc_names:
+        print(f"  Unfrozen encoder: {enc_trainable:,} params in {unfrozen_enc_names}")
+    return unfrozen_enc_names
 
 
 def train_one_epoch(model, loader, criterion, optimizer, device):
@@ -189,6 +207,10 @@ def main():
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--val-split", type=float, default=0.1)
     ap.add_argument("--test-split", type=float, default=0.1)
+    ap.add_argument("--unfreeze-encoder-layers", type=int, default=0,
+                    help="Unfreeze last N encoder layers (0 = head-only)")
+    ap.add_argument("--encoder-lr", type=float, default=1e-6,
+                    help="Learning rate for unfrozen encoder layers")
     args = ap.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -199,7 +221,7 @@ def main():
 
     config = load_config(args.config)
     model = load_model(config, args.checkpoint)
-    freeze_backbone(model)
+    unfrozen = freeze_backbone(model, args.unfreeze_encoder_layers)
     model = model.to(device)
 
     train_df, val_df, test_df = prepare_real_data(args.val_split, args.test_split, args.seed)
@@ -213,8 +235,23 @@ def main():
     from src.specpt.losses import NMADLoss
     criterion = NMADLoss(normalization_factor="std")
 
-    trainable = [p for p in model.parameters() if p.requires_grad]
-    optimizer = torch.optim.AdamW(trainable, lr=args.lr, weight_decay=args.weight_decay)
+    head_params = [p for p in model.mlp_blocks.parameters() if p.requires_grad]
+    head_params += [p for p in model.prediction.parameters() if p.requires_grad]
+    head_params += [p for p in model.attention.parameters() if p.requires_grad]
+    enc_params = [p for p in model.pretrained_model.parameters() if p.requires_grad]
+
+    if enc_params:
+        optimizer = torch.optim.AdamW(
+            [
+                {"params": head_params, "lr": args.lr},
+                {"params": enc_params, "lr": args.encoder_lr},
+            ],
+            weight_decay=args.weight_decay,
+        )
+        print(f"  Optimizer: head lr={args.lr:.1e}, encoder lr={args.encoder_lr:.1e}")
+    else:
+        optimizer = torch.optim.AdamW(head_params, lr=args.lr, weight_decay=args.weight_decay)
+        print(f"  Optimizer: head lr={args.lr:.1e}")
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, mode="min", factor=0.1, patience=15, min_lr=1e-7
     )
@@ -229,6 +266,9 @@ def main():
             "checkpoint": args.checkpoint,
             "epochs": args.epochs,
             "lr": args.lr,
+            "encoder_lr": args.encoder_lr,
+            "unfreeze_encoder_layers": args.unfreeze_encoder_layers,
+            "unfrozen_encoder_layers": unfrozen,
             "weight_decay": args.weight_decay,
             "batch_size": args.batch_size,
             "patience": args.patience,
