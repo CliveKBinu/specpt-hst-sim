@@ -63,6 +63,9 @@
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
 | tracka_control_z | configs/tracka_control_z.yaml | — | — | — | — | — | — | — | — | TRACK A: redshift head (frozen ae_tracka_control). COMPLETED at 128g. Test NMAD 0.01154, η 14.58%, RMSE 0.319. Best Track A synthetic result. Real eval SUBMITTED (job 41685, tigris). |
+| tracka_control_z_transfer | configs/tracka_control_z.yaml | — | — | — | — | — | — | — | — | TRANSFER: head-only fine-tuning of sim-trained control on real 3D-HST. AE frozen, head trainable, lr=1e-5, 150 ep, patience 25. Zero-shot baseline: NMAD 0.469. |
+| tracka_small_z_transfer | configs/tracka_small_z.yaml | — | — | — | — | — | — | — | — | TRANSFER: head-only fine-tuning of sim-trained small on real 3D-HST. AE frozen, head trainable, lr=1e-5, 150 ep, patience 25. Zero-shot baseline: NMAD 0.485. |
+| tracka_tiny_z_transfer | configs/tracka_tiny_z.yaml | — | — | — | — | — | — | — | — | TRANSFER: head-only fine-tuning of sim-trained tiny on real 3D-HST. AE frozen, head trainable, lr=1e-5, 150 ep, patience 25. Zero-shot baseline: NMAD 0.620. |
 
 **Track A synthetic results (completed):**
 
