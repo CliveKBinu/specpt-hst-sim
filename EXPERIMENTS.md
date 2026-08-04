@@ -62,7 +62,7 @@
 ## Running Experiments
 | exp | config | run_id | run_name | best_nmad | final_nmad | final_outs | val_z_bias | val_rmse | val_loss | notes |
 |-----|--------|--------|----------|-----------|------------|------------|------------|----------|----------|-------|
-| tracka_control_z | configs/tracka_control_z.yaml | — | — | — | — | — | — | — | — | TRACK A: redshift head (frozen ae_tracka_control). First attempt OOM at 64g (job 38008). RERUNNING at 128g (job 41183, tigris). |
+| tracka_control_z | configs/tracka_control_z.yaml | — | — | — | — | — | — | — | — | TRACK A: redshift head (frozen ae_tracka_control). COMPLETED at 128g. Test NMAD 0.01154, η 14.58%, RMSE 0.319. Best Track A synthetic result. Real eval SUBMITTED (job 41685, tigris). |
 
 **Track A synthetic results (completed):**
 
