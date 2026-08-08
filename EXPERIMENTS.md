@@ -57,6 +57,7 @@
 | exp_013_rerun | configs/exp_013.yaml | 4jrl2hig | laced-feather-49 | 0.02024 | 0.02158 | 23.62% | 0.000818 | 0.3924 | 0.3768 | exp_013 rerun for checkpoint recovery. NMAD 0.02024 (46.5% worse than original 0.01382). Early stopped ep216/400 — val_loss plateaued at ep166. Identical config to original, difference is random seed variance. |
 | exp_031 | configs/exp_031.yaml | f9uaj0ae | revived-voice-50 | 0.01489 | 0.01489 | 24.39% | -0.00189 | 0.4390 | 0.3815 | exp_013 config + patience 150, epochs 600. NMAD 0.01489 — 4th best overall! Early stopped ep344/600. LR decayed 1e-4→6.9e-5. Overfitting gap 10x persists. Longer patience helped but didn't recover to original exp_013 (0.01382). |
 | exp_032 | configs/exp_032.yaml | ejfhtjlk | confused-bee-54 | **0.00785** | 0.00921 | 15.17% | -0.00189 | 0.354 | 0.241 | NEW ALL-TIME BEST! Q1 quality data + exp_013 config (mlp_dim=1024, blocks=12, lr=1e-4). NMAD improved 43% (0.01382→0.00785). Overfit gap 6.85x (vs 9.43x). Best at ep314, final ep325. Catastrophic outliers 15.17% (down from 24.85%). LR 6.52e-5 (never reached 1e-4). |
+| exp_052 | configs/exp_052.yaml | 9e4a3amc | skilled-galaxy-109 | 0.3683 | 0.41523 | 68.09% | -0.01314 | 0.61293 | 0.85028 | SCRATCH END-TO-END on simv4a (100k, no pretrained AE, freeze_backbone false, lr 1e-4, bs 128). CATASTROPHIC: test NMAD 0.39042, η 66.93%, RMSE 0.54254. Train loss 1.18→0.187 while val loss CLIMBED 0.77→0.85 — severe overfitting, degenerate latent. Early stop ep60 (best val ep11). ~50× worse than frozen-AE 0.0079. Definitively confirms pretraining is essential. |
 
 
 ## Running Experiments
@@ -69,7 +70,6 @@
 | tracka_control_z_partial_unfreeze | configs/tracka_control_z.yaml | — | — | — | — | — | — | — | — | PARTIAL UNFREEZE: last 2 encoder layers + head on real 3D-HST. Enc lr 1e-6, head lr 1e-5, 150 ep, patience 25. Zero-shot baseline: NMAD 0.469. Head-only transfer: NMAD 0.261. |
 | tracka_small_z_partial_unfreeze | configs/tracka_small_z.yaml | — | — | — | — | — | — | — | — | PARTIAL UNFREEZE: last 2 encoder layers + head on real 3D-HST. Enc lr 1e-6, head lr 1e-5, 150 ep, patience 25. Zero-shot baseline: NMAD 0.485. Head-only transfer: NMAD 0.264. |
 | tracka_tiny_z_partial_unfreeze | configs/tracka_tiny_z.yaml | — | — | — | — | — | — | — | — | PARTIAL UNFREEZE: only encoder layer (1 total) + head on real 3D-HST. Enc lr 1e-6, head lr 1e-5, 150 ep, patience 25. Zero-shot baseline: NMAD 0.620. Head-only transfer: NMAD 0.257. |
-| exp_052 | configs/exp_052.yaml | — | — | — | — | — | — | — | — | SCRATCH: full redshift model (SpecPT encoder + exp_032 head) trained END-TO-END from random init on grism_training_simv4a.parquet (100k spectra, regridded 10800-17100 Å, z uniform 0-4, no pretrained AE). lr 1e-4, bs 128, 400 ep, patience 50, wd 5e-5, group split on TARGETID. Submitted on tigris. |
 
 **Track A synthetic results (completed):**
 

@@ -11,15 +11,15 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Last updated: 2026-08-06
-- Active experiment: exp_052 — full SpecPT redshift model (encoder + exp_032 head) trained END-TO-END from random init on grism_training_simv4a.parquet (100k spectra, regridded grid, z uniform 0-4). No pretrained autoencoder (user decision). Tigris job 49816, lr 1e-4 bs 128 400ep patience 50.
+- Last updated: 2026-08-08
+- Active experiment: none (paused — user deciding next move)
 - Best NMAD (synthetic): **0.00785 (exp_032)**
 - Best NMAD (real 3D-HST): **0.20767 (exp_045_RF_fixed)** — RF shrinkage on frozen 512-d latents
 - Best Catastrophic Outliers (synthetic): **15.17% (exp_032)**
 - Best Catastrophic Outliers (real): **49.82% (exp_045_RF_fixed)** — dominated by low-SNR tail
-- Total experiments completed: 39 (synthetic) + 26 (real 3D-HST, incl. Track A small/tiny)
-- Total experiments running: 1 (exp_052 on tigris, job 49816)
-- Direction: From-scratch end-to-end training on the richer simv4a release (uniform z 0-4, catalog SNR, selection weights). Tests whether a fresh model trained directly on simv4a can beat the frozen-DESI-AE sim baselines (exp_032 0.00785). Track A abandoned; capacity is not the lever.
+- Total experiments completed: 40 (synthetic) + 26 (real 3D-HST, incl. Track A small/tiny)
+- Total experiments running: 0
+- Direction: exp_052 (scratch end-to-end on simv4a, no pretrained AE) CATASTROPHICALLY failed — test NMAD 0.39042 vs frozen-AE best 0.00785. Train loss fell while val loss rose (degenerate latent, severe overfitting, early stop ep60). Pretraining confirmed essential — the frozen autoencoder provides the z-discriminative latent. Next candidate: reuse exp_032/033 head config on v4a with the frozen (DESI or regridded) AE to test v4a's richer data (uniform z, catalog SNR, selection weights).
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.

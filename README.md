@@ -27,7 +27,7 @@
 
 | Experiment | Approach | Test NMAD | Test η | Status |
 |------------|----------|-----------|--------|--------|
-| exp_052 | Full model from random init on simv4a (100k spectra, end-to-end, no pretrained AE) | — | — | running (tigris job 49816) |
+| _none_ | — | — | — | paused — exp_052 (scratch end-to-end on simv4a) failed catastrophically; pretraining confirmed essential |
 
 > ℹ️ **Track A (AE capacity sweep).** Retrain the SpecPT autoencoder from scratch on regridded sim data (`grism_training_sim_v3_regrid.parquet`) with reduced transformer capacity, then freeze it and train a redshift head on top. Each AE→redshift pair is chained with SLURM `afterok` on **tigris** (both AE and redshift run on GH200; dependencies can't span clusters). Grouped split by TARGETID prevents leakage. NOTE: transformer capacity is only a small slice of total AE size — the decoder `linear2` (~970M params) dominates, so total params only shrink 1.12B→1.00B across the three configs. If no real-data transfer gain, the next test is a decoder bottleneck (Track B).
 
