@@ -69,6 +69,7 @@
 | tracka_control_z_partial_unfreeze | configs/tracka_control_z.yaml | — | — | — | — | — | — | — | — | PARTIAL UNFREEZE: last 2 encoder layers + head on real 3D-HST. Enc lr 1e-6, head lr 1e-5, 150 ep, patience 25. Zero-shot baseline: NMAD 0.469. Head-only transfer: NMAD 0.261. |
 | tracka_small_z_partial_unfreeze | configs/tracka_small_z.yaml | — | — | — | — | — | — | — | — | PARTIAL UNFREEZE: last 2 encoder layers + head on real 3D-HST. Enc lr 1e-6, head lr 1e-5, 150 ep, patience 25. Zero-shot baseline: NMAD 0.485. Head-only transfer: NMAD 0.264. |
 | tracka_tiny_z_partial_unfreeze | configs/tracka_tiny_z.yaml | — | — | — | — | — | — | — | — | PARTIAL UNFREEZE: only encoder layer (1 total) + head on real 3D-HST. Enc lr 1e-6, head lr 1e-5, 150 ep, patience 25. Zero-shot baseline: NMAD 0.620. Head-only transfer: NMAD 0.257. |
+| exp_052 | configs/exp_052.yaml | — | — | — | — | — | — | — | — | SCRATCH: full redshift model (SpecPT encoder + exp_032 head) trained END-TO-END from random init on grism_training_simv4a.parquet (100k spectra, regridded 10800-17100 Å, z uniform 0-4, no pretrained AE). lr 1e-4, bs 128, 400 ep, patience 50, wd 5e-5, group split on TARGETID. Submitted on tigris. |
 
 **Track A synthetic results (completed):**
 
