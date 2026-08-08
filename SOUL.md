@@ -11,15 +11,15 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Last updated: 2026-08-03 17:00 UTC
-- Active experiment: Track A completed on real 3D-HST — FAILED catastrophically. Both small and tiny degrade from frozen AE baseline (real NMAD 0.216) to 0.485 and 0.620 respectively. Track A abandoned.
+- Last updated: 2026-08-06
+- Active experiment: exp_052 — full SpecPT redshift model (encoder + exp_032 head) trained END-TO-END from random init on grism_training_simv4a.parquet (100k spectra, regridded grid, z uniform 0-4). No pretrained autoencoder (user decision). Tigris job 49816, lr 1e-4 bs 128 400ep patience 50.
 - Best NMAD (synthetic): **0.00785 (exp_032)**
 - Best NMAD (real 3D-HST): **0.20767 (exp_045_RF_fixed)** — RF shrinkage on frozen 512-d latents
 - Best Catastrophic Outliers (synthetic): **15.17% (exp_032)**
 - Best Catastrophic Outliers (real): **49.82% (exp_045_RF_fixed)** — dominated by low-SNR tail
 - Total experiments completed: 39 (synthetic) + 26 (real 3D-HST, incl. Track A small/tiny)
-- Total experiments running: 1 (control z rerun 41183 at 128g on tigris — can be cancelled)
-- Direction: Track A abandoned. Reducing AE transformer capacity catastrophically degrades real-data NMAD (0.216 → 0.485 for small, 0.620 for tiny). Sim-to-real gap widens with reduced capacity. Next: explore alternative approaches — decoder bottleneck, head-only tuning on frozen baseline, or SNR-aware training.
+- Total experiments running: 1 (exp_052 on tigris, job 49816)
+- Direction: From-scratch end-to-end training on the richer simv4a release (uniform z 0-4, catalog SNR, selection weights). Tests whether a fresh model trained directly on simv4a can beat the frozen-DESI-AE sim baselines (exp_032 0.00785). Track A abandoned; capacity is not the lever.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.
