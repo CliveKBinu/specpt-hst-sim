@@ -129,3 +129,5 @@ N/A,exp_044,if2qx78l,exp_044,failed,,,,,,,,FAILED: shape bug — y arrays saved 
 42006,tracka_small_z_partial_unfreeze,,,submitted,,,,,,,,PARTIAL UNFREEZE: last 2 encoder layers + head on real 3D-HST. Enc lr 1e-6, head lr 1e-5. Tigris GH200.
 42005,tracka_tiny_z_partial_unfreeze,,,submitted,,,,,,,,PARTIAL UNFREEZE: only encoder layer (1 total) + head on real 3D-HST. Enc lr 1e-6, head lr 1e-5. Tigris GH200.
 49816,exp_052,9e4a3amc,skilled-galaxy-109,completed,2026-08-08T01:22,2026-08-08T01:43,0.3683,0.85028,68.09,-0.01314,0.61293,SCRATCH end-to-end on simv4a (no pretrained AE). CATASTROPHIC overfit — test NMAD 0.39042, eta 66.93%, RMSE 0.54254. Pretraining confirmed essential. Tigris GH200.
+81835,exp_053,,,,,,,,,,,,FROZEN REGRIDDED AE + exp_032 head on simv4a (100k, uniform z). Tests data lever vs exp_032/033/034. lr 1e-4 bs 128 400ep pat50 wd 5e-5 zscore grouped-TARGETID. Tigris GH200. PD.
+81836,autoencoder_simv4a,,,,,,,,,,,,CONTINUED AE pretraining on simv4a from regridded AE. Recon-only lr 1e-5 bs 64 200ep pat30 wd 5e-3 grouped-TARGETID. Output autoencoder_simv4a_autoencoder_weights.pth -> exp_054. Tigris GH200. PD.

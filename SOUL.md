@@ -12,14 +12,14 @@ systematic experimentation.
 
 ## Current State (updated by agents)
 - Last updated: 2026-08-08
-- Active experiment: none (paused — user deciding next move)
+- Active experiment: exp_053 (frozen regridded AE + exp_032 head on simv4a, tigris job 81835) + autoencoder_simv4a (continued AE pretraining, job 81836)
 - Best NMAD (synthetic): **0.00785 (exp_032)**
 - Best NMAD (real 3D-HST): **0.20767 (exp_045_RF_fixed)** — RF shrinkage on frozen 512-d latents
 - Best Catastrophic Outliers (synthetic): **15.17% (exp_032)**
 - Best Catastrophic Outliers (real): **49.82% (exp_045_RF_fixed)** — dominated by low-SNR tail
 - Total experiments completed: 40 (synthetic) + 26 (real 3D-HST, incl. Track A small/tiny)
-- Total experiments running: 0
-- Direction: exp_052 (scratch end-to-end on simv4a, no pretrained AE) CATASTROPHICALLY failed — test NMAD 0.39042 vs frozen-AE best 0.00785. Train loss fell while val loss rose (degenerate latent, severe overfitting, early stop ep60). Pretraining confirmed essential — the frozen autoencoder provides the z-discriminative latent. Next candidate: reuse exp_032/033 head config on v4a with the frozen (DESI or regridded) AE to test v4a's richer data (uniform z, catalog SNR, selection weights).
+- Total experiments running: 2 (exp_053 job 81835, autoencoder_simv4a job 81836, both tigris)
+- Direction: Post-exp_052 (scratch end-to-end catastrophically failed, NMAD 0.39 — pretraining essential). Two-part plan: (1) exp_053 isolates the DATA lever — does v4a's richer sim (uniform z 0-4, 100k spectra) beat exp_032/033/034 with the frozen regridded AE + exp_032 head unchanged? (2) autoencoder_simv4a continues AE pretraining on v4a from the regridded checkpoint; if it passes recon validation it feeds exp_054 (frozen adapted AE + same head) to test whether AE representation mismatches v4a.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.
