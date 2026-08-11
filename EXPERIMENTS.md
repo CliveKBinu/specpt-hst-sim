@@ -58,6 +58,7 @@
 | exp_031 | configs/exp_031.yaml | f9uaj0ae | revived-voice-50 | 0.01489 | 0.01489 | 24.39% | -0.00189 | 0.4390 | 0.3815 | exp_013 config + patience 150, epochs 600. NMAD 0.01489 — 4th best overall! Early stopped ep344/600. LR decayed 1e-4→6.9e-5. Overfitting gap 10x persists. Longer patience helped but didn't recover to original exp_013 (0.01382). |
 | exp_032 | configs/exp_032.yaml | ejfhtjlk | confused-bee-54 | **0.00785** | 0.00921 | 15.17% | -0.00189 | 0.354 | 0.241 | NEW ALL-TIME BEST! Q1 quality data + exp_013 config (mlp_dim=1024, blocks=12, lr=1e-4). NMAD improved 43% (0.01382→0.00785). Overfit gap 6.85x (vs 9.43x). Best at ep314, final ep325. Catastrophic outliers 15.17% (down from 24.85%). LR 6.52e-5 (never reached 1e-4). |
 | exp_052 | configs/exp_052.yaml | 9e4a3amc | skilled-galaxy-109 | 0.3683 | 0.41523 | 68.09% | -0.01314 | 0.61293 | 0.85028 | SCRATCH END-TO-END on simv4a (100k, no pretrained AE, freeze_backbone false, lr 1e-4, bs 128). CATASTROPHIC: test NMAD 0.39042, η 66.93%, RMSE 0.54254. Train loss 1.18→0.187 while val loss CLIMBED 0.77→0.85 — severe overfitting, degenerate latent. Early stop ep60 (best val ep11). ~50× worse than frozen-AE 0.0079. Definitively confirms pretraining is essential. |
+| exp_053 | configs/exp_053.yaml | lb7ymlgq | polished-music-110 | 0.3737 | 0.43157 | 68.87% | 0.01613 | 0.68762 | 0.89157 | FROZEN REGRIDDED AE + exp_032 head on simv4a (100k, uniform z 0-4). CATASTROPHIC (identical to exp_052 scratch): test NMAD 0.39077, η 67.53%, RMSE 0.51408, bias -0.01668. Early stop ep75. Train loss fell 1.19→0.22 while val loss ROSE 1.19→0.89 from ep4 — overfit head, latent not z-discriminative on v4a. simv4a data does NOT transfer even with the pretrained regridded AE. |
 
 
 ## Running Experiments
@@ -70,8 +71,9 @@
 | tracka_control_z_partial_unfreeze | configs/tracka_control_z.yaml | — | — | — | — | — | — | — | — | PARTIAL UNFREEZE: last 2 encoder layers + head on real 3D-HST. Enc lr 1e-6, head lr 1e-5, 150 ep, patience 25. Zero-shot baseline: NMAD 0.469. Head-only transfer: NMAD 0.261. |
 | tracka_small_z_partial_unfreeze | configs/tracka_small_z.yaml | — | — | — | — | — | — | — | — | PARTIAL UNFREEZE: last 2 encoder layers + head on real 3D-HST. Enc lr 1e-6, head lr 1e-5, 150 ep, patience 25. Zero-shot baseline: NMAD 0.485. Head-only transfer: NMAD 0.264. |
 | tracka_tiny_z_partial_unfreeze | configs/tracka_tiny_z.yaml | — | — | — | — | — | — | — | — | PARTIAL UNFREEZE: only encoder layer (1 total) + head on real 3D-HST. Enc lr 1e-6, head lr 1e-5, 150 ep, patience 25. Zero-shot baseline: NMAD 0.620. Head-only transfer: NMAD 0.257. |
-| exp_053 | configs/exp_053.yaml | — | — | — | — | — | — | — | — | FROZEN REGRIDDED AE + exp_032 head on simv4a (100k, uniform z 0-4). Tests data lever: does v4a beat exp_032 (0.00785, v2_Q1) / exp_033 (0.01111, v3) / exp_034 (0.00909)? lr 1e-4, bs 128, 400 ep, patience 50, wd 5e-5, zscore, grouped TARGETID split. |
-| autoencoder_simv4a | configs/autoencoder_simv4a.yaml | — | — | — | — | — | — | — | — | CONTINUED AE PRETRAINING on simv4a from regridded AE checkpoint (Plan 2 stage 2A). Recon-only, lr 1e-5, bs 64, 200 ep, patience 30, wd 5e-3, grouped TARGETID split. Output: checkpoints/autoencoder_simv4a_autoencoder_weights.pth → feeds exp_054. |
+| exp_053 | configs/exp_053.yaml | lb7ymlgq | polished-music-110 | — | — | — | — | — | — | FROZEN REGRIDDED AE + exp_032 head on simv4a. COMPLETED — test NMAD 0.39077 (see Completed table). CATASTROPHIC — simv4a does NOT transfer even with pretrained AE. |
+| autoencoder_simv4a | configs/autoencoder_simv4a.yaml | ycykp3v9 | wise-oath-6 | — | — | — | — | — | — | CONTINUED AE PRETRAINING on simv4a. COMPLETED — recon val 0.0402, cos 0.998 (see AE section). Feeds exp_054. |
+| exp_054 | configs/exp_054.yaml | — | — | — | — | — | — | — | — | FROZEN SIMV4A-ADAPTED AE + exp_032 head on simv4a. Tests whether AE adaptation recovers the redshift signal exp_053 lost (0.39077). Same head/training as exp_053; only pretrained_autoencoder → autoencoder_simv4a_autoencoder_weights.pth. lr 1e-4, bs 128, 400 ep, patience 50, wd 5e-5, zscore, grouped TARGETID. |
 
 **Track A synthetic results (completed):**
 
@@ -102,6 +104,11 @@ Label-free self-supervised encoder preserving broad spectral info + adding robus
 | C (+ consistency) | ✅ Complete (ep 61/100) | 0.014 | 0.0168 | ~0.85 | 0.995 | **0.2198** | Eval vs AE baseline 0.2162 (marginally worse). Consistency did not help z. |
 
 **USE verdict:** All three stages (masked recon → +noise → +consistency) faithfully preserve the frozen AE latent (student↔teacher cos ~0.995) and progressively improve noise robustness (0.9961→0.9995) and recon quality (0.0077→0.0069). But redshift NMAD is tied or marginally worse than the frozen AE linear-probe baseline (0.2162) across all stages. **Self-supervised robustness pretraining on real data cannot create z-discriminative structure that the frozen encoder lacks.** USE remains the right foundation for future multi-task heads (SFR/AGN) but does not solve z by itself.
+
+### AE continued pretraining on simv4a (autoencoder_simv4a)
+| run | status | train_loss | val_loss | test recon | test MAE | test cos | NaN | notes |
+|-----|--------|------------|----------|------------|----------|----------|-----|-------|
+| autoencoder_simv4a (wise-oath-6 / ycykp3v9, tigris job 81836) | ✅ Complete (ep 200/200) | 0.0335 | 0.04019 | 0.04027 | 0.03764 | 0.99797 | 0 | CONTINUED AE PRETRAINING on simv4a from regridded AE (lr 1e-5, bs 64, wd 5e-3, grouped TARGETID). Recon stable/improving, no NaN, cos 0.998 — passes the basic validation gate. Checkpoint: checkpoints/autoencoder_simv4a_autoencoder_weights.pth → feeds exp_054. Note: reconstruction quality is NOT the acceptance criterion; redshift utility is tested by exp_054. |
 
 ## Factorized Universal Encoder (FUSE)
 
