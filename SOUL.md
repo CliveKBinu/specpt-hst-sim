@@ -12,13 +12,13 @@ systematic experimentation.
 
 ## Current State (updated by agents)
 - Last updated: 2026-08-11
-- Active experiment: exp_054 (frozen simv4a-adapted AE + exp_032 head on simv4a)
+- Active experiment: exp_054 (frozen simv4a-adapted AE + exp_032 head on simv4a, tigris job 82710)
 - Best NMAD (synthetic): **0.00785 (exp_032)**
 - Best NMAD (real 3D-HST): **0.20767 (exp_045_RF_fixed)** — RF shrinkage on frozen 512-d latents
 - Best Catastrophic Outliers (synthetic): **15.17% (exp_032)**
 - Best Catastrophic Outliers (real): **49.82% (exp_045_RF_fixed)** — dominated by low-SNR tail
 - Total experiments completed: 41 (synthetic) + 26 (real 3D-HST, incl. Track A small/tiny) + 1 AE pretraining (autoencoder_simv4a)
-- Total experiments running: 1 (exp_054)
+- Total experiments running: 1 (exp_054, tigris job 82710)
 - Direction: simv4a's richer data (100k, uniform z 0-4) does NOT transfer to the redshift head — exp_053 (frozen regridded AE + exp_032 head, identical config to the 0.00785 best) collapsed to test NMAD 0.39077, indistinguishable from exp_052's scratch 0.39042. autoencoder_simv4a (continued AE pretraining on v4a) passed the recon gate (cos 0.998, no NaN) but reconstruction quality is NOT the criterion. exp_054 tests whether the simv4a-adapted AE recovers redshift signal; if it too stays ~0.39, stop redshift-head work on simv4a and investigate label alignment / spectrum construction / normalization on the v4a pipeline (prep_sim_regridded.py --flat --snr-column catalog_snr).
 
 ## Frozen Architecture Constraints
