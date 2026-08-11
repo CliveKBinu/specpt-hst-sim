@@ -30,3 +30,9 @@ data/training_format/
 /_save_run.py
 /_run_data.json
 checkpoints/
+graphify-out/
+
+# Generated artifacts
+wandb/
+outputs/autoencoder_reconstruction/
+output.log

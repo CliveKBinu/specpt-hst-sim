@@ -37,6 +37,12 @@ Usage:
     # Override mask range or disable trimming:
     python scripts/prep_sim_regridded.py --no-trim
     python scripts/prep_sim_regridded.py --wave-min 10900 --wave-max 17000
+
+    # simv4a release (pre-selected, flat HDF5, catalog_snr as SNR, no cuts):
+    python scripts/prep_sim_regridded.py \
+        --src  /path/to/simv4a_uniform_z_selection/track_a.h5 \
+        --out  /path/to/data/training_format/grism_training_simv4a.parquet \
+        --flat --snr-column catalog_snr --no-filter --passthrough-1d
 """
 import argparse
 import os
@@ -58,6 +64,16 @@ Z_QUALITY_MIN = 1
 
 TRACK = "track_a"
 
+# 1D scalar columns to exclude from --passthrough-1d (handled separately or
+# spectral arrays). Line *_FLUX / *_ERR columns are 1D scalars and ARE passed
+# through when --passthrough-1d is set.
+PASSTHROUGH_EXCLUDE = {
+    "wave", "flam", "cont", "line", "ferr", "sensitivity", "contam",
+    "redshift", "z_quality", "h_mag", "snr_median", "t_exp", "read_noise",
+    "grism_id", "catalog_snr",
+    "sensitivity_resampled", "contam_resampled", "clean_flux_resampled",
+}
+
 
 def parse_args():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -67,6 +83,9 @@ def parse_args():
                    help="Output parquet path (.parquet).")
     p.add_argument("--track", default=TRACK,
                    help=f"HDF5 group name (default: {TRACK}).")
+    p.add_argument("--flat", action="store_true",
+                   help="Treat source HDF5 as flat (no group). Auto-detected "
+                        "when --track group is absent and 'flam' is at root.")
     p.add_argument("--wave-min", type=float, default=DEFAULT_WAVE_MIN,
                    help=f"Blue trim edge in A (default: {DEFAULT_WAVE_MIN}).")
     p.add_argument("--wave-max", type=float, default=DEFAULT_WAVE_MAX,
@@ -74,10 +93,22 @@ def parse_args():
     p.add_argument("--no-trim", dest="trim", action="store_false",
                    help="Disable G141 post-interp NaN masking.")
     p.add_argument("--snr-min", type=float, default=SNR_MIN,
-                   help="Minimum line_peak_snr (default: 2.5)")
+                   help="Minimum SNR filter (default: 2.5)")
     p.add_argument("--snr-max", type=float, default=SNR_MAX,
-                   help="Maximum line_peak_snr (default: 15.0)")
+                   help="Maximum SNR filter (default: 15.0)")
     p.add_argument("--z-quality-min", type=int, default=Z_QUALITY_MIN)
+    p.add_argument("--snr-column", choices=["line_peak_snr", "catalog_snr"],
+                   default="line_peak_snr",
+                   help="Column to store as 'SNR' in the output parquet "
+                        "(default: line_peak_snr, computed from arrays). "
+                        "Use 'catalog_snr' for pre-selected releases.")
+    p.add_argument("--no-filter", action="store_true",
+                   help="Disable ALL filtering (snr-min/max and z-quality). "
+                        "Passes every spectrum through.")
+    p.add_argument("--passthrough-1d", action="store_true",
+                   help="Include all extra 1D scalar columns from the source "
+                        "HDF5 (e.g. selection_weight, SED params, line "
+                        "fluxes) as additional parquet columns.")
     return p.parse_args()
 
 
@@ -102,9 +133,14 @@ def main():
 
     print("Reading HDF5 ...")
     with h5py.File(args.src, "r") as f:
-        g = f[args.track]
+        if args.flat or (args.track not in f and "flam" in f):
+            g = f
+            print("  Flat HDF5 layout (no group)")
+        else:
+            g = f[args.track]
+            print(f"  Using /{args.track}/ group")
         n_spec = int(g["redshift"].shape[0])
-        print(f"  {n_spec:,} spectra in /{args.track}/")
+        print(f"  {n_spec:,} spectra")
         grism_id = [x.decode() if isinstance(x, bytes) else str(x) for x in g["grism_id"][:]]
         redshift = g["redshift"][:].astype(np.float32)
         z_quality = g["z_quality"][:].astype(np.int8)
@@ -114,6 +150,23 @@ def main():
         ferr_2d = g["ferr"][:]
         wave = list(g["wave"][:])
 
+        catalog_snr = None
+        if args.snr_column == "catalog_snr":
+            if "catalog_snr" not in g:
+                print("ERROR: --snr-column catalog_snr requested but "
+                      "'catalog_snr' is not in the HDF5")
+                sys.exit(1)
+            catalog_snr = g["catalog_snr"][:].astype(np.float32)
+
+        extras = {}
+        if args.passthrough_1d:
+            for key in g.keys():
+                if key in PASSTHROUGH_EXCLUDE:
+                    continue
+                ds = g[key]
+                if ds.ndim == 1 and ds.shape[0] == n_spec:
+                    extras[key] = ds[:]
+
     ratio = (flam_2d - cont_2d) / np.where(ferr_2d > 0, ferr_2d, np.inf)
     line_peak_snr = ratio.max(axis=1).astype(np.float32)
     del ratio, ferr_2d
@@ -122,18 +175,31 @@ def main():
           f"median={np.median(line_peak_snr):.2f}  max={line_peak_snr.max():.2f}")
 
     keep = np.ones(n_spec, dtype=bool)
-    if args.snr_min is not None:
-        before = int(keep.sum())
-        keep &= line_peak_snr >= args.snr_min
-        print(f"Filter line_peak_snr >= {args.snr_min}: {before} -> {int(keep.sum())}")
-    if args.snr_max is not None:
-        before = int(keep.sum())
-        keep &= line_peak_snr <= args.snr_max
-        print(f"Filter line_peak_snr <= {args.snr_max}: {before} -> {int(keep.sum())}")
-    if args.z_quality_min is not None:
-        before = int(keep.sum())
-        keep &= z_quality >= args.z_quality_min
-        print(f"Filter z_quality >= {args.z_quality_min}: {before} -> {int(keep.sum())}")
+    if args.no_filter:
+        print("Filtering disabled (--no-filter): passing all spectra")
+    else:
+        if args.snr_min is not None:
+            before = int(keep.sum())
+            if args.snr_column == "catalog_snr":
+                keep &= catalog_snr >= args.snr_min
+                lbl = "catalog_snr"
+            else:
+                keep &= line_peak_snr >= args.snr_min
+                lbl = "line_peak_snr"
+            print(f"Filter {lbl} >= {args.snr_min}: {before} -> {int(keep.sum())}")
+        if args.snr_max is not None:
+            before = int(keep.sum())
+            if args.snr_column == "catalog_snr":
+                keep &= catalog_snr <= args.snr_max
+                lbl = "catalog_snr"
+            else:
+                keep &= line_peak_snr <= args.snr_max
+                lbl = "line_peak_snr"
+            print(f"Filter {lbl} <= {args.snr_max}: {before} -> {int(keep.sum())}")
+        if args.z_quality_min is not None:
+            before = int(keep.sum())
+            keep &= z_quality >= args.z_quality_min
+            print(f"Filter z_quality >= {args.z_quality_min}: {before} -> {int(keep.sum())}")
 
     idx = np.where(keep)[0]
     n_keep = len(idx)
@@ -163,10 +229,13 @@ def main():
     wide_df = pd.DataFrame({
         "grism_id": [grism_id[i] for i in idx],
         "z": redshift[idx].astype(np.float32),
-        "SNR": line_peak_snr[idx].astype(np.float32),
+        "SNR": (catalog_snr[idx] if catalog_snr is not None
+                else line_peak_snr[idx]).astype(np.float32),
         "spec": specs,
         "clean_flux_resampled": specs,
     })
+    for key, arr in extras.items():
+        wide_df[key] = arr[idx]
 
     print(f"DataFrame shape: {wide_df.shape}")
     print(f"Columns: {list(wide_df.columns)}")
