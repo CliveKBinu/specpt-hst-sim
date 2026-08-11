@@ -70,6 +70,8 @@
 | tracka_control_z_partial_unfreeze | configs/tracka_control_z.yaml | — | — | — | — | — | — | — | — | PARTIAL UNFREEZE: last 2 encoder layers + head on real 3D-HST. Enc lr 1e-6, head lr 1e-5, 150 ep, patience 25. Zero-shot baseline: NMAD 0.469. Head-only transfer: NMAD 0.261. |
 | tracka_small_z_partial_unfreeze | configs/tracka_small_z.yaml | — | — | — | — | — | — | — | — | PARTIAL UNFREEZE: last 2 encoder layers + head on real 3D-HST. Enc lr 1e-6, head lr 1e-5, 150 ep, patience 25. Zero-shot baseline: NMAD 0.485. Head-only transfer: NMAD 0.264. |
 | tracka_tiny_z_partial_unfreeze | configs/tracka_tiny_z.yaml | — | — | — | — | — | — | — | — | PARTIAL UNFREEZE: only encoder layer (1 total) + head on real 3D-HST. Enc lr 1e-6, head lr 1e-5, 150 ep, patience 25. Zero-shot baseline: NMAD 0.620. Head-only transfer: NMAD 0.257. |
+| exp_053 | configs/exp_053.yaml | — | — | — | — | — | — | — | — | FROZEN REGRIDDED AE + exp_032 head on simv4a (100k, uniform z 0-4). Tests data lever: does v4a beat exp_032 (0.00785, v2_Q1) / exp_033 (0.01111, v3) / exp_034 (0.00909)? lr 1e-4, bs 128, 400 ep, patience 50, wd 5e-5, zscore, grouped TARGETID split. |
+| autoencoder_simv4a | configs/autoencoder_simv4a.yaml | — | — | — | — | — | — | — | — | CONTINUED AE PRETRAINING on simv4a from regridded AE checkpoint (Plan 2 stage 2A). Recon-only, lr 1e-5, bs 64, 200 ep, patience 30, wd 5e-3, grouped TARGETID split. Output: checkpoints/autoencoder_simv4a_autoencoder_weights.pth → feeds exp_054. |
 
 **Track A synthetic results (completed):**
 

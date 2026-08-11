@@ -1,0 +1,30 @@
+model:
+  input_size: 7781
+  d_model: 512
+  nhead: 8
+  num_encoder_layers: 3
+  num_decoder_layers: 3
+  dim_feedforward: 2048
+  dropout: 0.1
+
+training:
+  lr: 1.0e-5
+  batch_size: 64
+  epochs: 200
+  patience: 30
+  weight_decay: 5.0e-3
+  lr_scheduler: ReduceLROnPlateau
+  lr_scheduler_factor: 0.1
+  lr_scheduler_patience: 10
+
+data:
+  path: /home/ckb2084/research/specpt-hst-sim/data/training_format/grism_training_simv4a.parquet
+  pretrained_autoencoder: /home/ckb2084/research/specpt-hst-sim/checkpoints/autoencoder_regrid_autoencoder_best.pth
+  val_split: 0.15
+  test_split: 0.15
+  split_by_group: true
+  group_column: TARGETID
+
+wandb:
+  entity: ckb2084-rochester-institute-of-technology
+  project: specpt-autoencoder-sim
