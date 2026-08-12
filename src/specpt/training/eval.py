@@ -1,9 +1,24 @@
 import numpy as np
 import json
 import torch
+from ..model import binned_predict
 
 
-def predict_with_tta(model, test_loader, device, tta_config):
+def decode_redshift_output(outputs, prediction_type="point"):
+    """Return scalar z predictions from point, MDN, or binned outputs."""
+    if prediction_type == "binned":
+        return binned_predict(outputs)[0]
+    if prediction_type == "mdn":
+        means, _, mix_weights = outputs
+        batch_size = means.shape[0]
+        num_mixtures = mix_weights.shape[1]
+        means_reshaped = means.view(batch_size, num_mixtures, 1)
+        best_comp = torch.argmax(mix_weights, dim=-1)
+        return means_reshaped[torch.arange(batch_size, device=means.device), best_comp, 0]
+    return outputs
+
+
+def predict_with_tta(model, test_loader, device, tta_config, prediction_type=None):
     """Run test-time augmentation and return averaged predictions.
 
     Args:
@@ -25,13 +40,17 @@ def predict_with_tta(model, test_loader, device, tta_config):
     max_shift = tta_config.get("max_shift", 3)
     flux_scale_min, flux_scale_max = tta_config.get("flux_scale_range", [0.95, 1.05])
 
+    if prediction_type is None:
+        if hasattr(model, "binned_output") and model.binned_output:
+            prediction_type = "binned"
+        else:
+            prediction_type = "mdn" if hasattr(model, "mdn_head") else "point"
+
     model.eval()
     all_true = []
     all_preds = []
 
     # Check if model is MDN by checking return type
-    is_mdn = hasattr(model, 'mdn_head')
-
     with torch.no_grad():
         for X, Y, idx, t_id in test_loader:
             X, Y = X.to(device), Y.to(device)
@@ -60,17 +79,8 @@ def predict_with_tta(model, test_loader, device, tta_config):
                 )
                 X_aug = X_aug * scale
 
-                # Handle MDN vs point predictions
-                if is_mdn:
-                    means, log_vars, mix_weights = model(X_aug)
-                    # Extract predictions from MDN (highest-weight component mean)
-                    num_mixtures = mix_weights.shape[1]
-                    means_reshaped = means.view(batch_size, num_mixtures, 1)
-                    best_comp = torch.argmax(mix_weights, dim=-1)
-                    preds = means_reshaped[torch.arange(batch_size), best_comp, 0]
-                else:
-                    preds = model(X_aug)
-                aug_preds += preds
+                preds = decode_redshift_output(model(X_aug), prediction_type)
+                aug_preds += preds.reshape(batch_size, 1)
 
             # Average predictions across augmentations
             aug_preds /= n_aug

@@ -120,11 +120,15 @@ class EnhancedSpecPTForRedshift(nn.Module):
         num_mlp_blocks=5,
         mlp_dim=512,
         dropout_rate=0.2,
+        binned_output=False,
+        num_z_bins=24,
+        z_bin_max=3.0,
     ):
         super().__init__()
         self.encoder = pretrained_model.transformer_encoder
         self.proj_to_d_model = pretrained_model.proj_to_d_model
         self.pretrained_model = pretrained_model
+        self.binned_output = binned_output
 
         d_model = self.proj_to_d_model.out_features
         nhead = self.encoder.layers[0].self_attn.num_heads
@@ -141,13 +145,19 @@ class EnhancedSpecPTForRedshift(nn.Module):
             ]
         )
 
-        self.prediction = nn.Sequential(
-            nn.Linear(mlp_dim, mlp_dim // 2),
-            Swish(),
-            nn.Dropout(dropout_rate),
-            nn.Linear(mlp_dim // 2, output_features),
-            nn.Softplus(),
-        )
+        if binned_output:
+            self.prediction = BinnedRedshiftHead(
+                mlp_dim, num_bins=num_z_bins, z_bin_max=z_bin_max,
+                dropout_rate=dropout_rate,
+            )
+        else:
+            self.prediction = nn.Sequential(
+                nn.Linear(mlp_dim, mlp_dim // 2),
+                Swish(),
+                nn.Dropout(dropout_rate),
+                nn.Linear(mlp_dim // 2, output_features),
+                nn.Softplus(),
+            )
 
         self.attention = nn.MultiheadAttention(embed_dim=d_model, num_heads=nhead)
 
@@ -166,6 +176,46 @@ class EnhancedSpecPTForRedshift(nn.Module):
         x = self.mlp_blocks(x)
         redshift = self.prediction(x)
         return redshift
+
+
+class BinnedRedshiftHead(nn.Module):
+    """Classify redshift in log(1+z) bins and refine within each bin."""
+
+    def __init__(self, input_dim, num_bins=24, z_bin_max=3.0, dropout_rate=0.2):
+        super().__init__()
+        self.num_bins = num_bins
+        self.z_bin_max = z_bin_max
+        bin_edges_log1p = np.linspace(0.0, np.log1p(z_bin_max), num_bins + 1)
+        self.register_buffer(
+            "bin_left_log1p", torch.from_numpy(bin_edges_log1p[:-1]).float()
+        )
+        self.bin_width = float(bin_edges_log1p[1] - bin_edges_log1p[0])
+        self.dropout = nn.Dropout(dropout_rate)
+        self.conf_logits = nn.Linear(input_dim, num_bins)
+        self.refine = nn.Linear(input_dim, num_bins)
+
+    def forward(self, x):
+        conf = self.conf_logits(self.dropout(x))
+        raw = self.refine(self.dropout(x))
+        within_log1p = (
+            self.bin_left_log1p.unsqueeze(0)
+            + torch.sigmoid(raw) * self.bin_width
+        )
+        return {
+            "conf_logits": conf,
+            "within_z": torch.expm1(within_log1p),
+        }
+
+
+def binned_predict(outputs):
+    """Decode binned outputs using the highest-confidence bin."""
+    conf_logits = outputs["conf_logits"]
+    within_z = outputs["within_z"]
+    probabilities = F.softmax(conf_logits, dim=-1)
+    argmax_bin = probabilities.argmax(dim=-1, keepdim=True)
+    z_argmax = within_z.gather(1, argmax_bin).squeeze(-1)
+    z_soft = (probabilities * within_z).sum(dim=-1)
+    return z_argmax, z_soft, probabilities
 
 
 class MDNHead(nn.Module):

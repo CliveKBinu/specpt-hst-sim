@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+import numpy as np
 
 
 class NMADLoss(nn.Module):
@@ -122,3 +124,69 @@ class MDNMADLoss(nn.Module):
                 )
 
         return nll + torch.mean(torch.abs(delz)) / normalization
+
+
+class BinnedRedshiftLoss(nn.Module):
+    """Hybrid classification and within-bin refinement loss."""
+
+    def __init__(
+        self,
+        num_bins=24,
+        z_bin_max=3.0,
+        lambda_refine=0.3,
+        lambda_nmad=0.7,
+        label_smoothing=0.05,
+        huber_delta=None,
+    ):
+        super().__init__()
+        self.num_bins = num_bins
+        self.z_bin_max = z_bin_max
+        bin_edges_log1p = np.linspace(0.0, np.log1p(z_bin_max), num_bins + 1)
+        self.register_buffer(
+            "bin_left_log1p", torch.from_numpy(bin_edges_log1p[:-1]).float()
+        )
+        self.bin_width = float(bin_edges_log1p[1] - bin_edges_log1p[0])
+        self.lambda_refine = lambda_refine
+        self.lambda_nmad = lambda_nmad
+        self.label_smoothing = label_smoothing
+        self.huber_delta = huber_delta if huber_delta is not None else self.bin_width / 2.0
+
+    def forward(self, outputs, target):
+        conf_logits = outputs["conf_logits"]
+        within_z = outputs["within_z"]
+        z_true = target.squeeze(-1)
+
+        target_log1p = torch.log1p(z_true)
+        target_bin = torch.clamp(
+            (target_log1p / self.bin_width).long(), 0, self.num_bins - 1
+        )
+        bin_indices = torch.arange(self.num_bins, device=conf_logits.device)
+        dist = torch.abs(bin_indices.unsqueeze(0) - target_bin.unsqueeze(1)).float()
+        gauss = torch.exp(-0.5 * (dist / 0.85) ** 2)
+        gauss = gauss / gauss.sum(dim=-1, keepdim=True)
+        soft_target = (
+            (1.0 - self.label_smoothing) * gauss
+            + self.label_smoothing / self.num_bins
+        )
+        log_probs = F.log_softmax(conf_logits, dim=-1)
+        loss_cls = -(soft_target * log_probs).sum(dim=-1).mean()
+
+        probabilities = F.softmax(conf_logits, dim=-1)
+        residual_k = (within_z - z_true.unsqueeze(1)) / (1.0 + z_true.unsqueeze(1))
+        huber_k = F.smooth_l1_loss(
+            residual_k, torch.zeros_like(residual_k), reduction="none", beta=self.huber_delta
+        )
+        loss_refine = (probabilities * huber_k).sum(dim=-1).mean()
+
+        z_pred_soft = (probabilities * within_z).sum(dim=-1)
+        residual = (z_pred_soft - z_true) / (1.0 + z_true)
+        loss_nmad = F.smooth_l1_loss(
+            residual, torch.zeros_like(residual), reduction="mean", beta=self.huber_delta
+        )
+        total = loss_cls + self.lambda_refine * loss_refine + self.lambda_nmad * loss_nmad
+        return {
+            "total": total,
+            "loss_cls": loss_cls.detach(),
+            "loss_refine": loss_refine.detach(),
+            "loss_nmad": loss_nmad.detach(),
+        }

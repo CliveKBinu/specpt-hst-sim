@@ -6,11 +6,11 @@ model:
   num_decoder_layers: 3
   dim_feedforward: 2048
   dropout: 0.1
-  num_mlp_blocks: 5
-  mlp_dim: 512
-  prediction_type: point
+  num_mlp_blocks: 12
+  mlp_dim: 1024
+  prediction_type: binned
   num_z_bins: 24
-  z_bin_max: 3.0
+  z_bin_max: 4.0
 
 training:
   lr: 1.0e-4
@@ -26,9 +26,9 @@ training:
   label_smoothing: 0.05
 
 data:
-  path: /home/ckb2084/research/specpt-hst-sim/data/training_format/grism_training_sim_v1.pkl
+  path: /home/ckb2084/research/specpt-hst-sim/data/training_format/grism_training_sim_v2_Q1.parquet
   pretrained_autoencoder: /home/ckb2084/research/galax_spec/pretrained_weights/SpecPT_DESI_combined_autoencoder_150_new.pth
-  pretrained_redshift: /home/ckb2084/research/galax_spec/pretrained_weights/SpecPT_DESI_Combined_EnhancedSpecPTForRedshift_500_new.pth
+  pretrained_redshift: ""
   normalization: median
   val_split: 0.1
   test_split: 0.1
@@ -37,4 +37,4 @@ wandb:
   entity: ckb2084-rochester-institute-of-technology
   project: specpt-hst-sim-z
 
-expected_duration_hours: 4
+expected_duration_hours: 6

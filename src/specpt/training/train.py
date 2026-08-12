@@ -8,9 +8,9 @@ import zipfile
 from pathlib import Path
 
 from ..model import SpecPT, EnhancedSpecPTForRedshift, EnhancedSpecPTForRedshiftMDN
-from ..losses import NMADLoss, HuberNMADLoss, MDNMADLoss
+from ..losses import NMADLoss, HuberNMADLoss, MDNMADLoss, BinnedRedshiftLoss
 from ..dataloader import load_grism_data, split_data, create_dataloaders
-from .eval import compute_metrics, predict_with_tta
+from .eval import compute_metrics, predict_with_tta, decode_redshift_output
 
 
 def load_config(config_path):
@@ -65,11 +65,24 @@ def load_checkpoint(path, model, optimizer, scheduler=None, device="cpu"):
         print("  Skipping checkpoint load — model will use current weights")
         return None, None, None, None
     
-    model_state = checkpoint["model_state_dict"]
+    model_state = dict(checkpoint["model_state_dict"])
+    # Bin edges are deterministic config state; do not overwrite them on resume.
+    if getattr(model, "binned_output", False):
+        model_state.pop("prediction.bin_left_log1p", None)
     
     # Try loading with strict=False to handle architecture mismatches
     # (e.g., loading point-head checkpoint into MDN model)
-    missing, unexpected = model.load_state_dict(model_state, strict=False)
+    try:
+        missing, unexpected = model.load_state_dict(model_state, strict=False)
+    except RuntimeError as e:
+        print(f"Checkpoint tensor-shape mismatch — loading compatible keys only: {e}")
+        compatible = {
+            key: value for key, value in model_state.items()
+            if key in model.state_dict() and model.state_dict()[key].shape == value.shape
+        }
+        missing, unexpected = model.load_state_dict(compatible, strict=False)
+        print(f"  Loaded {len(compatible)} compatible keys (head reset where needed)")
+        return checkpoint["epoch"], checkpoint["train_losses"], checkpoint["val_losses"], checkpoint["best_val_loss"]
     if missing or unexpected:
         print(f"Checkpoint key mismatch — missing {len(missing)}, unexpected {len(unexpected)}")
         if missing:
@@ -90,7 +103,7 @@ def load_checkpoint(path, model, optimizer, scheduler=None, device="cpu"):
     return checkpoint["epoch"], checkpoint["train_losses"], checkpoint["val_losses"], checkpoint["best_val_loss"]
 
 
-def compute_redshift_weights(train_loader, model, device, bins=None):
+def compute_redshift_weights(train_loader, model, device, bins=None, prediction_type="point"):
     """Compute per-sample weights based on inverse error frequency by redshift bin.
 
     Args:
@@ -113,8 +126,8 @@ def compute_redshift_weights(train_loader, model, device, bins=None):
     with torch.no_grad():
         for X, Y, idx, t_id in train_loader:
             X, Y = X.to(device), Y.to(device)
-            preds = model(X)
-            delz = torch.abs((preds - Y) / (1 + Y)).flatten()
+            preds = decode_redshift_output(model(X), prediction_type)
+            delz = torch.abs((preds - Y.flatten()) / (1 + Y.flatten()))
             all_errors.append(delz.cpu().numpy())
             all_z_true.append(Y.cpu().numpy().flatten())
 
@@ -147,7 +160,10 @@ def compute_redshift_weights(train_loader, model, device, bins=None):
     return sample_weights, bins
 
 
-def compute_curriculum_weights(train_loader, model, device, start_pct=0.5, ramp_epochs=100, epoch=0):
+def compute_curriculum_weights(
+    train_loader, model, device, start_pct=0.5, ramp_epochs=100, epoch=0,
+    prediction_type="point",
+):
     """Compute curriculum weights that gradually increase dataset difficulty.
 
     Args:
@@ -171,8 +187,8 @@ def compute_curriculum_weights(train_loader, model, device, start_pct=0.5, ramp_
     with torch.no_grad():
         for X, Y, idx, t_id in train_loader:
             X, Y = X.to(device), Y.to(device)
-            preds = model(X)
-            delz = torch.abs((preds - Y) / (1 + Y)).flatten()
+            preds = decode_redshift_output(model(X), prediction_type)
+            delz = torch.abs((preds - Y.flatten()) / (1 + Y.flatten()))
             all_errors.append(delz.cpu().numpy())
 
     all_errors = np.concatenate(all_errors)
@@ -193,6 +209,12 @@ def main():
     parser.add_argument("--wandb_entity", default=None)
     parser.add_argument("--wandb_project", default=None)
     parser.add_argument("--resume", default=None, help="Path to checkpoint to resume from")
+    parser.add_argument("--binned-output", action="store_true")
+    parser.add_argument("--num-z-bins", type=int, default=None)
+    parser.add_argument("--z-bin-max", type=float, default=None)
+    parser.add_argument("--lambda-refine", type=float, default=None)
+    parser.add_argument("--lambda-nmad", type=float, default=None)
+    parser.add_argument("--label-smoothing", type=float, default=None)
     args = parser.parse_args()
 
     cfg = load_config(args.config)
@@ -244,9 +266,14 @@ def main():
     else:
         print("No pretrained autoencoder — initializing AE from scratch.")
 
-    # Check for MDN prediction type
+    # Check for alternate prediction types. Point regression remains the default.
     prediction_type = model_cfg.get("prediction_type", "point")
     num_mixtures = model_cfg.get("num_mixtures", 5)
+    binned_output = args.binned_output or prediction_type == "binned"
+    if binned_output:
+        prediction_type = "binned"
+    num_z_bins = args.num_z_bins if args.num_z_bins is not None else model_cfg.get("num_z_bins", 24)
+    z_bin_max = args.z_bin_max if args.z_bin_max is not None else model_cfg.get("z_bin_max", 3.0)
 
     if prediction_type == "mdn":
         redshift_model = EnhancedSpecPTForRedshiftMDN(
@@ -265,14 +292,21 @@ def main():
             num_mlp_blocks=model_cfg["num_mlp_blocks"],
             mlp_dim=model_cfg["mlp_dim"],
             dropout_rate=model_cfg["dropout"],
+            binned_output=binned_output,
+            num_z_bins=num_z_bins,
+            z_bin_max=z_bin_max,
         )
+        if binned_output:
+            print(f"Using binned redshift head with {num_z_bins} bins over z<= {z_bin_max}")
 
     rz_path = os.path.expanduser(data_cfg.get("pretrained_redshift", "") or "")
-    if rz_path:
+    if rz_path and not binned_output:
         state_dict = torch.load(rz_path, map_location=device)
         autoencoder_prefixes = ("encoder.", "proj_to_d_model.", "pretrained_model.")
         head_only = {k: v for k, v in state_dict.items() if not k.startswith(autoencoder_prefixes)}
         redshift_model.load_state_dict(head_only, strict=False)
+    elif rz_path and binned_output:
+        print("Binned head enabled — skipping incompatible pretrained redshift head weights.")
     else:
         print("No pretrained redshift head weights — initializing head from scratch.")
 
@@ -318,8 +352,21 @@ def main():
     loss_type = train_cfg.get("loss", "nmad")
     loss_delta = float(train_cfg.get("loss_delta", 0.15))
     
-    # MDN loss takes precedence if prediction_type is mdn
-    if prediction_type == "mdn":
+    lambda_refine = args.lambda_refine if args.lambda_refine is not None else train_cfg.get("lambda_refine", 0.3)
+    lambda_nmad = args.lambda_nmad if args.lambda_nmad is not None else train_cfg.get("lambda_nmad", 0.7)
+    label_smoothing = args.label_smoothing if args.label_smoothing is not None else train_cfg.get("label_smoothing", 0.05)
+
+    # Structured-head losses take precedence over scalar regression losses.
+    if prediction_type == "binned":
+        criterion = BinnedRedshiftLoss(
+            num_bins=num_z_bins,
+            z_bin_max=z_bin_max,
+            lambda_refine=lambda_refine,
+            lambda_nmad=lambda_nmad,
+            label_smoothing=label_smoothing,
+        )
+        print("Using BinnedRedshiftLoss")
+    elif prediction_type == "mdn":
         criterion = MDNMADLoss(normalization_factor="std")
         print("Using MDNMADLoss for MDN prediction")
     elif loss_type == "huber_nmad":
@@ -351,7 +398,8 @@ def main():
     if sample_weighting == "redshift_inverse_error":
         print("\nComputing redshift-based sample weights...")
         sample_weights, _ = compute_redshift_weights(
-            train_loader, redshift_model, device, bins=weight_bins
+            train_loader, redshift_model, device, bins=weight_bins,
+            prediction_type=prediction_type,
         )
         sample_weights = torch.from_numpy(sample_weights).float().to(device)
         print(f"Sample weights computed: min={sample_weights.min():.3f}, max={sample_weights.max():.3f}")
@@ -388,19 +436,20 @@ def main():
                 start_pct=curriculum_start_pct,
                 ramp_epochs=curriculum_ramp_epochs,
                 epoch=epoch,
+                prediction_type=prediction_type,
             )
 
         for X, Y, idx, t_id in train_loader:
             X, Y = X.to(device), Y.to(device)
             optimizer.zero_grad()
             
-            # Handle MDN vs point predictions
+            outputs = redshift_model(X)
             if prediction_type == "mdn":
-                means, log_vars, mix_weights = redshift_model(X)
-                loss = criterion(means, log_vars, mix_weights, Y)
+                loss = criterion(*outputs, Y)
             else:
-                preds = redshift_model(X)
-                loss = criterion(preds, Y)
+                loss = criterion(outputs, Y)
+            if isinstance(loss, dict):
+                loss = loss["total"]
 
             # Apply curriculum mask if available
             if curriculum_mask is not None:
@@ -434,41 +483,56 @@ def main():
         val_count = 0
         all_preds = []
         all_true = []
+        val_component_sums = {"loss_cls": 0.0, "loss_refine": 0.0, "loss_nmad": 0.0}
 
         with torch.no_grad():
             for X, Y, idx, t_id in val_loader:
                 X, Y = X.to(device), Y.to(device)
                 
-                # Handle MDN vs point predictions
+                outputs = redshift_model(X)
+                eval_mask = (Y.squeeze(-1) <= z_bin_max) if binned_output else None
+                if eval_mask is not None and not eval_mask.any():
+                    continue
+                loss_outputs = outputs
+                loss_target = Y
+                if eval_mask is not None:
+                    loss_target = Y[eval_mask]
+                    if isinstance(outputs, dict):
+                        loss_outputs = {key: value[eval_mask] for key, value in outputs.items()}
+                    elif isinstance(outputs, tuple):
+                        loss_outputs = tuple(value[eval_mask] for value in outputs)
                 if prediction_type == "mdn":
-                    means, log_vars, mix_weights = redshift_model(X)
-                    val_loss_batch = criterion(means, log_vars, mix_weights, Y)
-                    # Extract predictions from MDN (highest-weight component mean)
-                    batch_size = means.shape[0]
-                    num_mixtures = mix_weights.shape[1]
-                    means_reshaped = means.view(batch_size, num_mixtures, 1)
-                    best_comp = torch.argmax(mix_weights, dim=-1)
-                    preds = means_reshaped[torch.arange(batch_size), best_comp, 0]
+                    val_loss_batch = criterion(*loss_outputs, loss_target)
                 else:
-                    preds = redshift_model(X)
-                    val_loss_batch = criterion(preds, Y)
-                
+                    val_loss_batch = criterion(loss_outputs, loss_target)
+                loss_components = val_loss_batch if isinstance(val_loss_batch, dict) else None
+                if loss_components is not None:
+                    val_loss_batch = loss_components["total"]
                 if torch.isnan(val_loss_batch) or torch.isinf(val_loss_batch):
                     continue
+                if loss_components is not None:
+                    for key in val_component_sums:
+                        val_component_sums[key] += loss_components[key].item()
+                preds = decode_redshift_output(outputs, prediction_type)
+                if eval_mask is not None:
+                    preds = preds[eval_mask]
                 val_loss_epoch += val_loss_batch.item()
                 val_count += 1
                 all_preds.append(preds.cpu().numpy().flatten())
-                all_true.append(Y.cpu().numpy().flatten())
+                all_true.append((Y[eval_mask] if eval_mask is not None else Y).cpu().numpy().flatten())
 
         val_loss = val_loss_epoch / max(val_count, 1)
         val_losses.append(val_loss)
 
         all_preds = np.concatenate(all_preds)
         all_true = np.concatenate(all_true)
+        if binned_output:
+            eval_mask = all_true <= z_bin_max
+            all_preds = all_preds[eval_mask]
+            all_true = all_true[eval_mask]
         metrics = compute_metrics(all_true, all_preds)
 
-        wandb.log(
-            {
+        log_data = {
                 "train_loss": train_loss,
                 "val_loss": val_loss,
                 "val_nmad": metrics["nmad"],
@@ -478,7 +542,10 @@ def main():
                 "lr": optimizer.param_groups[0]["lr"],
                 "epoch": epoch,
             }
-        )
+        if prediction_type == "binned" and val_count:
+            for key, value in val_component_sums.items():
+                log_data[f"val_{key}"] = value / val_count
+        wandb.log(log_data)
 
         if val_loss < best_val_loss:
             best_val_loss = val_loss
@@ -534,8 +601,8 @@ def main():
         with torch.no_grad():
             for X, Y, idx, t_id in val_loader:
                 X, Y = X.to(device), Y.to(device)
-                preds = redshift_model(X)
-                delz = torch.abs((preds - Y) / (1 + Y)).flatten()
+                preds = decode_redshift_output(redshift_model(X), prediction_type)
+                delz = torch.abs((preds - Y.flatten()) / (1 + Y.flatten()))
                 val_errors.append(delz.cpu().numpy())
                 val_indices.append(idx.numpy())
 
@@ -547,15 +614,14 @@ def main():
         # Create weighted sampler for training set
         # Compute per-sample weights based on error from Stage 1 model
         redshift_model.eval()
-        train_errors = []
+        train_errors = np.zeros(len(train_loader.dataset), dtype=np.float32)
         with torch.no_grad():
             for X, Y, idx, t_id in train_loader:
                 X, Y = X.to(device), Y.to(device)
-                preds = redshift_model(X)
-                delz = torch.abs((preds - Y) / (1 + Y)).flatten()
-                train_errors.append(delz.cpu().numpy())
+                preds = decode_redshift_output(redshift_model(X), prediction_type)
+                delz = torch.abs((preds - Y.flatten()) / (1 + Y.flatten()))
+                train_errors[idx.numpy()] = delz.cpu().numpy()
 
-        train_errors = np.concatenate(train_errors)
         # Weight: 1.0 for normal samples, outlier_weight for outliers
         sample_weights = np.where(
             train_errors > outlier_threshold, outlier_weight, 1.0
@@ -567,6 +633,13 @@ def main():
             weights=sample_weights,
             num_samples=len(sample_weights),
             replacement=True,
+        )
+        stage2_train_loader = torch.utils.data.DataLoader(
+            train_loader.dataset,
+            batch_size=train_loader.batch_size,
+            sampler=weighted_sampler,
+            num_workers=train_loader.num_workers,
+            pin_memory=True,
         )
 
         # Reset optimizer and scheduler for Stage 2
@@ -588,11 +661,13 @@ def main():
             loss_epoch = 0.0
             batch_count = 0
 
-            for X, Y, idx, t_id in train_loader:
+            for X, Y, idx, t_id in stage2_train_loader:
                 X, Y = X.to(device), Y.to(device)
                 optimizer.zero_grad()
-                preds = redshift_model(X)
-                loss = criterion(preds, Y)
+                outputs = redshift_model(X)
+                loss = criterion(*outputs, Y) if prediction_type == "mdn" else criterion(outputs, Y)
+                if isinstance(loss, dict):
+                    loss = loss["total"]
 
                 if torch.isnan(loss) or torch.isinf(loss):
                     continue
@@ -614,20 +689,40 @@ def main():
             with torch.no_grad():
                 for X, Y, idx, t_id in val_loader:
                     X, Y = X.to(device), Y.to(device)
-                    preds = redshift_model(X)
-                    val_loss_batch = criterion(preds, Y)
+                    outputs = redshift_model(X)
+                    eval_mask = (Y.squeeze(-1) <= z_bin_max) if binned_output else None
+                    if eval_mask is not None and not eval_mask.any():
+                        continue
+                    loss_outputs = outputs
+                    loss_target = Y
+                    if eval_mask is not None:
+                        loss_target = Y[eval_mask]
+                        if isinstance(outputs, dict):
+                            loss_outputs = {key: value[eval_mask] for key, value in outputs.items()}
+                        elif isinstance(outputs, tuple):
+                            loss_outputs = tuple(value[eval_mask] for value in outputs)
+                    val_loss_batch = criterion(*loss_outputs, loss_target) if prediction_type == "mdn" else criterion(loss_outputs, loss_target)
+                    if isinstance(val_loss_batch, dict):
+                        val_loss_batch = val_loss_batch["total"]
+                    preds = decode_redshift_output(outputs, prediction_type)
+                    if eval_mask is not None:
+                        preds = preds[eval_mask]
                     if torch.isnan(val_loss_batch) or torch.isinf(val_loss_batch):
                         continue
                     val_loss_epoch += val_loss_batch.item()
                     val_count += 1
                     all_preds.append(preds.cpu().numpy().flatten())
-                    all_true.append(Y.cpu().numpy().flatten())
+                    all_true.append((Y[eval_mask] if eval_mask is not None else Y).cpu().numpy().flatten())
 
             val_loss = val_loss_epoch / max(val_count, 1)
             scheduler.step(val_loss)
 
             all_preds = np.concatenate(all_preds)
             all_true = np.concatenate(all_true)
+            if binned_output:
+                eval_mask = all_true <= z_bin_max
+                all_preds = all_preds[eval_mask]
+                all_true = all_true[eval_mask]
             metrics = compute_metrics(all_true, all_preds)
 
             wandb.log({
@@ -691,17 +786,7 @@ def main():
         for X, Y, idx, t_id in test_loader:
             X, Y = X.to(device), Y.to(device)
             
-            # Handle MDN vs point predictions
-            if prediction_type == "mdn":
-                means, log_vars, mix_weights = redshift_model(X)
-                # Extract predictions from MDN (highest-weight component mean)
-                batch_size = means.shape[0]
-                num_mixtures = mix_weights.shape[1]
-                means_reshaped = means.view(batch_size, num_mixtures, 1)
-                best_comp = torch.argmax(mix_weights, dim=-1)
-                preds = means_reshaped[torch.arange(batch_size), best_comp, 0]
-            else:
-                preds = redshift_model(X)
+            preds = decode_redshift_output(redshift_model(X), prediction_type)
             
             test_true.extend(Y.cpu().numpy().flatten().tolist())
             test_preds.extend(preds.cpu().numpy().flatten().tolist())
@@ -709,6 +794,11 @@ def main():
 
     test_true = np.array(test_true)
     test_preds = np.array(test_preds)
+    if binned_output:
+        eval_mask = test_true <= z_bin_max
+        test_true = test_true[eval_mask]
+        test_preds = test_preds[eval_mask]
+        print(f"Binned evaluation restricted to true z <= {z_bin_max}")
 
     test_metrics = compute_metrics(test_true, test_preds)
     print(f"\nTest Metrics:")
@@ -732,7 +822,7 @@ def main():
         print("="*60)
 
         tta_true, tta_preds = predict_with_tta(
-            redshift_model, test_loader, device, tta_cfg
+            redshift_model, test_loader, device, tta_cfg, prediction_type
         )
         tta_metrics = compute_metrics(tta_true, tta_preds)
         print(f"\nTTA Test Metrics (n_aug={tta_cfg.get('n_augmentations', 10)}):")
