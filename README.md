@@ -27,8 +27,8 @@
 
 | Experiment | Approach | Test NMAD | Test η | Status |
 |------------|----------|-----------|--------|--------|
-| exp_056 | EXACT exp_032 config on simv4a (DESI AE, zscore norm, random split) — isolates the data file | — | — | running (sporc job 21454344) |
-| exp_055 | Binned redshift head (24 log(1+z) bins, z≤4.0) on known-good v2_Q1 — attacks catastrophic outliers while holding NMAD | — | — | running (sporc job 21454127) |
+| exp_056 | EXACT exp_032 config on simv4a (DESI AE, zscore norm, random split) — isolates the data file | — | — | running (tigris job 83811) |
+| exp_055 | Binned redshift head (24 log(1+z) bins, z≤4.0) on known-good v2_Q1 — attacks catastrophic outliers while holding NMAD | — | — | running (tigris job 83810) |
 | exp_054 | Frozen simv4a-adapted AE + exp_032 head on simv4a — **FAILED** (test NMAD 0.3939, AE adaptation does not recover simv4a z-signal) | 0.3939 | 67.45% | completed — see leaderboard |
 | exp_053 | Frozen regridded AE + exp_032 head on simv4a — **FAILED** (test NMAD 0.39077, simv4a does not transfer) | 0.39077 | 67.53% | completed — see leaderboard |
 
@@ -97,9 +97,9 @@ Key finding: **All six axes of downstream methods on the frozen AE encoder are e
 
 **exp_054 — frozen simv4a-adapted AE + exp_032 head on simv4a (NEGATIVE, published).** The third consecutive simv4a failure (with exp_052 scratch and exp_053 regridded): test NMAD **0.3939**, η 67.45%, best val NMAD 0.4367 @ ep71. AE adaptation on simv4a does NOT recover the redshift signal. **Verdict: stop simv4a redshift-head work; investigate the v4a pipeline** (`scripts/prep_sim_regridded.py --flat --snr-column catalog_snr`) — label alignment / spectrum construction / normalization.
 
-**exp_056 — active.** The missing control: **exact exp_032 config** (DESI combined AE, 12×1024 head, lr 1e-4, bs 128, 400 ep, pat 50, wd 5e-5, **zscore** normalization, **random** split) run on **simv4a** — only `data.path` differs. exp_053/054 differed from exp_032 in AE (regridded/adapted vs DESI) + split (grouped vs random) — note the `normalization` config key was never read by train.py, so all runs used z-score at load time. If exp_056 also collapses to ~0.39, simv4a data itself is definitively the cause. Sporc job 21454344.
+**exp_056 — active.** The missing control: **exact exp_032 config** (DESI combined AE, 12×1024 head, lr 1e-4, bs 128, 400 ep, pat 50, wd 5e-5, **zscore** normalization, **random** split) run on **simv4a** — only `data.path` differs. exp_053/054 differed from exp_032 in AE (regridded/adapted vs DESI) + split (grouped vs random) — note the `normalization` config key was never read by train.py, so all runs used z-score at load time. If exp_056 also collapses to ~0.39, simv4a data itself is definitively the cause. Tigris job 83811.
 
-**exp_055 — active.** First controlled test of the new **binned redshift head** (classification over uniform log(1+z) bins + per-bin sigmoid refinement, 24 bins over z≤4.0, λ_refine 0.3 / λ_nmad 0.7 / label_smoothing 0.05) on the known-good **v2_Q1** pipeline (exp_032 config: frozen DESI AE, 12×1024 head, lr 1e-4). Purpose: kill catastrophic outliers (exp_032 η = 15.17%, target <1%) while holding NMAD ≤0.016. Sporc job 21454127.
+**exp_055 — active.** First controlled test of the new **binned redshift head** (classification over uniform log(1+z) bins + per-bin sigmoid refinement, 24 bins over z≤4.0, λ_refine 0.3 / λ_nmad 0.7 / label_smoothing 0.05) on the known-good **v2_Q1** pipeline (exp_032 config: frozen DESI AE, 12×1024 head, lr 1e-4). Purpose: kill catastrophic outliers (exp_032 η = 15.17%, target <1%) while holding NMAD ≤0.016. Tigris job 83810.
 
 ### Next Experiments Under Consideration
 

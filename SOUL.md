@@ -12,13 +12,13 @@ systematic experimentation.
 
 ## Current State (updated by agents)
 - Last updated: 2026-08-12
-- Active experiment: exp_056 (exact exp_032 config on simv4a — isolates the data file, sporc job 21454344); exp_055 (binned head on v2_Q1) also queued (job 21454127)
+- Active experiment: exp_056 (exact exp_032 config on simv4a — isolates the data file, tigris job 83811); exp_055 (binned head on v2_Q1) also queued (tigris job 83810)
 - Best NMAD (synthetic): **0.00785 (exp_032)**
 - Best NMAD (real 3D-HST): **0.20767 (exp_045_RF_fixed)** — RF shrinkage on frozen 512-d latents
 - Best Catastrophic Outliers (synthetic): **15.17% (exp_032)**
 - Best Catastrophic Outliers (real): **49.82% (exp_045_RF_fixed)** — dominated by low-SNR tail
 - Total experiments completed: 42 (synthetic) + 26 (real 3D-HST, incl. Track A small/tiny) + 1 AE pretraining (autoencoder_simv4a)
-- Total experiments running: 2 (exp_055 job 21454127, exp_056 job 21454344, both PD on sporc)
+- Total experiments running: 2 (exp_055 tigris job 83810, exp_056 tigris job 83811, both PD on tigris)
 - Direction: simv4a is dead for redshift-head work — exp_052/053/054 all collapsed to test NMAD ~0.39 (scratch end-to-end, regridded AE, simv4a-adapted AE). exp_056 runs the EXACT exp_032 config (DESI AE, zscore norm, random split, 12×1024 head) on simv4a to isolate whether the simv4a data file itself is the cause vs AE/split. In parallel, exp_055 tests the new binned redshift head on the known-good v2_Q1 pipeline to attack catastrophic outliers (15.17% → target <1%) while holding NMAD ≤0.016.
 
 ## Frozen Architecture Constraints
