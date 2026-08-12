@@ -27,7 +27,8 @@
 
 | Experiment | Approach | Test NMAD | Test η | Status |
 |------------|----------|-----------|--------|--------|
-| exp_054 | Frozen simv4a-adapted AE + exp_032 head on simv4a — tests if AE adaptation recovers redshift signal | — | — | running (tigris job 82710) |
+| exp_055 | Binned redshift head (24 log(1+z) bins, z≤4.0) on known-good v2_Q1 — attacks catastrophic outliers while holding NMAD | — | — | running (sporc job 21454127) |
+| exp_054 | Frozen simv4a-adapted AE + exp_032 head on simv4a — **FAILED** (test NMAD 0.3939, AE adaptation does not recover simv4a z-signal) | 0.3939 | 67.45% | completed — see leaderboard |
 | exp_053 | Frozen regridded AE + exp_032 head on simv4a — **FAILED** (test NMAD 0.39077, simv4a does not transfer) | 0.39077 | 67.53% | completed — see leaderboard |
 
 > ℹ️ **Track A (AE capacity sweep).** Retrain the SpecPT autoencoder from scratch on regridded sim data (`grism_training_sim_v3_regrid.parquet`) with reduced transformer capacity, then freeze it and train a redshift head on top. Each AE→redshift pair is chained with SLURM `afterok` on **tigris** (both AE and redshift run on GH200; dependencies can't span clusters). Grouped split by TARGETID prevents leakage. NOTE: transformer capacity is only a small slice of total AE size — the decoder `linear2` (~970M params) dominates, so total params only shrink 1.12B→1.00B across the three configs. If no real-data transfer gain, the next test is a decoder bottleneck (Track B).
@@ -93,14 +94,16 @@ Key finding: **All six axes of downstream methods on the frozen AE encoder are e
 
 **autoencoder_simv4a — continued AE pretraining (COMPLETED).** Recon-only adaptation of the regridded AE on simv4a (lr 1e-5, 200 ep): test recon NMAD 0.0403, cos 0.99797, 0 NaN. Passes the reconstruction gate but that is NOT the acceptance criterion.
 
-**exp_054 — active.** Frozen simv4a-adapted AE + exp_032 head on simv4a. Tests whether AE adaptation recovers redshift signal exp_053 lost. If it stays ~0.39, stop redshift-head work on simv4a and investigate the v4a pipeline (`scripts/prep_sim_regridded.py --flat --snr-column catalog_snr`).
+**exp_054 — frozen simv4a-adapted AE + exp_032 head on simv4a (NEGATIVE, published).** The third consecutive simv4a failure (with exp_052 scratch and exp_053 regridded): test NMAD **0.3939**, η 67.45%, best val NMAD 0.4367 @ ep71. AE adaptation on simv4a does NOT recover the redshift signal. **Verdict: stop simv4a redshift-head work; investigate the v4a pipeline** (`scripts/prep_sim_regridded.py --flat --snr-column catalog_snr`) — label alignment / spectrum construction / normalization.
+
+**exp_055 — active.** First controlled test of the new **binned redshift head** (classification over uniform log(1+z) bins + per-bin sigmoid refinement, 24 bins over z≤4.0, λ_refine 0.3 / λ_nmad 0.7 / label_smoothing 0.05) on the known-good **v2_Q1** pipeline (exp_032 config: frozen DESI AE, 12×1024 head, lr 1e-4). Purpose: kill catastrophic outliers (exp_032 η = 15.17%, target <1%) while holding NMAD ≤0.016. Sporc job 21454127.
 
 ### Next Experiments Under Consideration
 
 | Priority | Experiment | Goal |
 |----------|-----------|------|
-| **High** | **exp_054: frozen simv4a-adapted AE + exp_032 head on simv4a** | **Does AE adaptation (autoencoder_simv4a) recover redshift signal exp_053 lost? If not, simv4a pipeline is the suspect — not the model.** |
-| High | Investigate simv4a pipeline if exp_054 fails: label alignment, spectrum construction, NaN/pad distribution, normalization stats | Find why simv4a gives NMAD 0.39 while v2_Q1/v3 give 0.0079–0.011 |
+| **High** | **exp_055: binned redshift head on v2_Q1 (running)** | **Kill catastrophic outliers (15.17% → <1%) while holding NMAD ≤0.016. First controlled test of the new binned head on known-good data.** |
+| High | Investigate simv4a pipeline (exp_054 verdict): label alignment, spectrum construction, NaN/pad distribution, normalization stats | Find why simv4a gives NMAD 0.39 while v2_Q1/v3 give 0.0079–0.011 |
 | High | Harden Stage-2 claim: multi-seed (2–3×) + bootstrap CI95 on ALL probe pathways + same-capacity h_universal control | Establish whether the 0.202-vs-0.215 bottleneck is real before more architecture work |
 | High | Real-only controlled unfreeze (sim contributes recon only, never z) | Does encoder adaptation help real z at all, absent sim contamination? |
 | High | Anti-shrinkage/calibration head on h_z (variance-preserving term, report probe NMAD as primary) | Convert the 0.184 shrinkage into genuine prediction spread (R² > 0) |
@@ -146,10 +149,11 @@ Key finding: **All six axes of downstream methods on the frozen AE encoder are e
 | 30 | `exp_026` | **0.07718** | **30.36%** | 73 | HuberNMADLoss. 5.6x worse. Loss scale mismatch. |
 | 31 | `exp_052` | 0.39042 | 68.09% | 60 | SCRATCH end-to-end on simv4a (no pretrained AE). Catastrophic overfit — confirms pretraining is essential. |
 | 32 | `exp_053` | 0.39077 | 68.87% | 75 | Frozen regridded AE + exp_032 head on simv4a. Also catastrophic — simv4a does not transfer. |
+| 33 | `exp_054` | 0.3939 | 67.45% | 71 | Frozen simv4a-adapted AE + exp_032 head on simv4a. Third simv4a failure — AE adaptation doesn't recover z-signal. |
 
 > 📝 `exp_034` uses the regridded sim data (10800–17100 Å) with an **unfrozen** DESI autoencoder (end-to-end training). It set the all-time outlier record (12.73%) at the cost of a moderate NMAD increase (0.00785 → 0.00909). Despite grid alignment, real-data transfer remains challenging — see [Real 3D-HST Evaluation](#-real-3d-hst-evaluation) for transfer learning results.
 
-*Last updated: 2026-08-11 UTC*
+*Last updated: 2026-08-12 UTC*
 
 ---
 
