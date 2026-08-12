@@ -28,7 +28,7 @@ data:
   path: /home/ckb2084/research/specpt-hst-sim/data/training_format/grism_training_sim_v1.pkl
   pretrained_autoencoder: /home/ckb2084/research/galax_spec/pretrained_weights/SpecPT_DESI_combined_autoencoder_150_new.pth
   pretrained_redshift: ""
-  normalization: median
+  normalization: zscore
   val_split: 0.1
   test_split: 0.1
 

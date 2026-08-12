@@ -24,7 +24,7 @@ data:
   path: /home/ckb2084/research/specpt-hst-sim/data/training_format/grism_training_sim_v3_regrid.parquet
   pretrained_autoencoder: /home/ckb2084/research/specpt-hst-sim/checkpoints/autoencoder_tracka_small_autoencoder_weights.pth
   pretrained_redshift: ""
-  normalization: median
+  normalization: zscore
   val_split: 0.1
   test_split: 0.1
   split_by_group: true

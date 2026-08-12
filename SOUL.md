@@ -19,7 +19,7 @@ systematic experimentation.
 - Best Catastrophic Outliers (real): **49.82% (exp_045_RF_fixed)** — dominated by low-SNR tail
 - Total experiments completed: 42 (synthetic) + 26 (real 3D-HST, incl. Track A small/tiny) + 1 AE pretraining (autoencoder_simv4a)
 - Total experiments running: 2 (exp_055 job 21454127, exp_056 job 21454344, both PD on sporc)
-- Direction: simv4a is dead for redshift-head work — exp_052/053/054 all collapsed to test NMAD ~0.39 (scratch end-to-end, regridded AE, simv4a-adapted AE). exp_056 runs the EXACT exp_032 config (DESI AE, median norm, random split, 12×1024 head) on simv4a to isolate whether the simv4a data file itself is the cause vs AE/normalization/split. In parallel, exp_055 tests the new binned redshift head on the known-good v2_Q1 pipeline to attack catastrophic outliers (15.17% → target <1%) while holding NMAD ≤0.016.
+- Direction: simv4a is dead for redshift-head work — exp_052/053/054 all collapsed to test NMAD ~0.39 (scratch end-to-end, regridded AE, simv4a-adapted AE). exp_056 runs the EXACT exp_032 config (DESI AE, zscore norm, random split, 12×1024 head) on simv4a to isolate whether the simv4a data file itself is the cause vs AE/split. In parallel, exp_055 tests the new binned redshift head on the known-good v2_Q1 pipeline to attack catastrophic outliers (15.17% → target <1%) while holding NMAD ≤0.016.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.
