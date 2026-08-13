@@ -12,14 +12,14 @@ systematic experimentation.
 
 ## Current State (updated by agents)
 - Last updated: 2026-08-12
-- Active experiment: none running (exp_055 and exp_056 both completed on tigris)
+- Active experiment: exp_057 (rerun of exact exp_032 config on v2_Q1 — reproducibility/seed-variance check, tigris job 83965)
 - Best NMAD (synthetic): **0.00785 (exp_032)**
 - Best NMAD (real 3D-HST): **0.20767 (exp_045_RF_fixed)** — RF shrinkage on frozen 512-d latents
 - Best Catastrophic Outliers (synthetic): **15.17% (exp_032)**
 - Best Catastrophic Outliers (real): **49.82% (exp_045_RF_fixed)** — dominated by low-SNR tail
 - Total experiments completed: 44 (synthetic) + 26 (real 3D-HST, incl. Track A small/tiny) + 1 AE pretraining (autoencoder_simv4a)
-- Total experiments running: 0
-- Direction: TWO CLOSED QUESTIONS. (1) exp_056 = EXACT exp_032 config (DESI AE, zscore, random split) on simv4a → test NMAD 0.3987, the FOURTH simv4a failure (052 scratch 0.390, 053 regridded AE 0.391, 054 adapted AE 0.394, 056 exact-best 0.399). simv4a DATA FILE is definitively the cause; no more simv4a model work until the v4a pipeline (label alignment / spectrum construction / normalization) is fixed. (2) exp_055 = binned redshift head on v2_Q1 → gate FAILED: NMAD 0.0329 (4× worse than exp_032, needed ≤0.016), η 14.90% (0.3pp better than 15.17%, needed <1%). Binned head does not beat the pretrained continuous regression head (matches reference implementation finding). NEXT: investigate the simv4a data pipeline — compare spectrum construction/normalization/label alignment vs v2_Q1/v3 to explain why the same frozen AE + exact best config gives 0.0079 on v2_Q1 but 0.40 on simv4a.
+- Total experiments running: 1 (exp_057, tigris job 83965)
+- Direction: TWO CLOSED QUESTIONS. (1) exp_056 = EXACT exp_032 config (DESI AE, zscore, random split) on simv4a → test NMAD 0.3987, the FOURTH simv4a failure (052 scratch 0.390, 053 regridded AE 0.391, 054 adapted AE 0.394, 056 exact-best 0.399). simv4a DATA FILE is definitively the cause; no more simv4a model work until the v4a pipeline (label alignment / spectrum construction / normalization) is fixed. (2) exp_055 = binned redshift head on v2_Q1 → gate FAILED: NMAD 0.0329 (4× worse than exp_032, needed ≤0.016), η 14.90% (0.3pp better than 15.17%, needed <1%). Binned head does not beat the pretrained continuous regression head. RUNNING: exp_057 re-runs the exact exp_032 config on v2_Q1 to measure the seed-variance band around the 0.00785 best (exp_013_rerun showed 0.01382→0.02024 variance).
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.

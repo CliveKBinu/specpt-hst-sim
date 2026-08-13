@@ -27,6 +27,7 @@
 
 | Experiment | Approach | Test NMAD | Test η | Status |
 |------------|----------|-----------|--------|--------|
+| exp_057 | RERUN of exact exp_032 config on v2_Q1 — reproducibility / seed-variance check around the 0.00785 best | — | — | running (tigris job 83965) |
 | exp_055 | Binned redshift head (24 log(1+z) bins, z≤4.0) on v2_Q1 — **gate FAILED** (NMAD 0.0329, η 14.90%; binned doesn't beat regression head) | 0.0329 | 14.90% | completed — see leaderboard |
 | exp_056 | EXACT exp_032 config on simv4a (DESI AE, zscore norm, random split) — **simv4a data definitively confirmed as the cause** | 0.3987 | 67.96% | completed — see leaderboard |
 | exp_054 | Frozen simv4a-adapted AE + exp_032 head on simv4a — **FAILED** (test NMAD 0.3939, AE adaptation does not recover simv4a z-signal) | 0.3939 | 67.45% | completed — see leaderboard |
@@ -97,6 +98,8 @@ Key finding: **All six axes of downstream methods on the frozen AE encoder are e
 
 **exp_054 — frozen simv4a-adapted AE + exp_032 head on simv4a (NEGATIVE, published).** The third consecutive simv4a failure (with exp_052 scratch and exp_053 regridded): test NMAD **0.3939**, η 67.45%, best val NMAD 0.4367 @ ep71. AE adaptation on simv4a does NOT recover the redshift signal. **Verdict: stop simv4a redshift-head work; investigate the v4a pipeline** (`scripts/prep_sim_regridded.py --flat --snr-column catalog_snr`) — label alignment / spectrum construction / normalization.
 
+**exp_057 — running.** Rerun of the **exact exp_032 config** on v2_Q1 (DESI combined AE, 12×1024 head, lr 1e-4, bs 128, 400 ep, pat 50, wd 5e-5, zscore norm, random split). Purpose: measure the **seed-variance band** around the 0.00785 best — exp_013_rerun showed 0.01382→0.02024 (46% swing) on identical config. If exp_057 lands well above 0.00785, the "best" is partly luck-of-the-seed and leaderboard comparisons need error bars. Tigris job 83965.
+
 **exp_056 — exact exp_032 config on simv4a (NEGATIVE, definitive).** The missing control: **byte-identical to exp_032** (DESI combined AE, 12×1024 head, lr 1e-4, bs 128, 400 ep, pat 50, wd 5e-5, zscore norm, random split) with ONLY `data.path` → simv4a. **Also collapsed**: test NMAD **0.39869**, η 67.96%, RMSE 0.533. This is the FOURTH simv4a failure (exp_052 scratch 0.390, exp_053 regridded AE 0.391, exp_054 adapted AE 0.394, exp_056 exact-best 0.399) — statistically indistinguishable across scratch / AE variant / split / normalization. **Verdict: the simv4a data file itself is definitively the cause** (label alignment / spectrum construction / normalization in `scripts/prep_sim_regridded.py`), not the model. No further simv4a model work until the v4a pipeline is fixed.
 
 **exp_055 — binned redshift head on v2_Q1 (NEGATIVE, gate failed).** First controlled test of the new binned head (24 uniform log(1+z) bins over z≤4.0, λ_refine 0.3 / λ_nmad 0.7 / label_smoothing 0.05) on the known-good v2_Q1 pipeline. **Gate FAILED**: test NMAD **0.0329** (4.2× worse than exp_032's 0.00785; needed ≤0.016), test η **14.90%** (only 0.3pp better than exp_032's 15.17%; needed <1%), RMSE 0.331, bias 0.005. Early stop ep82 (~18 min on tigris GH200). The binned head does NOT beat the pretrained continuous regression head — consistent with the reference implementation's empirical finding. The ~0.3pp outlier gain does not justify 4× NMAD degradation; binned mode stays available behind `--binned-output` but is not the path forward.
@@ -105,6 +108,7 @@ Key finding: **All six axes of downstream methods on the frozen AE encoder are e
 
 | Priority | Experiment | Goal |
 |----------|-----------|------|
+| **High** | **exp_057: exact exp_032 config rerun on v2_Q1 (running)** | **Measure seed variance around the 0.00785 best — if it lands far off, leaderboard needs multi-seed error bars.** |
 | **High** | **Investigate simv4a pipeline (definitive verdict from exp_056)** | **Why does the EXACT best config (0.0079 on v2_Q1) give 0.40 on simv4a? Audit label alignment, spectrum construction, NaN/pad distribution, z-column integrity in `prep_sim_regridded.py --flat --snr-column catalog_snr`.** |
 | High | Diff v2_Q1 vs simv4a spectra for the SAME galaxy (if overlap exists): raw flux, normalization stats, z label vs catalog | Pinpoint exactly which v4a construction step destroys the z-signal |
 | High | Harden Stage-2 claim: multi-seed (2–3×) + bootstrap CI95 on ALL probe pathways + same-capacity h_universal control | Establish whether the 0.202-vs-0.215 bottleneck is real before more architecture work |
