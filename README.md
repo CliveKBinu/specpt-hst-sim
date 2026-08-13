@@ -27,8 +27,8 @@
 
 | Experiment | Approach | Test NMAD | Test η | Status |
 |------------|----------|-----------|--------|--------|
-| exp_056 | EXACT exp_032 config on simv4a (DESI AE, zscore norm, random split) — isolates the data file | — | — | running (tigris job 83811) |
-| exp_055 | Binned redshift head (24 log(1+z) bins, z≤4.0) on known-good v2_Q1 — attacks catastrophic outliers while holding NMAD | — | — | running (tigris job 83810) |
+| exp_055 | Binned redshift head (24 log(1+z) bins, z≤4.0) on v2_Q1 — **gate FAILED** (NMAD 0.0329, η 14.90%; binned doesn't beat regression head) | 0.0329 | 14.90% | completed — see leaderboard |
+| exp_056 | EXACT exp_032 config on simv4a (DESI AE, zscore norm, random split) — **simv4a data definitively confirmed as the cause** | 0.3987 | 67.96% | completed — see leaderboard |
 | exp_054 | Frozen simv4a-adapted AE + exp_032 head on simv4a — **FAILED** (test NMAD 0.3939, AE adaptation does not recover simv4a z-signal) | 0.3939 | 67.45% | completed — see leaderboard |
 | exp_053 | Frozen regridded AE + exp_032 head on simv4a — **FAILED** (test NMAD 0.39077, simv4a does not transfer) | 0.39077 | 67.53% | completed — see leaderboard |
 
@@ -97,21 +97,20 @@ Key finding: **All six axes of downstream methods on the frozen AE encoder are e
 
 **exp_054 — frozen simv4a-adapted AE + exp_032 head on simv4a (NEGATIVE, published).** The third consecutive simv4a failure (with exp_052 scratch and exp_053 regridded): test NMAD **0.3939**, η 67.45%, best val NMAD 0.4367 @ ep71. AE adaptation on simv4a does NOT recover the redshift signal. **Verdict: stop simv4a redshift-head work; investigate the v4a pipeline** (`scripts/prep_sim_regridded.py --flat --snr-column catalog_snr`) — label alignment / spectrum construction / normalization.
 
-**exp_056 — active.** The missing control: **exact exp_032 config** (DESI combined AE, 12×1024 head, lr 1e-4, bs 128, 400 ep, pat 50, wd 5e-5, **zscore** normalization, **random** split) run on **simv4a** — only `data.path` differs. exp_053/054 differed from exp_032 in AE (regridded/adapted vs DESI) + split (grouped vs random) — note the `normalization` config key was never read by train.py, so all runs used z-score at load time. If exp_056 also collapses to ~0.39, simv4a data itself is definitively the cause. Tigris job 83811.
+**exp_056 — exact exp_032 config on simv4a (NEGATIVE, definitive).** The missing control: **byte-identical to exp_032** (DESI combined AE, 12×1024 head, lr 1e-4, bs 128, 400 ep, pat 50, wd 5e-5, zscore norm, random split) with ONLY `data.path` → simv4a. **Also collapsed**: test NMAD **0.39869**, η 67.96%, RMSE 0.533. This is the FOURTH simv4a failure (exp_052 scratch 0.390, exp_053 regridded AE 0.391, exp_054 adapted AE 0.394, exp_056 exact-best 0.399) — statistically indistinguishable across scratch / AE variant / split / normalization. **Verdict: the simv4a data file itself is definitively the cause** (label alignment / spectrum construction / normalization in `scripts/prep_sim_regridded.py`), not the model. No further simv4a model work until the v4a pipeline is fixed.
 
-**exp_055 — active.** First controlled test of the new **binned redshift head** (classification over uniform log(1+z) bins + per-bin sigmoid refinement, 24 bins over z≤4.0, λ_refine 0.3 / λ_nmad 0.7 / label_smoothing 0.05) on the known-good **v2_Q1** pipeline (exp_032 config: frozen DESI AE, 12×1024 head, lr 1e-4). Purpose: kill catastrophic outliers (exp_032 η = 15.17%, target <1%) while holding NMAD ≤0.016. Tigris job 83810.
+**exp_055 — binned redshift head on v2_Q1 (NEGATIVE, gate failed).** First controlled test of the new binned head (24 uniform log(1+z) bins over z≤4.0, λ_refine 0.3 / λ_nmad 0.7 / label_smoothing 0.05) on the known-good v2_Q1 pipeline. **Gate FAILED**: test NMAD **0.0329** (4.2× worse than exp_032's 0.00785; needed ≤0.016), test η **14.90%** (only 0.3pp better than exp_032's 15.17%; needed <1%), RMSE 0.331, bias 0.005. Early stop ep82 (~18 min on tigris GH200). The binned head does NOT beat the pretrained continuous regression head — consistent with the reference implementation's empirical finding. The ~0.3pp outlier gain does not justify 4× NMAD degradation; binned mode stays available behind `--binned-output` but is not the path forward.
 
 ### Next Experiments Under Consideration
 
 | Priority | Experiment | Goal |
 |----------|-----------|------|
-| **High** | **exp_056: exact exp_032 config on simv4a (running)** | **Isolate the data file: if the byte-identical best config collapses to ~0.39 on simv4a, simv4a data is the cause — not AE/normalization/split.** |
-| **High** | **exp_055: binned redshift head on v2_Q1 (running)** | **Kill catastrophic outliers (15.17% → <1%) while holding NMAD ≤0.016. First controlled test of the new binned head on known-good data.** |
-| High | Investigate simv4a pipeline (exp_054 verdict): label alignment, spectrum construction, NaN/pad distribution, normalization stats | Find why simv4a gives NMAD 0.39 while v2_Q1/v3 give 0.0079–0.011 |
+| **High** | **Investigate simv4a pipeline (definitive verdict from exp_056)** | **Why does the EXACT best config (0.0079 on v2_Q1) give 0.40 on simv4a? Audit label alignment, spectrum construction, NaN/pad distribution, z-column integrity in `prep_sim_regridded.py --flat --snr-column catalog_snr`.** |
+| High | Diff v2_Q1 vs simv4a spectra for the SAME galaxy (if overlap exists): raw flux, normalization stats, z label vs catalog | Pinpoint exactly which v4a construction step destroys the z-signal |
 | High | Harden Stage-2 claim: multi-seed (2–3×) + bootstrap CI95 on ALL probe pathways + same-capacity h_universal control | Establish whether the 0.202-vs-0.215 bottleneck is real before more architecture work |
 | High | Real-only controlled unfreeze (sim contributes recon only, never z) | Does encoder adaptation help real z at all, absent sim contamination? |
 | High | Anti-shrinkage/calibration head on h_z (variance-preserving term, report probe NMAD as primary) | Convert the 0.184 shrinkage into genuine prediction spread (R² > 0) |
-| Medium | Use v4a `selection_weight` as per-sample loss weighting | Fix low-SNR / high-z tail, which drives catastrophic outliers |
+| Medium | Use v4a `selection_weight` as per-sample loss weighting (only after v4a pipeline fixed) | Fix low-SNR / high-z tail, which drives catastrophic outliers |
 | Medium | Bigger multi-scale conv-map extractor (tap all 3 conv blocks + attention over 487 wavelength positions) | Recover more of the z signal the 512-d flatten discards |
 | Medium | USE-Stage-C student as frozen backbone (swap for raw AE) | Cleaner low-SNR features via noise robustness (clean-vs-noisy cos 0.9995) |
 
@@ -150,10 +149,12 @@ Key finding: **All six axes of downstream methods on the frozen AE encoder are e
 | 27 | `exp_000_baseline` | 0.0303 | 23.24% | 244 | Default config. |
 | 28 | `exp_006` | 0.0332 | 23.98% | 193 | Regularization backfired. |
 | 29 | `exp_004` | 0.0335 | 23.42% | — | lr 5e-5 — worse than baseline. |
-| 30 | `exp_026` | **0.07718** | **30.36%** | 73 | HuberNMADLoss. 5.6x worse. Loss scale mismatch. |
-| 31 | `exp_052` | 0.39042 | 68.09% | 60 | SCRATCH end-to-end on simv4a (no pretrained AE). Catastrophic overfit — confirms pretraining is essential. |
-| 32 | `exp_053` | 0.39077 | 68.87% | 75 | Frozen regridded AE + exp_032 head on simv4a. Also catastrophic — simv4a does not transfer. |
-| 33 | `exp_054` | 0.3939 | 67.45% | 71 | Frozen simv4a-adapted AE + exp_032 head on simv4a. Third simv4a failure — AE adaptation doesn't recover z-signal. |
+| 30 | `exp_055` | **0.0329** | **14.90%** | 82 | Binned redshift head on v2_Q1 (24 bins, z≤4). Best outlier rate vs exp_032 (14.90% vs 15.17%) but NMAD 4.2× worse — binned doesn't beat the regression head. |
+| 31 | `exp_026` | **0.07718** | **30.36%** | 73 | HuberNMADLoss. 5.6x worse. Loss scale mismatch. |
+| 32 | `exp_052` | 0.39042 | 68.09% | 60 | SCRATCH end-to-end on simv4a (no pretrained AE). Catastrophic overfit — confirms pretraining is essential. |
+| 33 | `exp_053` | 0.39077 | 68.87% | 75 | Frozen regridded AE + exp_032 head on simv4a. Also catastrophic — simv4a does not transfer. |
+| 34 | `exp_054` | 0.3939 | 67.45% | 71 | Frozen simv4a-adapted AE + exp_032 head on simv4a. Third simv4a failure — AE adaptation doesn't recover z-signal. |
+| 35 | `exp_056` | 0.39869 | 67.96% | 74 | EXACT exp_032 config on simv4a. Fourth simv4a failure — definitively confirms simv4a DATA is the cause, not the model. |
 
 > 📝 `exp_034` uses the regridded sim data (10800–17100 Å) with an **unfrozen** DESI autoencoder (end-to-end training). It set the all-time outlier record (12.73%) at the cost of a moderate NMAD increase (0.00785 → 0.00909). Despite grid alignment, real-data transfer remains challenging — see [Real 3D-HST Evaluation](#-real-3d-hst-evaluation) for transfer learning results.
 
