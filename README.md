@@ -27,11 +27,8 @@
 
 | Experiment | Approach | Test NMAD | Test η | Status |
 |------------|----------|-----------|--------|--------|
-| exp_057 | RERUN of exact exp_032 config on v2_Q1 — reproducibility / seed-variance check around the 0.00785 best | — | — | running (tigris job 83965) |
-| exp_055 | Binned redshift head (24 log(1+z) bins, z≤4.0) on v2_Q1 — **gate FAILED** (NMAD 0.0329, η 14.90%; binned doesn't beat regression head) | 0.0329 | 14.90% | completed — see leaderboard |
-| exp_056 | EXACT exp_032 config on simv4a (DESI AE, zscore norm, random split) — **simv4a data definitively confirmed as the cause** | 0.3987 | 67.96% | completed — see leaderboard |
-| exp_054 | Frozen simv4a-adapted AE + exp_032 head on simv4a — **FAILED** (test NMAD 0.3939, AE adaptation does not recover simv4a z-signal) | 0.3939 | 67.45% | completed — see leaderboard |
-| exp_053 | Frozen regridded AE + exp_032 head on simv4a — **FAILED** (test NMAD 0.39077, simv4a does not transfer) | 0.39077 | 67.53% | completed — see leaderboard |
+| exp_058 | EXP_032 config on simv4a_v2 (fixed line detectability: 54.7% ≥ SNR5 vs old 2.1%) — definitive test | — | — | running (tigris job 89792) |
+| exp_057 | RERUN of exact exp_032 config on v2_Q1 — reproducibility / seed-variance check | 0.01316 | 15.26% | running (tigris job 83965) |
 
 > ℹ️ **Track A (AE capacity sweep).** Retrain the SpecPT autoencoder from scratch on regridded sim data (`grism_training_sim_v3_regrid.parquet`) with reduced transformer capacity, then freeze it and train a redshift head on top. Each AE→redshift pair is chained with SLURM `afterok` on **tigris** (both AE and redshift run on GH200; dependencies can't span clusters). Grouped split by TARGETID prevents leakage. NOTE: transformer capacity is only a small slice of total AE size — the decoder `linear2` (~970M params) dominates, so total params only shrink 1.12B→1.00B across the three configs. If no real-data transfer gain, the next test is a decoder bottleneck (Track B).
 

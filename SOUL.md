@@ -11,15 +11,15 @@ systematic experimentation.
 - Tertiary: Confidence calibration ECE — target < 0.1
 
 ## Current State (updated by agents)
-- Last updated: 2026-08-12
-- Active experiment: exp_057 (rerun of exact exp_032 config on v2_Q1 — reproducibility/seed-variance check, tigris job 83965)
+- Last updated: 2026-08-18
+- Active experiment: exp_058 (exp_032 config on simv4a_v2 — fixed line detectability, tigris job 89792)
 - Best NMAD (synthetic): **0.00785 (exp_032)**
 - Best NMAD (real 3D-HST): **0.20767 (exp_045_RF_fixed)** — RF shrinkage on frozen 512-d latents
 - Best Catastrophic Outliers (synthetic): **15.17% (exp_032)**
 - Best Catastrophic Outliers (real): **49.82% (exp_045_RF_fixed)** — dominated by low-SNR tail
-- Total experiments completed: 44 (synthetic) + 26 (real 3D-HST, incl. Track A small/tiny) + 1 AE pretraining (autoencoder_simv4a)
-- Total experiments running: 1 (exp_057, tigris job 83965)
-- Direction: TWO CLOSED QUESTIONS. (1) exp_056 = EXACT exp_032 config (DESI AE, zscore, random split) on simv4a → test NMAD 0.3987, the FOURTH simv4a failure (052 scratch 0.390, 053 regridded AE 0.391, 054 adapted AE 0.394, 056 exact-best 0.399). simv4a DATA FILE is definitively the cause; no more simv4a model work until the v4a pipeline (label alignment / spectrum construction / normalization) is fixed. (2) exp_055 = binned redshift head on v2_Q1 → gate FAILED: NMAD 0.0329 (4× worse than exp_032, needed ≤0.016), η 14.90% (0.3pp better than 15.17%, needed <1%). Binned head does not beat the pretrained continuous regression head. RUNNING: exp_057 re-runs the exact exp_032 config on v2_Q1 to measure the seed-variance band around the 0.00785 best (exp_013_rerun showed 0.01382→0.02024 variance).
+- Total experiments completed: 46 (synthetic) + 26 (real 3D-HST, incl. Track A small/tiny) + 1 AE pretraining
+- Total experiments running: 2 (exp_057 on tigris 83965, exp_058 on tigris 89792)
+- Direction: THREE CLOSED QUESTIONS + ONE OPEN. (1) simv4a v1 DATA FILE was broken — old version had 2.1% line detectability at SNR≥5 vs real's 51.1%. (2) Binned head on v2_Q1 gate FAILED: NMAD 0.0329 (4× worse than continuous head). (3) Seed variance: exp_057 rerun shows NMAD 0.01316 vs 0.00785 baseline — ~68% degradation from a different random seed. NEW: (4) simv4a_v2 regenerated with integrated_line_snr selection — 54.7% line detectability at SNR≥5 (matches real 51.1%). exp_058 tests whether fixing line detectability recovers redshift learning on simv4a. If NMAD ≤ 0.05 → proceed to sim-to-real fine-tuning. If ~0.40 persists → deeper pipeline audit needed.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.
