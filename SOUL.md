@@ -12,14 +12,14 @@ systematic experimentation.
 
 ## Current State (updated by agents)
 - Last updated: 2026-08-18
-- Active experiment: exp_058 (exp_032 config on simv4a_v2 — fixed line detectability, tigris job 89792)
+- Active experiments: exp_058 (simv4a_v2 line-detectability fix, tigris 89792) + 3 regularization A/B runs on simv4a_v2: exp_059 (head dropout 0.3), exp_060 (mlp_blocks 5), exp_061 (wd 1e-4)
 - Best NMAD (synthetic): **0.00785 (exp_032)**
 - Best NMAD (real 3D-HST): **0.20767 (exp_045_RF_fixed)** — RF shrinkage on frozen 512-d latents
 - Best Catastrophic Outliers (synthetic): **15.17% (exp_032)**
 - Best Catastrophic Outliers (real): **49.82% (exp_045_RF_fixed)** — dominated by low-SNR tail
 - Total experiments completed: 46 (synthetic) + 26 (real 3D-HST, incl. Track A small/tiny) + 1 AE pretraining
-- Total experiments running: 2 (exp_057 on tigris 83965, exp_058 on tigris 89792)
-- Direction: THREE CLOSED QUESTIONS + ONE OPEN. (1) simv4a v1 DATA FILE was broken — old version had 2.1% line detectability at SNR≥5 vs real's 51.1%. (2) Binned head on v2_Q1 gate FAILED: NMAD 0.0329 (4× worse than continuous head). (3) Seed variance: exp_057 rerun shows NMAD 0.01316 vs 0.00785 baseline — ~68% degradation from a different random seed. NEW: (4) simv4a_v2 regenerated with integrated_line_snr selection — 54.7% line detectability at SNR≥5 (matches real 51.1%). exp_058 tests whether fixing line detectability recovers redshift learning on simv4a. If NMAD ≤ 0.05 → proceed to sim-to-real fine-tuning. If ~0.40 persists → deeper pipeline audit needed.
+- Total experiments running: 5 (exp_057 tigris 83965, exp_058 tigris 89792, exp_059/060/061 tigris PD)
+- Direction: simv4a_v2 (exp_058) RECOVERED PARTIALLY — test NMAD 0.09250 (vs old simv4a 0.3987, 4.3× better) but OVERFITS: train loss→0.18 while val loss rises→0.54 after ep28; η 32.23% (vs v2_Q1's 15.17%). Root cause is data composition: 45% of simv4a_v2 is z_quality=-1 (low continuum SNR) so the model memorizes instead of learning line→z. NOW RUNNING: 3 isolated regularization A/B runs on simv4a_v2 (exp_032 pipeline) to test which lever reduces overfitting — exp_059 (head dropout 0.1→0.3), exp_060 (num_mlp_blocks 12→5), exp_061 (weight_decay 5e-5→1e-4). CAVEAT: no seed set, so NMAD differences vs exp_058's 0.09250 are partly seed confounded (exp_057 showed ~68% seed variance on v2_Q1). If all 3 still land >0.05, the real lever is brighter mag_ranges (→ more z_quality=1) = simv4a_v3.
 
 ## Frozen Architecture Constraints
 The SpecPT autoencoder (conv layers + transformers) is pretrained and frozen.

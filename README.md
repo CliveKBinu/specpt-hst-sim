@@ -27,6 +27,9 @@
 
 | Experiment | Approach | Test NMAD | Test η | Status |
 |------------|----------|-----------|--------|--------|
+| exp_059 | REGULARIZATION A/B #1 on simv4a_v2 — head dropout_rate 0.1→0.3 (frozen AE dropout stays 0.1) | — | — | running (tigris) |
+| exp_060 | REGULARIZATION A/B #2 on simv4a_v2 — num_mlp_blocks 12→5 (less capacity) | — | — | running (tigris) |
+| exp_061 | REGULARIZATION A/B #3 on simv4a_v2 — weight_decay 5e-5→1e-4 | — | — | running (tigris) |
 | exp_058 | EXP_032 config on simv4a_v2 (fixed line detectability: 54.7% ≥ SNR5 vs old 2.1%) — definitive test | — | — | running (tigris job 89792) |
 | exp_057 | RERUN of exact exp_032 config on v2_Q1 — reproducibility / seed-variance check | 0.01316 | 15.26% | running (tigris job 83965) |
 

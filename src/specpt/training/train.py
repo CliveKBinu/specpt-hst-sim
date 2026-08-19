@@ -281,7 +281,7 @@ def main():
             output_features=1,
             num_mlp_blocks=model_cfg["num_mlp_blocks"],
             mlp_dim=model_cfg["mlp_dim"],
-            dropout_rate=model_cfg["dropout"],
+            dropout_rate=model_cfg.get("dropout_rate", model_cfg.get("dropout", 0.1)),
             num_mixtures=num_mixtures,
         )
         print(f"Using MDN head with {num_mixtures} mixtures")
@@ -291,7 +291,7 @@ def main():
             output_features=1,
             num_mlp_blocks=model_cfg["num_mlp_blocks"],
             mlp_dim=model_cfg["mlp_dim"],
-            dropout_rate=model_cfg["dropout"],
+            dropout_rate=model_cfg.get("dropout_rate", model_cfg.get("dropout", 0.1)),
             binned_output=binned_output,
             num_z_bins=num_z_bins,
             z_bin_max=z_bin_max,
